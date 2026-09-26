@@ -3,6 +3,8 @@ PLAN: "feat: room_layout — espacios, equipamiento, turnos de ocupación y disp
 TAG: v0.1.0
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 13224572231307430392
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
