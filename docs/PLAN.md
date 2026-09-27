@@ -3,8 +3,9 @@ PLAN: "feat: room_layout — espacios, equipamiento, turnos de ocupación y disp
 TAG: v0.1.0
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 13224572231307430392
+PR: https://github.com/veltylabs/room_layout/pull/1
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
