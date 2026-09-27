@@ -1,4 +1,5 @@
 # room_layout
+<img src="docs/img/badges.svg">
 
 Módulo genérico para la distribución y ocupación de espacios de atención por niveles, equipamiento, turnos y disponibilidad para el ecosistema Velty.
 
