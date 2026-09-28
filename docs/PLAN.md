@@ -2,8 +2,9 @@
 PLAN: "fix(ui): the room_layout screen actually paints, loads its choices and saves; the demo mounts it"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 3479941765748529990
+PR: https://github.com/veltylabs/room_layout/pull/2
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
