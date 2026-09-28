@@ -6,8 +6,10 @@ import (
 	roomlayout "github.com/veltylabs/room_layout"
 	"github.com/veltylabs/room_layout/seed"
 	"github.com/veltylabs/room_layout/ui"
+	"webtyp.com/dom"
 	"webtyp.com/events/mock"
 	"webtyp.com/fmt"
+	"webtyp.com/layout/platformd"
 	"webtyp.com/orm"
 	"webtyp.com/router/loopback"
 	"webtyp.com/storage/mem"
@@ -34,9 +36,18 @@ func (d *demoOccupants) OccupantOptions(tenantID string) ([]fmt.KeyValue, error)
 	}, nil
 }
 
+type demoUser struct{}
+
+func (u demoUser) UserName() string    { return "Administrador Demo" }
+func (u demoUser) UserAvatar() string  { return "" }
+func (u demoUser) UserRoles() []string { return []string{"Administrador"} }
+
 func main() {
 	db := orm.New(mem.New())
-	ids, _ := unixid.NewUnixID()
+	ids, err := unixid.NewUnixID()
+	if err != nil {
+		panic(err)
+	}
 	pub := &mock.Broker{}
 
 	deps := roomlayout.Deps{
@@ -53,11 +64,29 @@ func main() {
 		panic(err)
 	}
 
-	_, _ = seed.Load(mod, "demo-tenant", seed.LoadOptions{
+	if _, err := seed.Load(mod, "demo-tenant", seed.LoadOptions{
 		CategoryIDs: []string{"cat1", "cat2", "cat3"},
 		OccupantIDs: []string{"occ1", "occ2", "occ3"},
-	})
+	}); err != nil {
+		panic(err)
+	}
 
 	loop := loopback.WithTenant("demo-tenant", mod)
-	_, _ = ui.Browser(loop, ids, "demo-tenant")
+	v, err := ui.Browser(loop, ids, "demo-tenant")
+	if err != nil {
+		panic(err)
+	}
+
+	p := &platformd.Platform{
+		AppName:   ui.DefaultLabel + " — demo",
+		User:      demoUser{},
+		Modules:   []platformd.UIModule{v},
+		DefaultID: ui.ID,
+	}
+
+	if err := dom.Render("body", p); err != nil {
+		panic(err)
+	}
+
+	select {}
 }
