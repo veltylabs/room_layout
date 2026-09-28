@@ -3,46 +3,76 @@ package ui
 import (
 	roomlayout "github.com/veltylabs/room_layout"
 	"webtyp.com/dom"
+	"webtyp.com/fmt"
+	"webtyp.com/html"
 	"webtyp.com/layout/crudview"
 	"webtyp.com/model"
 	"webtyp.com/router"
 )
 
-func buildRoomsTab(caller router.Caller, ids model.IDGenerator) (*dom.Element, error) {
+type roomsTab struct {
+	dom.Element
+	cv       *crudview.CrudView
+	caller   router.Caller
+	tenantID string
+}
+
+func newRoomsTab(caller router.Caller, ids model.IDGenerator, tenantID string) (*roomsTab, error) {
 	presenter := roomlayout.NewRoomView(caller)
 	cv, err := crudview.New(crudview.Config{
-		ParentID:  "rl-rooms-crud",
+		ParentID:  ID + ".rooms",
 		Presenter: presenter,
 		IDs:       ids,
 	})
 	if err != nil {
 		return nil, err
 	}
-	_ = cv
-	container := dom.NewElement("div").ID("rl-rooms-crud")
-	return container, nil
+	t := &roomsTab{
+		Element:  *dom.NewElement("div"),
+		cv:       cv,
+		caller:   caller,
+		tenantID: tenantID,
+	}
+	return t, nil
 }
 
-func buildCatalogsTab(caller router.Caller, ids model.IDGenerator) (*dom.Element, error) {
-	container := dom.NewElement("div").Class("rl-catalogs-tab")
+func (t *roomsTab) Init(ctx dom.Ctx) {
+	var floorsRes roomlayout.FloorList
+	t.caller.Call(roomlayout.ModelName+"."+roomlayout.OpListFloors, &roomlayout.ListFloorsArgs{TenantId: t.tenantID}, &floorsRes, func(err error) {
+		if err == nil {
+			opts := make([]fmt.KeyValue, len(floorsRes))
+			for i, f := range floorsRes {
+				opts[i] = fmt.KeyValue{Key: f.Id, Value: f.Name}
+			}
+			t.cv.SetOptions("floor_id", opts...)
+		}
+	})
+}
 
-	floorsDiv := dom.NewElement("div").ID("rl-floors-crud")
-	eqDiv := dom.NewElement("div").ID("rl-eq-crud")
+func (t *roomsTab) Render() *dom.Element {
+	return html.Div().Child(t.cv)
+}
 
+func catalogsPanel(caller router.Caller, ids model.IDGenerator) (*dom.Element, error) {
 	fPresenter := roomlayout.NewFloorView(caller)
-	_, _ = crudview.New(crudview.Config{
-		ParentID:  "rl-floors-crud",
+	floorsCV, err := crudview.New(crudview.Config{
+		ParentID:  ID + ".floors",
 		Presenter: fPresenter,
 		IDs:       ids,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	eqPresenter := roomlayout.NewEquipmentView(caller)
-	_, _ = crudview.New(crudview.Config{
-		ParentID:  "rl-eq-crud",
+	eqCV, err := crudview.New(crudview.Config{
+		ParentID:  ID + ".equipment",
 		Presenter: eqPresenter,
 		IDs:       ids,
 	})
+	if err != nil {
+		return nil, err
+	}
 
-	container.Child(floorsDiv, eqDiv)
-	return container, nil
+	return html.Div().Child(floorsCV, eqCV).Class("rl-catalogs-tab"), nil
 }

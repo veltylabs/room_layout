@@ -39,11 +39,24 @@ El módulo gestiona espacios físicos en establecimientos (p. ej. consultorios, 
 - **Validación de solapamiento**: Dos turnos en el mismo espacio (o para el mismo ocupante) no pueden solaparse en sus franjas horarias `[start_min, end_min)`.
 - **Límites de establecimiento (`DayBounds`)**: Los turnos fechados deben encontrarse dentro del horario de apertura del día.
 - **Transacciones e Integridad**: Los cambios en categorías y equipamiento de un espacio se realizan de forma atómica en transacciones. No se puede deshabilitar una categoría si el espacio tiene turnos activos vinculados a ella.
-- **Aislamiento Multi-Tenant**: Toda consulta y mutación filtra estrictamente por `tenant_id`.
+- **Aislamiento Multi-Tenant**: Toda consulta y mutación filtra strictly por `tenant_id`.
 
 ---
 
-## 4. Tabla de Operaciones (Ops)
+## 4. Pantalla (`ui/`)
+
+La pantalla del módulo en el navegador (`ui.Browser`) expone 6 pestañas organizadas en un mazo de solapas (`decktabs`):
+
+1. **Tablero (`boardTab`)**: Muestra la ocupación de los espacios agrupados por piso para la fecha de hoy, con filtros dinámicos por área/categoría y equipamiento (`OpListBoard`).
+2. **Buscar libre (`freeSearchTab`)**: Permite buscar espacios disponibles en un rango horario y fecha. Permite seleccionar un turno existente para reubicarlo manualmente (`OpMoveShiftOccurrence`, RL-4).
+3. **Turnos (`shiftsTab`)**: Administra los turnos de un espacio seleccionado mediante un selector de espacios reutilizable (`roomPicker`). Las opciones de los selectores del formulario (`room_id`, `category_id`, `occupant_id`, `day_of_week`) se alimentan mediante `CrudView.SetOptions`.
+4. **Espacios (`roomsTab`)**: Formularios y listado CRUD de espacios de atención (`RoomView`), alimentando el selector de piso (`floor_id`) dinámicamente desde `OpListFloors`.
+5. **Áreas y equipos (`assignTab`)**: Permite habilitar o deshabilitar áreas/categorías (`OpSetRoomCategories`) y equipamiento (`OpSetRoomEquipment`) para el espacio seleccionado.
+6. **Niveles y equipamiento (`catalogsPanel`)**: Paneles CRUD para la gestión de pisos (`FloorView`) y equipamiento global (`EquipmentView`).
+
+---
+
+## 5. Tabla de Operaciones (Ops)
 
 | Op | Recurso | Acción | Descripción |
 |---|---|---|---|
@@ -75,7 +88,7 @@ El módulo gestiona espacios físicos en establecimientos (p. ej. consultorios, 
 
 ---
 
-## 5. Ejemplo de Raíz de Composición
+## 6. Ejemplo de Raíz de Composición
 
 ```go
 package main
