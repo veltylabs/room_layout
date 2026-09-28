@@ -3,13 +3,13 @@ module github.com/veltylabs/room_layout
 go 1.26.8
 
 require (
-	webtyp.com/components v0.6.34
+	webtyp.com/components v0.7.0
 	webtyp.com/ddl v0.0.20
 	webtyp.com/dom v0.13.17
 	webtyp.com/events v0.0.5
 	webtyp.com/form v0.4.19
 	webtyp.com/input v0.0.10
-	webtyp.com/layout v0.2.59
+	webtyp.com/layout v0.3.2
 	webtyp.com/model v0.2.0
 	webtyp.com/orm v0.12.6
 	webtyp.com/router v0.1.42
