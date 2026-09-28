@@ -2,7 +2,6 @@ package ui
 
 import (
 	"webtyp.com/components/decktabs"
-	"webtyp.com/dom"
 	"webtyp.com/layout/platformd"
 	"webtyp.com/model"
 	"webtyp.com/router"
@@ -26,18 +25,18 @@ func Browser(caller router.Caller, ids model.IDGenerator, tenantID string, opts 
 		opt(&o)
 	}
 
-	tabBoard := buildBoardTab(caller, tenantID)
-	tabFree := buildFreeSearchTab(caller, ids, tenantID)
-	tabShifts, err := buildShiftsTab(caller, ids, tenantID)
+	tabBoard := newBoardTab(caller, tenantID)
+	tabFree := newFreeSearchTab(caller, tenantID)
+	tabShifts := newShiftsTab(caller, ids, tenantID)
+
+	tabRooms, err := newRoomsTab(caller, ids, tenantID)
 	if err != nil {
 		return nil, err
 	}
-	tabRooms, err := buildRoomsTab(caller, ids)
-	if err != nil {
-		return nil, err
-	}
-	tabAssign := buildAssignTab(caller, tenantID)
-	tabCatalogs, err := buildCatalogsTab(caller, ids)
+
+	tabAssign := newAssignTab(caller, tenantID)
+
+	tabCatalogs, err := catalogsPanel(caller, ids)
 	if err != nil {
 		return nil, err
 	}
@@ -53,6 +52,5 @@ func Browser(caller router.Caller, ids model.IDGenerator, tenantID string, opts 
 		},
 	}
 
-	deck := dom.NewElement("div").Child(tabs)
-	return platformd.NewUIModule(ID, o.label, Icon(ID), deck), nil
+	return platformd.NewUIModule(ID, o.label, Icon(ID), tabs), nil
 }

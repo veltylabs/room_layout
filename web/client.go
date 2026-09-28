@@ -84,7 +84,7 @@ func main() {
 		DefaultID: ui.ID,
 	}
 
-	if err := dom.Render("body", p); err != nil {
+	if err := dom.Append("body", p); err != nil {
 		panic(err)
 	}
 

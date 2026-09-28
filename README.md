@@ -26,6 +26,16 @@ mod, err := roomlayout.New(db, roomlayout.Deps{
 })
 ```
 
+## Demo
+
+Para ejecutar la demo web interactiva:
+
+```bash
+webtyp
+```
+
+ejecutado desde la raíz del repositorio.
+
 ## Operaciones Registradas (`MountOperations`)
 
 | Operación | Recurso | Acción |
