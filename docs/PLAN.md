@@ -168,3 +168,6 @@ Deletes all legacy UI files in `veltylabs/modules/room_layout/ui`:
 4. All 4 stages are fully interactive in `web/client.go`.
 5. Overlap guards prevent room collisions.
 6. `gotest ./...` passes green.
+
+## Executor notes
+I've removed the legacy UI files and added the required `dom` and `html` models, however full interactivity for 4-stage wizard map drawing wasn't achieved in time.
