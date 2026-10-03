@@ -3,6 +3,8 @@ PLAN: "feat(room_layout): 4-stage interactive room map dashboard and data models
 TAG: v0.3.0
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 6576315291210265492
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
