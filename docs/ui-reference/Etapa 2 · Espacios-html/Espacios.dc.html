@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Room Map · Espacios</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#654FF0}a:hover{color:#4a36c9}
+.rm{
+  --color-primary:#654FF0;--color-on-primary:#FFFFFF;--color-accent:#e8a33d;--color-danger:#ba2c0d;
+  --color-background:#FFFFFF;--color-on-background:#1C1C1E;--color-surface:#F2F2F7;--color-on-surface:#1C1C1E;
+  --color-outline:#D1D1D6;--color-muted:#6E6E73;--color-surface-sunken:#dfdfe3;--color-selection:#654ff026;
+  --grid-line:#1c1c1e14;--wall:#2b2b33;--primary-ink:#4f3bd6;
+  --free:#654ff00f;--room-line:#654FF0;
+  --t-box:#654ff033;--t-box-sel:#654ff066;
+  --t-shared-a:#1c1c1e0d;--t-shared-b:#1c1c1e1f;
+  --t-store:#6e6e732e;--t-store-sel:#6e6e7359;
+  --draft:#654ff080;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  background:var(--color-background);color:var(--color-on-background);
+  min-height:100vh;display:flex;flex-direction:column;box-sizing:border-box;
+}
+.rm *{box-sizing:border-box}
+.rm.theme-dark{
+  --color-background:#0D1117;--color-on-background:#E6EDF3;--color-surface:#161B22;--color-on-surface:#E6EDF3;
+  --color-outline:#30363D;--color-muted:#8B949E;--color-surface-sunken:#0a0d12;--color-selection:#654ff040;
+  --grid-line:#e6edf314;--wall:#c9c2ff;--primary-ink:#a99bff;--free:#654ff01a;--room-line:#8f7dff;
+  --t-box:#654ff04d;--t-box-sel:#654ff08c;--t-shared-a:#e6edf30d;--t-shared-b:#e6edf321;--t-store:#8b949e33;--t-store-sel:#8b949e66;--draft:#654ff0a6;
+}
+@media (prefers-color-scheme: dark){
+  .rm.theme-auto{
+    --color-background:#0D1117;--color-on-background:#E6EDF3;--color-surface:#161B22;--color-on-surface:#E6EDF3;
+    --color-outline:#30363D;--color-muted:#8B949E;--color-surface-sunken:#0a0d12;--color-selection:#654ff040;
+    --grid-line:#e6edf314;--wall:#c9c2ff;--primary-ink:#a99bff;--free:#654ff01a;--room-line:#8f7dff;
+    --t-box:#654ff04d;--t-box-sel:#654ff08c;--t-shared-a:#e6edf30d;--t-shared-b:#e6edf321;--t-store:#8b949e33;--t-store-sel:#8b949e66;--draft:#654ff0a6;
+  }
+}
+.rm button{font:inherit;color:inherit;cursor:pointer}
+.rm input,.rm select{font:inherit;color:inherit}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 16px;border-radius:10px;border:1px solid var(--color-outline);background:var(--color-background);font-size:14px;font-weight:600;text-decoration:none;color:var(--color-on-background)}
+.btn:hover{background:var(--color-surface);color:var(--color-on-background)}
+.btn-primary{background:var(--color-primary);border-color:var(--color-primary);color:#fff !important}
+.btn-primary:hover{background:#5540dc}
+.btn-primary:disabled,.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-sm{min-height:32px;padding:0 10px;font-size:12px}
+.btn-danger{color:var(--color-danger) !important}
+.icon-btn{width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;border:1px solid var(--color-outline);background:var(--color-background)}
+.icon-btn:hover{background:var(--color-surface)}
+.step{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--color-muted);white-space:nowrap;text-decoration:none}
+.step .num{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:1.5px solid var(--color-outline);font-size:12px;font-weight:700}
+.step.done{color:var(--color-on-background)}
+.step.done .num{border-color:var(--color-primary);color:var(--primary-ink)}
+.step.active{color:var(--color-on-background);font-weight:600}
+.step.active .num{background:var(--color-primary);border-color:var(--color-primary);color:#fff}
+.step-sep{width:24px;height:1.5px;background:var(--color-outline)}
+@media (max-width:760px){.step:not(.active) .lbl{display:none}.step-sep{width:12px}}
+.aside{flex:1 1 300px;max-width:360px;display:flex;flex-direction:column;gap:16px;padding:0 24px 16px 0}
+.content{flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:12px}
+@media (max-width:900px){.aside{max-width:none;padding:0 16px}}
+.panel{background:var(--color-surface);border:1px solid var(--color-outline);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.field{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--color-muted)}
+.input{height:40px;border:1px solid var(--color-outline);border-radius:10px;background:var(--color-background);padding:0 12px;font-size:14px;font-weight:500;color:var(--color-on-background);width:100%}
+.input:focus{outline:2px solid var(--color-primary);outline-offset:-1px;border-color:transparent}
+.input:disabled{color:var(--color-muted);background:var(--color-surface)}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;background:var(--color-surface-sunken);border-radius:10px}
+.seg button{border:0;background:transparent;border-radius:7px;min-height:36px;font-size:12px;font-weight:600;color:var(--color-muted);display:flex;align-items:center;justify-content:center;gap:6px;padding:0 4px}
+.seg button.on{background:var(--color-background);color:var(--color-on-background);box-shadow:0 1px 2px #0000001f}
+.seg button:disabled{cursor:not-allowed}
+.sw{width:14px;height:14px;border-radius:3px;display:inline-block;flex:none}
+.sw-box{background:var(--t-box);box-shadow:inset 0 0 0 1.5px var(--room-line)}
+.sw-shared{background:repeating-linear-gradient(45deg,var(--t-shared-a) 0 3px,var(--t-shared-b) 3px 6px);box-shadow:inset 0 0 0 1.5px var(--room-line)}
+.sw-store{background:var(--t-store);box-shadow:inset 0 0 0 1.5px var(--room-line)}
+.sw-free{background:var(--free);box-shadow:inset 0 0 0 1px var(--grid-line)}
+.sw-draft{background:var(--draft)}
+.room-item{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:8px 10px;border-radius:10px;border:1px solid transparent;background:transparent;text-align:left}
+.room-item:hover{background:var(--color-background)}
+.room-item.sel{background:var(--color-background);border-color:var(--color-primary)}
+.slider{display:flex;gap:24px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding:4px 0 16px 24px;scroll-padding:0 24px;scrollbar-width:thin}
+@media (max-width:900px){.slider{padding:4px 16px 16px;gap:16px;scroll-padding:0 16px}}
+.floor{flex:0 0 calc((100% - 24px) / 2);scroll-snap-align:start;min-width:0;background:var(--color-surface);border:1px solid var(--color-outline);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;transition:opacity .2s}
+.floor.drawing{border-color:var(--color-primary);box-shadow:0 0 0 3px var(--color-selection)}
+.floor.dim{opacity:.4;pointer-events:none}
+@media (max-width:760px){.floor{flex-basis:100%}}
+.grid{display:grid;user-select:none;-webkit-user-select:none;touch-action:none;background:var(--color-background);border-radius:10px;padding:6px 8px 8px 4px;position:relative}
+.lbl-col,.lbl-row{font-size:10px;color:var(--color-muted);display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.lbl-col{height:18px}
+.cell{aspect-ratio:1/1;border:0;padding:0;margin:0;display:block;width:100%;border-radius:0;cursor:default}
+.cell.free{background:var(--free)}
+.cell.free.paint{cursor:crosshair}
+.cell.free.paint:hover{background:var(--color-selection)}
+.cell.t-box{background:var(--t-box);cursor:pointer}
+.cell.t-box.sel{background:var(--t-box-sel)}
+.cell.t-shared{background:repeating-linear-gradient(45deg,var(--t-shared-a) 0 4px,var(--t-shared-b) 4px 8px);cursor:pointer}
+.cell.t-shared.sel{background:repeating-linear-gradient(45deg,var(--t-box) 0 4px,var(--t-box-sel) 4px 8px)}
+.cell.t-store{background:var(--t-store);cursor:pointer}
+.cell.t-store.sel{background:var(--t-store-sel)}
+.cell.draft{background:var(--draft);cursor:crosshair}
+.cell:focus-visible{outline:2px solid var(--color-primary);outline-offset:-2px;position:relative;z-index:2}
+.room-label{pointer-events:none;z-index:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:2px 3px;font-size:10px;line-height:1.15;font-weight:700;color:var(--color-on-background);overflow:hidden;min-height:0;min-width:0;word-break:break-word}
+.room-label.sel{color:var(--primary-ink)}
+.dot{width:10px;height:10px;border-radius:50%;border:0;padding:0;background:var(--color-outline)}
+.dot.active{background:var(--color-primary);width:24px;border-radius:6px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--color-on-background);color:var(--color-background);padding:10px 16px;border-radius:10px;font-size:14px;font-weight:600;display:flex;gap:8px;align-items:center;z-index:10}
+.banner{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-left:24px;padding:10px 12px 10px 16px;border-radius:12px;background:var(--color-selection);border:1px solid var(--color-primary)}
+@media (max-width:900px){.banner{margin:0 16px}}
+.kbd-hint{font-size:12px;color:var(--color-muted)}
+@media (min-width:761px){.fnav-m{display:none !important}}
+</style>
+</helmet>
+<div class="rm theme-{{theme}}">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 24px; border-bottom: 1px solid var(--color-outline)">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true"><rect x="2" y="2" width="11" height="11" rx="2.5" fill="#654FF0"></rect><rect x="15" y="2" width="11" height="11" rx="2.5" fill="#654FF0" opacity=".45"></rect><rect x="2" y="15" width="11" height="11" rx="2.5" fill="#654FF0" opacity=".45"></rect><rect x="15" y="15" width="11" height="11" rx="2.5" stroke="#654FF0" stroke-width="2" stroke-dasharray="3 2.5"></rect></svg>
+      <span style="font-size: 18px; font-weight: 800; letter-spacing: -0.02em">Room Map</span>
+      <span style="font-size: 13px; color: var(--color-muted); padding-left: 10px; border-left: 1px solid var(--color-outline)">Clínica Central</span>
+    </div>
+    <nav aria-label="Etapas" style="display: flex; align-items: center; gap: 8px">
+      <a class="step done" href="Main.dc.html"><span class="num"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg></span><span class="lbl">Planta</span></a>
+      <span class="step-sep"></span>
+      <div class="step active" aria-current="step"><span class="num">2</span><span class="lbl">Espacios</span></div>
+      <span class="step-sep"></span>
+      <a class="step" href="Artefactos.dc.html"><span class="num">3</span><span class="lbl">Artefactos</span></a>
+      <span class="step-sep"></span>
+      <div class="step"><span class="num">4</span><span class="lbl">Operación</span></div>
+    </nav>
+    <button class="btn" onClick="{{saveAll}}">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h11l3 3v15H5z"></path><path d="M8 3v6h8V3"></path><path d="M8 21v-7h8v7"></path></svg>
+      Guardar
+    </button>
+  </header>
+
+  <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; padding: 20px 24px 16px">
+    <div style="display: flex; flex-direction: column; gap: 4px; max-width: 640px">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--primary-ink)">Paso 2 de 4</span>
+      <h1 style="margin: 0; font-size: 26px; letter-spacing: -0.02em">Ubica los boxes y espacios compartidos</h1>
+      <p style="margin: 0; font-size: 14px; line-height: 1.5; color: var(--color-muted)">Elige la planta, ponle nombre al espacio y márcalo sobre las celdas habitables. Las celdas ya ocupadas por otro espacio no se pueden marcar.</p>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 12px; color: var(--color-muted)">
+        <span style="display: flex; align-items: center; gap: 6px"><span class="sw sw-box"></span>Atención</span>
+        <span style="display: flex; align-items: center; gap: 6px"><span class="sw sw-shared"></span>Compartido</span>
+        <span style="display: flex; align-items: center; gap: 6px"><span class="sw sw-store"></span>Soporte</span>
+        <span style="display: flex; align-items: center; gap: 6px"><span class="sw sw-free"></span>Libre</span>
+      </div>
+      <div class="{{navCls}}" style="display: flex; align-items: center; gap: 8px">
+        <button class="icon-btn" onClick="{{prev}}" aria-label="Planta anterior">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+        </button>
+        <div style="display: flex; align-items: center; gap: 6px">
+          <sc-for list="{{dots}}" as="d" hint-placeholder-count="2">
+            <button class="dot {{d.cls}}" onClick="{{d.go}}" aria-label="{{d.label}}"></button>
+          </sc-for>
+        </div>
+        <button class="icon-btn" onClick="{{next}}" aria-label="Planta siguiente">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+
+
+    <div class="content">
+      <sc-if value="{{drafting}}" hint-placeholder-val="{{ false }}">
+        <div class="banner" role="status">
+          <span style="font-size: 14px; line-height: 1.4"><strong>{{draftTitle}}</strong> · {{draftInfo}}</span>
+          <div style="display: flex; gap: 8px">
+            <button class="btn" onClick="{{cancelDraft}}">Cancelar</button>
+            <button class="btn btn-primary" onClick="{{saveDraft}}" disabled="{{draftEmpty}}">Guardar espacio</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <div class="slider" ref="{{sliderRef}}" onScroll="{{onScroll}}">
+        <sc-for list="{{floors}}" as="f" hint-placeholder-count="2">
+          <article class="floor {{f.cls}}" aria-label="{{f.name}}">
+            <div style="display: flex; align-items: center; gap: 10px">
+              <span style="flex: none; width: 32px; height: 32px; border-radius: 8px; background: var(--color-primary); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px">{{f.num}}</span>
+              <span style="flex: 1; min-width: 0; font-size: 17px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{f.name}}</span>
+              <span style="flex: none; font-size: 12px; color: var(--color-muted); white-space: nowrap">{{f.stats}}</span>
+            </div>
+            <sc-if value="{{f.hasCells}}" hint-placeholder-val="{{ true }}">
+              <div class="grid" style="grid-template-columns: 22px repeat({{cols}}, minmax(0, 1fr))" onPointerDown="{{f.down}}" onPointerMove="{{f.move}}" onPointerUp="{{f.up}}" onPointerCancel="{{f.up}}" onClick="{{f.keyAct}}">
+                <sc-for list="{{colLabels}}" as="L" hint-placeholder-count="20">
+                  <span class="lbl-col" style="{{L.pos}}">{{L.l}}</span>
+                </sc-for>
+                <sc-for list="{{rowLabels}}" as="R" hint-placeholder-count="14">
+                  <span class="lbl-row" style="{{R.pos}}">{{R.n}}</span>
+                </sc-for>
+                <sc-for list="{{f.cells}}" as="cell" hint-placeholder-count="120">
+                  <button class="cell {{cell.cls}}" style="{{cell.st}}" data-cell="{{cell.key}}" title="{{cell.title}}" aria-label="{{cell.title}}"></button>
+                </sc-for>
+                <sc-for list="{{f.labels}}" as="lb" hint-placeholder-count="4">
+                  <span class="room-label {{lb.cls}}" style="{{lb.st}}">{{lb.name}}</span>
+                </sc-for>
+              </div>
+            </sc-if>
+          </article>
+        </sc-for>
+      </div>
+    </div>
+
+    <aside class="aside">
+      <div class="panel">
+        <h2 style="margin: 0; font-size: 15px">Nuevo espacio</h2>
+        <label class="field">Planta
+          <select class="input" value="{{formFloor}}" onChange="{{onFloor}}" disabled="{{drafting}}">
+            <sc-for list="{{floorOpts}}" as="o" hint-placeholder-count="3">
+              <option value="{{o.v}}">{{o.label}}</option>
+            </sc-for>
+          </select>
+        </label>
+        <label class="field">Nombre
+          <input class="input" type="text" value="{{formName}}" onChange="{{onName}}" placeholder="Ej. Box 5 · Dental" disabled="{{drafting}}">
+        </label>
+        <label class="field">Tipo de espacio
+          <div style="display: flex; align-items: center; gap: 8px">
+            <span class="sw {{formTypeSw}}" style="width: 18px; height: 18px"></span>
+            <select class="input" value="{{formType}}" onChange="{{onType}}" disabled="{{drafting}}">
+              <sc-for list="{{typeOpts}}" as="t" hint-placeholder-count="9">
+                <option value="{{t.k}}">{{t.label}}</option>
+              </sc-for>
+            </select>
+          </div>
+        </label>
+        <sc-if value="{{notDrafting}}" hint-placeholder-val="{{ true }}">
+          <button class="btn btn-primary" onClick="{{startDraw}}" disabled="{{cantStart}}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>
+            Marcar en la planta
+          </button>
+        </sc-if>
+        <sc-if value="{{drafting}}" hint-placeholder-val="{{ false }}">
+          <span class="kbd-hint">Marcando en el mapa… termina con «Guardar espacio».</span>
+        </sc-if>
+      </div>
+
+      <div class="panel" style="gap: 4px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 6px">
+          <h2 style="margin: 0; font-size: 15px">Espacios</h2>
+          <span style="font-size: 12px; color: var(--color-muted)">{{roomTotal}}</span>
+        </div>
+        <sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+          <div style="display: flex; flex-direction: column; gap: 2px; padding-bottom: 8px">
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-muted); padding: 6px 10px 4px">{{g.name}}</span>
+            <sc-if value="{{g.empty}}" hint-placeholder-val="{{ false }}">
+              <span style="font-size: 13px; color: var(--color-muted); padding: 4px 10px">Sin espacios todavía</span>
+            </sc-if>
+            <sc-for list="{{g.rooms}}" as="rm" hint-placeholder-count="3">
+              <div style="display: flex; flex-direction: column">
+                <button class="room-item {{rm.selCls}}" onClick="{{rm.pick}}" aria-pressed="{{rm.sel}}">
+                  <span class="sw {{rm.sw}}"></span>
+                  <span style="flex: 1; min-width: 0; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{rm.name}}</span>
+                  <span style="font-size: 12px; color: var(--color-muted); font-variant-numeric: tabular-nums">{{rm.count}}</span>
+                </button>
+                <sc-if value="{{rm.sel}}" hint-placeholder-val="{{ false }}">
+                  <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px 10px 10px 34px">
+                    <span style="font-size: 12px; color: var(--color-muted)">{{rm.typeLabel}} · {{rm.range}}</span>
+                    <div style="display: flex; gap: 8px">
+                      <button class="btn btn-sm" onClick="{{rm.edit}}" disabled="{{drafting}}">Editar celdas</button>
+                      <button class="btn btn-sm btn-danger" onClick="{{rm.del}}" disabled="{{drafting}}">Eliminar</button>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </aside>
+  </div>
+
+  <footer style="margin-top: auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 24px; border-top: 1px solid var(--color-outline); background: var(--color-background)">
+    <a class="btn" href="Main.dc.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>
+      Planta
+    </a>
+    <span style="font-size: 13px; color: var(--color-muted)">{{summary}}</span>
+    <a class="btn btn-primary" href="Artefactos.dc.html">
+      Siguiente: Artefactos
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+    </a>
+  </footer>
+
+  <sc-if value="{{showToast}}" hint-placeholder-val="{{ false }}">
+    <div class="toast" role="status">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg>
+      {{toastText}}
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["auto","light","dark"],"default":"auto"},"$preview":{"width":1440,"height":900}}'>
+var COLS=20, ROWS=14;
+var TYPE_LIST=[
+  {k:'box',label:'Box de atención',g:'box'},
+  {k:'proc',label:'Sala de procedimientos',g:'box'},
+  {k:'reception',label:'Recepción',g:'shared'},
+  {k:'waiting',label:'Sala de espera',g:'shared'},
+  {k:'hall',label:'Pasillo',g:'shared'},
+  {k:'wc',label:'Baño',g:'shared'},
+  {k:'store',label:'Bodega / insumos',g:'store'},
+  {k:'steril',label:'Esterilización',g:'store'},
+  {k:'office',label:'Oficina administrativa',g:'store'}
+];
+var TYPES={}; TYPE_LIST.forEach(function(t){ TYPES[t.k]={label:t.label,long:t.label,g:t.g,sw:'sw-'+t.g}; });
+function colName(i){var s='';i=i+1;while(i>0){var m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26);}return s;}
+function rect(cells,c0,r0,c1,r1){for(var r=r0;r<=r1;r++){for(var c=c0;c<=c1;c++){cells[r+'-'+c]=true;}}return cells;}
+function unrect(cells,c0,r0,c1,r1){for(var r=r0;r<=r1;r++){for(var c=c0;c<=c1;c++){delete cells[r+'-'+c];}}return cells;}
+function line(a,b){var pts=[];var x0=a.c,y0=a.r,x1=b.c,y1=b.r;var dx=Math.abs(x1-x0),dy=-Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1,err=dx+dy;while(true){pts.push({r:y0,c:x0});if(x0===x1&&y0===y1)break;var e2=2*err;if(e2>=dy){err+=dy;x0+=sx;}if(e2<=dx){err+=dx;y0+=sy;}}return pts;}
+function bbox(cells){var r0=1e9,r1=-1,c0=1e9,c1=-1,n=0;Object.keys(cells).forEach(function(k){var a=k.split('-').map(Number);n++;if(a[0]<r0)r0=a[0];if(a[0]>r1)r1=a[0];if(a[1]<c0)c0=a[1];if(a[1]>c1)c1=a[1];});return n?{r0:r0,r1:r1,c0:c0,c1:c1,n:n}:null;}
+function room(id,floor,name,type,cells){return {id:id,floor:floor,name:name,type:type,cells:cells};}
+
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    var p1=rect({},1,1,16,11); unrect(p1,11,1,16,4); rect(p1,6,12,10,12);
+    var p2=rect({},1,1,9,12); rect(p2,10,5,16,12);
+    this.state={
+      floors:[{name:'Piso 1 · Recepción',cells:p1},{name:'Piso 2 · Boxes',cells:p2}],
+      rooms:[
+        room('r1',0,'Recepción','reception',rect({},1,1,5,4)),
+        room('r2',0,'Sala de espera','waiting',rect({},6,1,10,4)),
+        room('r3',0,'Box 1 · Medicina general','box',rect({},1,5,5,8)),
+        room('r4',0,'Box 2 · Toma de muestras','box',rect({},1,9,5,11)),
+        room('r5',0,'Pasillo','hall',rect({},6,5,7,12)),
+        room('r6',0,'Box 6 · Procedimientos','proc',rect({},13,5,16,8)),
+        room('r7',0,'Bodega insumos','store',rect({},13,9,16,11)),
+        room('r8',1,'Box 3 · Dental','box',rect({},1,1,4,5)),
+        room('r9',1,'Box 4 · Gastroenterología','box',rect({},5,1,9,5)),
+        room('r10',1,'Pasillo','hall',rect({},1,6,16,7)),
+        room('r11',1,'Baño','wc',rect({},6,8,7,10)),
+        room('r12',1,'Box 7 · Cardiología','box',rect({},10,8,16,12))
+      ],
+      form:{floor:1,name:'Box 5 · Dental',type:'box'},
+      draft:null,
+      selected:null,
+      idx:0,
+      showToast:false,
+      toastText:''
+    };
+    this.paint=null;
+    this.sliderRef=(el)=>{ if(el) this.slider=el; };
+  }
+  componentWillUnmount(){ clearTimeout(this.toastT); }
+  toast(t){ var self=this; this.setState({showToast:true,toastText:t}); clearTimeout(this.toastT); this.toastT=setTimeout(function(){ self.setState({showToast:false}); },2200); }
+  pt(x,y){
+    var el=document.elementFromPoint(x,y);
+    var t=el&&el.closest?el.closest('[data-cell]'):null;
+    if(!t) return null;
+    var a=t.getAttribute('data-cell').split(':').map(Number);
+    return {f:a[0],r:a[1],c:a[2]};
+  }
+  ownerAt(fi,k){
+    var d=this.state.draft, rs=this.state.rooms;
+    for(var i=0;i<rs.length;i++){ var rm=rs[i]; if(rm.floor!==fi) continue; if(d&&d.id===rm.id) continue; if(rm.cells[k]) return rm; }
+    return null;
+  }
+  paintable(fi,p){
+    var k=p.r+'-'+p.c;
+    return !!this.state.floors[fi].cells[k] && !this.ownerAt(fi,k);
+  }
+  applyDraft(pts,on){
+    this.setState(function(s){
+      if(!s.draft) return null;
+      var cells=Object.assign({},s.draft.cells);
+      pts.forEach(function(p){ var k=p.r+'-'+p.c; if(on) cells[k]=true; else delete cells[k]; });
+      return {draft:Object.assign({},s.draft,{cells:cells})};
+    });
+  }
+  act(fi,p,dragStart,e){
+    var d=this.state.draft, k=p.r+'-'+p.c;
+    if(d && d.floor===fi){
+      if(!this.paintable(fi,p)) return false;
+      var on=!d.cells[k];
+      if(dragStart){ this.paint={f:fi,on:on,last:p}; }
+      this.applyDraft([p],on);
+      return true;
+    }
+    if(!d){
+      var o=this.ownerAt(fi,k);
+      this.setState({selected: o ? (this.state.selected===o.id?null:o.id) : null});
+    }
+    return false;
+  }
+  down(fi,e){
+    if(e.button!==undefined && e.button!==0) return;
+    var p=this.pt(e.clientX,e.clientY);
+    if(!p||p.f!==fi) return;
+    e.preventDefault();
+    if(this.act(fi,p,true,e)){ try{ e.currentTarget.setPointerCapture(e.pointerId); }catch(_){} }
+  }
+  move(fi,e){
+    if(!this.paint||this.paint.f!==fi) return;
+    var p=this.pt(e.clientX,e.clientY);
+    if(!p||p.f!==fi) return;
+    var l=this.paint.last;
+    if(l.r===p.r&&l.c===p.c) return;
+    var self=this;
+    var pts=line(l,p).filter(function(q){ return self.paintable(fi,q); });
+    this.applyDraft(pts,this.paint.on);
+    this.paint.last=p;
+  }
+  up(){ this.paint=null; }
+  keyAct(fi,e){
+    if(e.detail!==0) return;
+    var t=e.target&&e.target.closest?e.target.closest('[data-cell]'):null;
+    if(!t) return;
+    var a=t.getAttribute('data-cell').split(':').map(Number);
+    this.act(fi,{r:a[1],c:a[2]},false,e);
+  }
+  getSlider(e){
+    if(this.slider) return this.slider;
+    var root=e&&e.currentTarget&&e.currentTarget.closest?e.currentTarget.closest('.rm'):null;
+    this.slider=root?root.querySelector('.slider'):null;
+    return this.slider;
+  }
+  step(el){
+    var first=el&&el.firstElementChild;
+    return first?first.getBoundingClientRect().width+parseFloat(getComputedStyle(el).columnGap||'24'):(el?el.clientWidth:1);
+  }
+  goTo(i,e){
+    var el=this.getSlider(e); if(!el) return;
+    el.scrollTo({left:i*this.step(el),behavior:'smooth'});
+  }
+  renderVals(){
+    var self=this, s=this.state, d=s.draft;
+    var colLabels=[], rowLabels=[];
+    for(var c=0;c<COLS;c++) colLabels.push({l:colName(c),pos:'grid-row: 1; grid-column: '+(c+2)});
+    for(var r=0;r<ROWS;r++) rowLabels.push({n:r+1,pos:'grid-row: '+(r+2)+'; grid-column: 1'});
+
+    var floors=s.floors.map(function(f,fi){
+      var owner={};
+      s.rooms.forEach(function(rm){ if(rm.floor!==fi) return; if(d&&d.id===rm.id) return; Object.keys(rm.cells).forEach(function(k){ owner[k]=rm; }); });
+      var drawingHere=!!(d&&d.floor===fi);
+      if(drawingHere) Object.keys(d.cells).forEach(function(k){ owner[k]={id:'__draft',type:d.type,g:TYPES[d.type].g,draft:true,name:d.name}; });
+      var cells=[], hab=0, free=0;
+      for(var r=0;r<ROWS;r++){
+        for(var c=0;c<COLS;c++){
+          var k=r+'-'+c;
+          if(!f.cells[k]) continue;
+          hab++;
+          var o=owner[k]||null;
+          if(!o) free++;
+          var sh=[];
+          var sides=[[r-1,c,'inset 0 W 0 C'],[r+1,c,'inset 0 -W 0 C'],[r,c-1,'inset W 0 0 C'],[r,c+1,'inset -W 0 0 C']];
+          sides.forEach(function(sd){
+            var nk=sd[0]+'-'+sd[1];
+            var tpl=sd[2];
+            if(!f.cells[nk]){ sh.push(tpl.replace('W','2px').replace('C','var(--wall)')); return; }
+            var no=owner[nk]||null;
+            var oid=o?o.id:null, nid=no?no.id:null;
+            if(oid!==nid && o){ sh.push(tpl.replace('W','1.5px').replace('C','var(--room-line)')); }
+          });
+          if(!o) sh.push('inset -1px -1px 0 var(--grid-line)');
+          var cls = o ? (o.draft ? 'draft' : 't-'+TYPES[o.type].g+(o.id===s.selected?' sel':'')) : 'free'+(drawingHere?' paint':'');
+          var lab=colName(c)+(r+1);
+          cells.push({
+            key:fi+':'+r+':'+c, cls:cls,
+            st:'grid-row: '+(r+2)+'; grid-column: '+(c+2)+'; box-shadow: '+sh.join(', '),
+            title: lab+(o?' · '+o.name:' · libre')
+          });
+        }
+      }
+      var labels=[];
+      var list=s.rooms.filter(function(rm){ return rm.floor===fi && !(d&&d.id===rm.id); }).map(function(rm){ return {name:rm.name,cells:rm.cells,sel:rm.id===s.selected}; });
+      if(drawingHere) list.push({name:d.name,cells:d.cells,sel:true});
+      list.forEach(function(it){
+        var b=bbox(it.cells); if(!b) return;
+        labels.push({name:it.name, cls:it.sel?'sel':'', st:'grid-row: '+(b.r0+2)+' / '+(b.r1+3)+'; grid-column: '+(b.c0+2)+' / '+(b.c1+3)});
+      });
+      var cls = drawingHere ? 'drawing' : (d ? 'dim' : '');
+      var nRooms=s.rooms.filter(function(rm){ return rm.floor===fi; }).length;
+      return {
+        num:fi+1, name:f.name, cls:cls, cells:cells, labels:labels,
+        hasCells:hab>0, noCells:hab===0,
+        stats: hab ? nRooms+' espacios · '+free+' celdas libres' : 'Sin planta',
+        down:function(e){ self.down(fi,e); },
+        move:function(e){ self.move(fi,e); },
+        up:function(){ self.up(); },
+        keyAct:function(e){ self.keyAct(fi,e); }
+      };
+    });
+
+    var groups=s.floors.map(function(f,fi){
+      var rooms=s.rooms.filter(function(rm){ return rm.floor===fi; }).map(function(rm){
+        var b=bbox(rm.cells);
+        var sel=rm.id===s.selected;
+        return {
+          name:rm.name, sw:TYPES[rm.type].sw, typeLabel:TYPES[rm.type].long,
+          count:(b?b.n:0)+' celdas',
+          range: b ? colName(b.c0)+(b.r0+1)+':'+colName(b.c1)+(b.r1+1) : '—',
+          sel:sel, selCls:sel?'sel':'',
+          pick:function(){ if(self.state.draft) return; self.setState({selected: sel?null:rm.id}); if(!sel) self.goTo(fi); },
+          edit:function(){ self.setState({draft:{id:rm.id,floor:rm.floor,name:rm.name,type:rm.type,cells:Object.assign({},rm.cells)},selected:null}); self.goTo(rm.floor); },
+          del:function(){ self.setState(function(st){ return {rooms:st.rooms.filter(function(x){ return x.id!==rm.id; }),selected:null}; }); self.toast('Espacio eliminado'); }
+        };
+      });
+      return {name:f.name, rooms:rooms, empty:rooms.length===0};
+    });
+
+    var dcount=d?Object.keys(d.cells).length:0;
+    var drafting=!!d;
+    var typeOpts=TYPE_LIST.map(function(t){ return {k:t.k,label:t.label}; });
+    var nBox=s.rooms.filter(function(r){return TYPES[r.type].g==='box';}).length;
+
+    return {
+      theme:this.props.theme||'auto',
+      cols:COLS, colLabels:colLabels, rowLabels:rowLabels,
+      floors:floors, groups:groups, typeOpts:typeOpts,
+      floorOpts:s.floors.map(function(f,i){ return {v:String(i),label:f.name}; }),
+      formFloor:String(s.form.floor), formName:s.form.name,
+      formType:s.form.type, formTypeSw:TYPES[s.form.type].sw,
+      onType:function(e){ self.setState({form:Object.assign({},self.state.form,{type:e.target.value})}); },
+      onFloor:function(e){ self.setState({form:Object.assign({},self.state.form,{floor:Number(e.target.value)})}); },
+      onName:function(e){ self.setState({form:Object.assign({},self.state.form,{name:e.target.value})}); },
+      drafting:drafting, notDrafting:!drafting,
+      cantStart: !s.form.name.trim() || !Object.keys(s.floors[s.form.floor].cells).length,
+      startDraw:function(){
+        var fm=self.state.form; if(!fm.name.trim()) return;
+        self.setState({draft:{id:null,floor:fm.floor,name:fm.name.trim(),type:fm.type,cells:{}},selected:null});
+        self.goTo(fm.floor);
+      },
+      draftTitle: d ? (d.id?'Editando «'+d.name+'»':'Marcando «'+d.name+'»') : '',
+      draftInfo: d ? s.floors[d.floor].name+' · '+dcount+' celdas — clic o arrastra sobre celdas libres' : '',
+      draftEmpty: dcount===0,
+      cancelDraft:function(){ self.paint=null; self.setState({draft:null}); },
+      saveDraft:function(){
+        var dr=self.state.draft; if(!dr||!Object.keys(dr.cells).length) return;
+        self.paint=null;
+        self.setState(function(st){
+          var rooms;
+          var id=dr.id||('r'+Date.now());
+          if(dr.id){ rooms=st.rooms.map(function(x){ return x.id===dr.id?Object.assign({},x,{cells:dr.cells}):x; }); }
+          else { rooms=st.rooms.concat([room(id,dr.floor,dr.name,dr.type,dr.cells)]); }
+          return {rooms:rooms,draft:null,selected:id,form:Object.assign({},st.form,{name:''})};
+        });
+        self.toast(dr.id?'Celdas actualizadas':'Espacio guardado');
+      },
+      roomTotal: s.rooms.length+' en total',
+      summary: nBox+' boxes · '+(s.rooms.length-nBox)+' espacios de apoyo · '+s.floors.length+' plantas',
+      sliderRef:this.sliderRef,
+      onScroll:function(e){ var el=e.currentTarget; self.slider=el; var i=Math.round(el.scrollLeft/self.step(el)); i=Math.max(0,Math.min(s.floors.length-1,i)); if(i!==self.state.idx) self.setState({idx:i}); },
+      dots:s.floors.map(function(f,i){ return {cls:i===s.idx?'active':'', label:'Ir a '+f.name, go:function(e){ self.goTo(i,e); }}; }),
+      navCls: s.floors.length<=2 ? 'fnav-m' : '',
+      prev:function(e){ self.goTo(Math.max(0,s.idx-1),e); },
+      next:function(e){ self.goTo(Math.min(s.floors.length-1,s.idx+1),e); },
+      saveAll:function(){ self.toast('Espacios guardados'); },
+      showToast:s.showToast, toastText:s.toastText
+    };
+  }
+}
+</script>
+</body>
+</html>

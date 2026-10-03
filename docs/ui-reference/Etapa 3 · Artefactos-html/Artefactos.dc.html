@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Room Map · Artefactos</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#654FF0}a:hover{color:#4a36c9}
+.rm{
+  --color-primary:#654FF0;--color-on-primary:#FFFFFF;--color-accent:#e8a33d;--color-danger:#ba2c0d;
+  --color-background:#FFFFFF;--color-on-background:#1C1C1E;--color-surface:#F2F2F7;--color-on-surface:#1C1C1E;
+  --color-outline:#D1D1D6;--color-muted:#6E6E73;--color-surface-sunken:#dfdfe3;--color-selection:#654ff026;
+  --grid-line:#1c1c1e14;--wall:#2b2b33;--primary-ink:#4f3bd6;
+  --free:#654ff00a;--room-line:#654FF0;
+  --t-box:#654ff024;--t-shared-a:#1c1c1e0a;--t-shared-b:#1c1c1e1a;--t-store:#6e6e7326;
+  --warn-ink:#8a5a12;--warn-wash:#e8a33d33;--crit-wash:#ba2c0d24;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  background:var(--color-background);color:var(--color-on-background);
+  min-height:100vh;display:flex;flex-direction:column;box-sizing:border-box;
+}
+.rm *{box-sizing:border-box}
+.rm.theme-dark{
+  --color-background:#0D1117;--color-on-background:#E6EDF3;--color-surface:#161B22;--color-on-surface:#E6EDF3;
+  --color-outline:#30363D;--color-muted:#8B949E;--color-surface-sunken:#0a0d12;--color-selection:#654ff040;
+  --grid-line:#e6edf314;--wall:#c9c2ff;--primary-ink:#a99bff;--free:#654ff012;--room-line:#8f7dff;
+  --t-box:#654ff03d;--t-shared-a:#e6edf30a;--t-shared-b:#e6edf31c;--t-store:#8b949e2e;
+  --warn-ink:#f2c27a;--warn-wash:#e8a33d40;--crit-wash:#ba2c0d4d;
+}
+@media (prefers-color-scheme: dark){
+  .rm.theme-auto{
+    --color-background:#0D1117;--color-on-background:#E6EDF3;--color-surface:#161B22;--color-on-surface:#E6EDF3;
+    --color-outline:#30363D;--color-muted:#8B949E;--color-surface-sunken:#0a0d12;--color-selection:#654ff040;
+    --grid-line:#e6edf314;--wall:#c9c2ff;--primary-ink:#a99bff;--free:#654ff012;--room-line:#8f7dff;
+    --t-box:#654ff03d;--t-shared-a:#e6edf30a;--t-shared-b:#e6edf31c;--t-store:#8b949e2e;
+    --warn-ink:#f2c27a;--warn-wash:#e8a33d40;--crit-wash:#ba2c0d4d;
+  }
+}
+.rm button{font:inherit;color:inherit;cursor:pointer}
+.rm input,.rm select{font:inherit;color:inherit}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 16px;border-radius:10px;border:1px solid var(--color-outline);background:var(--color-background);font-size:14px;font-weight:600;text-decoration:none;color:var(--color-on-background)}
+.btn:hover{background:var(--color-surface);color:var(--color-on-background)}
+.btn-primary{background:var(--color-primary);border-color:var(--color-primary);color:#fff !important}
+.btn-primary:hover{background:#5540dc}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-sm{min-height:32px;padding:0 10px;font-size:12px}
+.btn-danger{color:var(--color-danger) !important}
+.icon-btn{width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;border:1px solid var(--color-outline);background:var(--color-background);flex:none}
+.icon-btn:hover{background:var(--color-surface)}
+.step{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--color-muted);white-space:nowrap;text-decoration:none}
+.step .num{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:1.5px solid var(--color-outline);font-size:12px;font-weight:700}
+.step.done{color:var(--color-on-background)}
+.step.done .num{border-color:var(--color-primary);color:var(--primary-ink)}
+.step.active{color:var(--color-on-background);font-weight:600}
+.step.active .num{background:var(--color-primary);border-color:var(--color-primary);color:#fff}
+.step-sep{width:24px;height:1.5px;background:var(--color-outline)}
+@media (max-width:760px){.step:not(.active) .lbl{display:none}.step-sep{width:12px}}
+.aside{flex:1 1 300px;max-width:360px;display:flex;flex-direction:column;gap:16px;padding:0 24px 16px 0}
+.content{flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:12px}
+@media (max-width:900px){.aside{max-width:none;padding:0 16px 16px}}
+.panel{background:var(--color-surface);border:1px solid var(--color-outline);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.field{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--color-muted)}
+.input{height:40px;border:1px solid var(--color-outline);border-radius:10px;background:var(--color-background);padding:0 12px;font-size:14px;font-weight:500;color:var(--color-on-background);width:100%;min-width:0}
+.input:focus{outline:2px solid var(--color-primary);outline-offset:-1px;border-color:transparent}
+.input:disabled{color:var(--color-muted);background:var(--color-surface)}
+.slider{display:flex;gap:24px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding:4px 0 16px 24px;scroll-padding:0 24px;scrollbar-width:thin}
+@media (max-width:900px){.slider{padding:4px 16px 16px;gap:16px;scroll-padding:0 16px}}
+.floor{flex:0 0 calc((100% - 24px) / 2);scroll-snap-align:start;min-width:0;background:var(--color-surface);border:1px solid var(--color-outline);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+@media (max-width:760px){.floor{flex-basis:100%}}
+.grid{display:grid;user-select:none;-webkit-user-select:none;background:var(--color-background);border-radius:10px;padding:6px 8px 8px 4px;position:relative}
+.lbl-col,.lbl-row{font-size:10px;color:var(--color-muted);display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.lbl-col{height:18px}
+.cell{aspect-ratio:1/1;border:0;padding:0;margin:0;display:block;width:100%;border-radius:0;cursor:default}
+.cell.free{background:var(--free)}
+.cell.g-box{background:var(--t-box)}
+.cell.g-shared{background:repeating-linear-gradient(45deg,var(--t-shared-a) 0 4px,var(--t-shared-b) 4px 8px)}
+.cell.g-store{background:var(--t-store)}
+.cell.drop{cursor:copy}
+.cell.drop:hover{background:var(--color-selection);outline:2px dashed var(--color-primary);outline-offset:-3px}
+.cell.nodrop{cursor:not-allowed}
+.cell:focus-visible{outline:2px solid var(--color-primary);outline-offset:-2px;position:relative;z-index:2}
+.room-label{pointer-events:none;z-index:1;display:flex;align-items:flex-end;justify-content:center;padding:0 3px 2px;font-size:9.5px;line-height:1.1;font-weight:700;color:var(--color-muted);overflow:hidden;white-space:nowrap;min-width:0;min-height:0}
+.room-label span{overflow:hidden;text-overflow:ellipsis}
+.tok-cell{z-index:3;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;position:relative}
+.tok{width:22px;height:22px;border-radius:50%;padding:0;display:inline-flex;align-items:center;justify-content:center;background:var(--color-background);border:2px solid var(--color-primary);color:var(--primary-ink);position:relative;box-shadow:0 1px 3px #0000002e}
+.tok:hover{transform:scale(1.12)}
+.dot{width:10px;height:10px;border-radius:50%;border:0;padding:0;background:var(--color-outline)}
+.dot.active{background:var(--color-primary);width:24px;border-radius:6px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--color-on-background);color:var(--color-background);padding:10px 16px;border-radius:10px;font-size:14px;font-weight:600;display:flex;gap:8px;align-items:center;z-index:30}
+.banner{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-left:24px;padding:10px 12px 10px 16px;border-radius:12px;background:var(--color-selection);border:1px solid var(--color-primary)}
+@media (max-width:900px){.banner{margin:0 16px}}
+.cat{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.cat button{display:flex;align-items:center;gap:8px;min-height:44px;padding:6px 8px;border-radius:10px;border:1px solid var(--color-outline);background:var(--color-background);text-align:left;font-size:12px;font-weight:600}
+.cat button.on{border-color:var(--color-primary);box-shadow:0 0 0 2px var(--color-selection)}
+.cat .ic{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:2px solid var(--color-primary);color:var(--primary-ink);flex:none}
+.grid{touch-action:none}
+.tok{cursor:grab;touch-action:none}
+.tok.sel{border-color:var(--color-primary);background:var(--color-primary);color:#fff;box-shadow:0 0 0 4px var(--color-selection),0 1px 3px #0000002e}
+.tok.dragging{opacity:.35}
+.cell.target{background:var(--color-selection);outline:2px dashed var(--color-primary);outline-offset:-3px}
+.cell.bad{background:#ba2c0d1f;outline:2px dashed var(--color-danger);outline-offset:-3px}
+.sel-card{display:flex;align-items:center;gap:12px}
+@media (min-width:761px){.fnav-m{display:none !important}}
+</style>
+</helmet>
+<div class="rm theme-{{theme}}">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 24px; border-bottom: 1px solid var(--color-outline)">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true"><rect x="2" y="2" width="11" height="11" rx="2.5" fill="#654FF0"></rect><rect x="15" y="2" width="11" height="11" rx="2.5" fill="#654FF0" opacity=".45"></rect><rect x="2" y="15" width="11" height="11" rx="2.5" fill="#654FF0" opacity=".45"></rect><rect x="15" y="15" width="11" height="11" rx="2.5" stroke="#654FF0" stroke-width="2" stroke-dasharray="3 2.5"></rect></svg>
+      <span style="font-size: 18px; font-weight: 800; letter-spacing: -0.02em">Room Map</span>
+      <span style="font-size: 13px; color: var(--color-muted); padding-left: 10px; border-left: 1px solid var(--color-outline)">Clínica Central</span>
+    </div>
+    <nav aria-label="Etapas" style="display: flex; align-items: center; gap: 8px">
+      <a class="step done" href="Main.dc.html"><span class="num"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg></span><span class="lbl">Planta</span></a>
+      <span class="step-sep"></span>
+      <a class="step done" href="Espacios.dc.html"><span class="num"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg></span><span class="lbl">Espacios</span></a>
+      <span class="step-sep"></span>
+      <div class="step active" aria-current="step"><span class="num">3</span><span class="lbl">Artefactos</span></div>
+      <span class="step-sep"></span>
+      <div class="step"><span class="num">4</span><span class="lbl">Operación</span></div>
+    </nav>
+    <button class="btn" onClick="{{saveAll}}">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h11l3 3v15H5z"></path><path d="M8 3v6h8V3"></path><path d="M8 21v-7h8v7"></path></svg>
+      Guardar
+    </button>
+  </header>
+
+  <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; padding: 20px 24px 16px">
+    <div style="display: flex; flex-direction: column; gap: 4px; max-width: 660px">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--primary-ink)">Paso 3 de 4</span>
+      <h1 style="margin: 0; font-size: 26px; letter-spacing: -0.02em">Equipa cada espacio</h1>
+      <p style="margin: 0; font-size: 14px; line-height: 1.5; color: var(--color-muted)">Agrega artefactos dentro de los espacios. Arrastra un ícono para moverlo; tócalo para seleccionarlo y quitarlo.</p>
+    </div>
+    <div class="{{navCls}}" style="display: flex; align-items: center; gap: 8px">
+      <button class="icon-btn" onClick="{{prev}}" aria-label="Planta anterior">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+      </button>
+      <div style="display: flex; align-items: center; gap: 6px">
+        <sc-for list="{{dots}}" as="d" hint-placeholder-count="2">
+          <button class="dot {{d.cls}}" onClick="{{d.go}}" aria-label="{{d.label}}"></button>
+        </sc-for>
+      </div>
+      <button class="icon-btn" onClick="{{next}}" aria-label="Planta siguiente">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>
+      </button>
+    </div>
+  </section>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+
+    <div class="content">
+      <sc-if value="{{hasBanner}}" hint-placeholder-val="{{ false }}">
+        <div class="banner" role="status">
+          <span style="display: flex; align-items: center; gap: 10px; font-size: 14px; line-height: 1.4">
+            <span class="tok" style="flex: none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{bannerIcon}}"></path></svg></span>
+            <span>{{bannerVerb}} <strong>{{bannerCode}}</strong> · haz clic en una celda libre dentro de un espacio</span>
+          </span>
+          <button class="btn" onClick="{{cancelMode}}">Cancelar</button>
+        </div>
+      </sc-if>
+
+      <div class="slider" ref="{{sliderRef}}" onScroll="{{onScroll}}">
+        <sc-for list="{{floors}}" as="f" hint-placeholder-count="2">
+          <article class="floor" aria-label="{{f.name}}">
+            <div style="display: flex; align-items: center; gap: 10px">
+              <span style="flex: none; width: 32px; height: 32px; border-radius: 8px; background: var(--color-primary); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px">{{f.num}}</span>
+              <span style="flex: 1; min-width: 0; font-size: 17px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{f.name}}</span>
+              <span style="flex: none; font-size: 12px; color: var(--color-muted); white-space: nowrap">{{f.stats}}</span>
+            </div>
+            <sc-if value="{{f.hasCells}}" hint-placeholder-val="{{ true }}">
+              <div class="grid" style="grid-template-columns: 22px repeat({{cols}}, minmax(0, 1fr))" onClick="{{f.click}}" onPointerMove="{{f.move}}" onPointerUp="{{f.up}}" onPointerCancel="{{f.cancel}}">
+                <sc-for list="{{colLabels}}" as="L" hint-placeholder-count="20">
+                  <span class="lbl-col" style="{{L.pos}}">{{L.l}}</span>
+                </sc-for>
+                <sc-for list="{{rowLabels}}" as="R" hint-placeholder-count="14">
+                  <span class="lbl-row" style="{{R.pos}}">{{R.n}}</span>
+                </sc-for>
+                <sc-for list="{{f.cells}}" as="cell" hint-placeholder-count="120">
+                  <button class="cell {{cell.cls}}" style="{{cell.st}}" data-cell="{{cell.key}}" title="{{cell.title}}" aria-label="{{cell.title}}" tabindex="{{cell.ti}}"></button>
+                </sc-for>
+                <sc-for list="{{f.labels}}" as="lb" hint-placeholder-count="4">
+                  <span class="room-label" style="{{lb.st}}"><span>{{lb.name}}</span></span>
+                </sc-for>
+                <sc-for list="{{f.toks}}" as="t" hint-placeholder-count="6">
+                  <div class="tok-cell" style="{{t.st}}">
+                    <button class="tok {{t.cls}}" data-art="{{t.id}}" onPointerDown="{{t.down}}" onClick="{{t.key}}" aria-label="{{t.aria}}" aria-pressed="{{t.sel}}" title="{{t.aria}}">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{t.icon}}"></path></svg>
+                    </button>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </article>
+        </sc-for>
+      </div>
+    </div>
+
+    <aside class="aside">
+      <sc-if value="{{hasSel}}" hint-placeholder-val="{{ false }}">
+        <div class="panel" style="border-color: var(--color-primary)">
+          <div class="sel-card">
+            <span class="tok sel" style="width: 40px; height: 40px; flex: none; cursor: default"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{sel.icon}}"></path></svg></span>
+            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 15px; font-weight: 700">{{sel.code}} · {{sel.kind}}</span>
+              <span style="font-size: 12px; color: var(--color-muted)">{{sel.where}}</span>
+            </div>
+            <button class="icon-btn" onClick="{{clearSel}}" aria-label="Deseleccionar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+            </button>
+          </div>
+          <div style="display: flex; gap: 8px">
+            <button class="btn" style="flex: 1" onClick="{{startMove}}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"></path></svg>
+              Mover
+            </button>
+            <button class="btn btn-danger" style="flex: 1" onClick="{{removeSel}}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg>
+              Quitar
+            </button>
+          </div>
+        </div>
+      </sc-if>
+
+      <div class="panel">
+        <h2 style="margin: 0; font-size: 15px">Agregar artefacto</h2>
+        <label class="field">Tipo de artefacto
+          <select class="input" value="{{formType}}" onChange="{{onType}}" disabled="{{busy}}">
+            <sc-for list="{{typeOpts}}" as="o" hint-placeholder-count="8">
+              <option value="{{o.k}}">{{o.label}}</option>
+            </sc-for>
+          </select>
+        </label>
+        <label class="field">Código (ID único)
+          <input class="input" type="text" value="{{formCode}}" onChange="{{onCode}}" disabled="{{busy}}">
+        </label>
+        <button class="btn btn-primary" onClick="{{startPlace}}" disabled="{{cantPlace}}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+          Colocar en el mapa
+        </button>
+      </div>
+
+      <div class="panel">
+        <div style="display: flex; align-items: baseline; justify-content: space-between">
+          <h2 style="margin: 0; font-size: 15px">Catálogo</h2>
+          <span style="font-size: 12px; color: var(--color-muted)">{{artTotal}}</span>
+        </div>
+        <div class="cat">
+          <sc-for list="{{catalog}}" as="c" hint-placeholder-count="8">
+            <button class="{{c.cls}}" onClick="{{c.pick}}" aria-pressed="{{c.on}}" disabled="{{busy}}">
+              <span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{c.icon}}"></path></svg></span>
+              <span style="display: flex; flex-direction: column; min-width: 0">
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{c.label}}</span>
+                <span style="font-size: 11px; font-weight: 500; color: var(--color-muted)">{{c.count}}</span>
+              </span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <footer style="margin-top: auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 24px; border-top: 1px solid var(--color-outline); background: var(--color-background)">
+    <a class="btn" href="Espacios.dc.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>
+      Espacios
+    </a>
+    <span style="font-size: 13px; color: var(--color-muted)">{{summary}}</span>
+    <a class="btn btn-primary" href="Operacion.dc.html">
+      Finalizar configuración
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+    </a>
+  </footer>
+
+  <sc-if value="{{showToast}}" hint-placeholder-val="{{ false }}">
+    <div class="toast" role="status">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg>
+      {{toastText}}
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["auto","light","dark"],"default":"auto"},"$preview":{"width":1440,"height":900}}'>
+var COLS=20, ROWS=14;
+var GROUP={box:'box',proc:'box',reception:'shared',waiting:'shared',hall:'shared',wc:'shared',store:'store',steril:'store',office:'store'};
+var KINDS=[
+  {k:'agenda',label:'Agenda',pre:'AG',icon:'M4 6h16v14H4z M4 10h16 M8 3v5 M16 3v5'},
+  {k:'pc',label:'Computador',pre:'PC',icon:'M3 4h18v12H3z M8 20h8 M12 16v4'},
+  {k:'printer',label:'Impresora',pre:'IMP',icon:'M6 9V3h12v6 M6 18H4v-7h16v7h-2 M6 14h12v7H6z'},
+  {k:'gastro',label:'Gastroscopio',pre:'GAS',icon:'M4 4h6v6H4z M10 7h4a4 4 0 0 1 0 8H9a3 3 0 0 0 0 6h11'},
+  {k:'chair',label:'Sillón dental',pre:'SD',icon:'M7 3v10h9l3 5 M7 13l-2 7 M11 13v7 M7 8h5'},
+  {k:'ecg',label:'Electrocardiógrafo',pre:'ECG',icon:'M3 12h4l2-5 4 10 2-5h6'},
+  {k:'monitor',label:'Monitor signos vitales',pre:'MON',icon:'M3 4h18v13H3z M6 11h3l2-3 2 6 2-3h3 M9 21h6'},
+  {k:'supply',label:'Insumos',pre:'INS',icon:'M3 7l9-4 9 4v10l-9 4-9-4z M3 7l9 4 9-4 M12 11v10'}
+];
+var K={}; KINDS.forEach(function(k){ K[k.k]=k; });
+function colName(i){var s='';i=i+1;while(i>0){var m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26);}return s;}
+function rect(cells,c0,r0,c1,r1){for(var r=r0;r<=r1;r++){for(var c=c0;c<=c1;c++){cells[r+'-'+c]=true;}}return cells;}
+function unrect(cells,c0,r0,c1,r1){for(var r=r0;r<=r1;r++){for(var c=c0;c<=c1;c++){delete cells[r+'-'+c];}}return cells;}
+function bbox(cells){var r0=1e9,r1=-1,c0=1e9,c1=-1,n=0;Object.keys(cells).forEach(function(k){var a=k.split('-').map(Number);n++;if(a[0]<r0)r0=a[0];if(a[0]>r1)r1=a[0];if(a[1]<c0)c0=a[1];if(a[1]>c1)c1=a[1];});return n?{r0:r0,r1:r1,c0:c0,c1:c1,n:n}:null;}
+function room(id,floor,name,type,cells){return {id:id,floor:floor,name:name,type:type,cells:cells};}
+function art(id,kind,code,roomId,r,c){ return {id:id,kind:kind,code:code,room:roomId,r:r,c:c}; }
+
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    var p1=rect({},1,1,16,11); unrect(p1,11,1,16,4); rect(p1,6,12,10,12);
+    var p2=rect({},1,1,9,12); rect(p2,10,5,16,12);
+    var arts=[
+      art('a1','pc','PC-01','r1',2,2), art('a2','printer','IMP-01','r1',2,4),
+      art('a3','agenda','AG-01','r3',5,2), art('a4','pc','PC-02','r3',7,2),
+      art('a5','agenda','AG-02','r4',9,2), art('a6','supply','INS-02','r4',10,5),
+      art('a7','agenda','AG-03','r6',5,13), art('a8','monitor','MON-01','r6',7,15),
+      art('a9','supply','INS-01','r7',10,14),
+      art('a10','agenda','AG-04','r8',1,1), art('a11','chair','SD-01','r8',3,2), art('a12','pc','PC-03','r8',4,4),
+      art('a13','agenda','AG-05','r9',1,6), art('a14','gastro','GAS-01','r9',3,6), art('a15','pc','PC-04','r9',4,8),
+      art('a16','agenda','AG-06','r12',8,11), art('a17','ecg','ECG-01','r12',10,11), art('a18','pc','PC-05','r12',11,15)
+    ];
+    this.state={
+      floors:[{name:'Piso 1 · Recepción',cells:p1},{name:'Piso 2 · Boxes',cells:p2}],
+      rooms:[
+        room('r1',0,'Recepción','reception',rect({},1,1,5,4)),
+        room('r2',0,'Sala de espera','waiting',rect({},6,1,10,4)),
+        room('r3',0,'Box 1 · Medicina general','box',rect({},1,5,5,8)),
+        room('r4',0,'Box 2 · Toma de muestras','box',rect({},1,9,5,11)),
+        room('r5',0,'Pasillo','hall',rect({},6,5,7,12)),
+        room('r6',0,'Box 6 · Procedimientos','proc',rect({},13,5,16,8)),
+        room('r7',0,'Bodega insumos','store',rect({},13,9,16,11)),
+        room('r8',1,'Box 3 · Dental','box',rect({},1,1,4,5)),
+        room('r9',1,'Box 4 · Gastroenterología','box',rect({},5,1,9,5)),
+        room('r10',1,'Pasillo','hall',rect({},1,6,16,7)),
+        room('r11',1,'Baño','wc',rect({},6,8,7,10)),
+        room('r12',1,'Box 7 · Cardiología','box',rect({},10,8,16,12))
+      ],
+      arts:arts,
+      formType:'pc', formCode:'',
+      mode:null,          // null | 'place' | 'move'
+      sel:null,           // selected artifact id
+      drag:null,          // {id, floor, over:'r-c', ok:bool}
+      idx:0, showToast:false, toastText:''
+    };
+    this.state.formCode=this.nextCode('pc',arts);
+    this.dragInfo=null;
+    this.sliderRef=(el)=>{ if(el) this.slider=el; };
+    this.onWinUp=()=>{ if(this.dragInfo){ this.dragInfo=null; this.setState({drag:null}); } };
+  }
+  componentDidMount(){ window.addEventListener('pointerup',this.onWinUp); }
+  componentWillUnmount(){ clearTimeout(this.toastT); window.removeEventListener('pointerup',this.onWinUp); }
+  nextCode(kind,arts){
+    var pre=K[kind].pre, max=0;
+    (arts||this.state.arts).forEach(function(a){ if(a.kind!==kind) return; var n=parseInt(String(a.code).split('-')[1],10); if(n>max) max=n; });
+    var n=max+1; return pre+'-'+(n<10?'0'+n:n);
+  }
+  toast(t){ var self=this; this.setState({showToast:true,toastText:t}); clearTimeout(this.toastT); this.toastT=setTimeout(function(){ self.setState({showToast:false}); },2200); }
+  roomAt(fi,k){ var rs=this.state.rooms; for(var i=0;i<rs.length;i++){ if(rs[i].floor===fi && rs[i].cells[k]) return rs[i]; } return null; }
+  roomById(id){ return this.state.rooms.find(function(x){ return x.id===id; }); }
+  // can artifact of `kind` (optionally moving `selfId`) go to cell (fi,r,c)? returns {ok, room, msg}
+  check(fi,r,c,kind,selfId){
+    var k=r+'-'+c, rm=this.roomAt(fi,k);
+    if(!rm) return {ok:false,msg:'Debe quedar dentro de un espacio'};
+    var self=this;
+    var taken=this.state.arts.some(function(a){ if(a.id===selfId) return false; var ar=self.roomById(a.room); return ar&&ar.floor===fi&&a.r===r&&a.c===c; });
+    if(taken) return {ok:false,msg:'Esa celda ya tiene un artefacto'};
+    if(kind==='agenda' && this.state.arts.some(function(a){ return a.id!==selfId && a.kind==='agenda' && a.room===rm.id; })) return {ok:false,msg:rm.name+' ya tiene agenda'};
+    return {ok:true,room:rm};
+  }
+  cellFrom(el){
+    var t=el&&el.closest?el.closest('[data-cell]'):null;
+    if(!t) return null;
+    var a=t.getAttribute('data-cell').split(':').map(Number);
+    return {f:a[0],r:a[1],c:a[2]};
+  }
+  moveArt(id,fi,p){
+    var a=this.state.arts.find(function(x){ return x.id===id; }); if(!a) return;
+    var chk=this.check(fi,p.r,p.c,a.kind,id);
+    if(!chk.ok){ this.toast(chk.msg); return false; }
+    this.setState(function(s){ return {arts:s.arts.map(function(x){ return x.id===id?Object.assign({},x,{room:chk.room.id,r:p.r,c:p.c}):x; }),mode:null}; });
+    this.toast(a.code+' movido a '+chk.room.name);
+    return true;
+  }
+  // click on grid: place / move mode
+  gridClick(fi,e){
+    var mode=this.state.mode; if(!mode) return;
+    var p=this.cellFrom(e.target); if(!p||p.f!==fi) return;
+    if(mode==='place'){
+      var kind=this.state.formType;
+      var chk=this.check(fi,p.r,p.c,kind,null);
+      if(!chk.ok){ this.toast(chk.msg); return; }
+      var code=(this.state.formCode||'').trim()||this.nextCode(kind);
+      var na=art('a'+Date.now(),kind,code,chk.room.id,p.r,p.c);
+      var self=this;
+      this.setState(function(s){ var arts=s.arts.concat([na]); return {arts:arts,mode:null,sel:na.id,formCode:self.nextCode(kind,arts)}; });
+      this.toast(code+' agregado a '+chk.room.name);
+    } else if(mode==='move' && this.state.sel){
+      this.moveArt(this.state.sel,fi,p);
+    }
+  }
+  tokDown(id,fi,e){
+    if(this.state.mode) return;
+    if(e.button!==undefined && e.button!==0) return;
+    e.preventDefault();
+    this.dragInfo={id:id,floor:fi,x:e.clientX,y:e.clientY,moved:false};
+  }
+  gridMove(fi,e){
+    var d=this.dragInfo; if(!d||d.floor!==fi) return;
+    if(!d.moved){ if(Math.abs(e.clientX-d.x)+Math.abs(e.clientY-d.y)<6) return; d.moved=true; }
+    var el=document.elementFromPoint(e.clientX,e.clientY);
+    var p=this.cellFrom(el);
+    var a=this.state.arts.find(function(x){ return x.id===d.id; });
+    var over=null, ok=false;
+    if(p&&p.f===fi){ over=p.r+'-'+p.c; ok=this.check(fi,p.r,p.c,a.kind,d.id).ok; }
+    var cur=this.state.drag;
+    if(!cur||cur.over!==over||cur.ok!==ok) this.setState({drag:{id:d.id,floor:fi,over:over,ok:ok}});
+  }
+  gridUp(fi,e){
+    var d=this.dragInfo; if(!d) return;
+    this.dragInfo=null;
+    if(!d.moved){
+      this.setState({drag:null, sel:this.state.sel===d.id?null:d.id});
+      return;
+    }
+    var dr=this.state.drag;
+    this.setState({drag:null});
+    if(dr&&dr.over){
+      var rc=dr.over.split('-').map(Number);
+      if(this.moveArt(d.id,fi,{r:rc[0],c:rc[1]})) this.setState({sel:d.id});
+    }
+  }
+  getSlider(e){
+    if(this.slider) return this.slider;
+    var root=e&&e.currentTarget&&e.currentTarget.closest?e.currentTarget.closest('.rm'):null;
+    this.slider=root?root.querySelector('.slider'):null;
+    return this.slider;
+  }
+  step(el){
+    var first=el&&el.firstElementChild;
+    return first?first.getBoundingClientRect().width+parseFloat(getComputedStyle(el).columnGap||'24'):(el?el.clientWidth:1);
+  }
+  goTo(i,e){ var el=this.getSlider(e); if(!el) return; el.scrollTo({left:i*this.step(el),behavior:'smooth'}); }
+  renderVals(){
+    var self=this, s=this.state, drag=s.drag;
+    var colLabels=[], rowLabels=[];
+    for(var c=0;c<COLS;c++) colLabels.push({l:colName(c),pos:'grid-row: 1; grid-column: '+(c+2)});
+    for(var r=0;r<ROWS;r++) rowLabels.push({n:r+1,pos:'grid-row: '+(r+2)+'; grid-column: 1'});
+    var roomIdx={}; s.rooms.forEach(function(r){ roomIdx[r.id]=r; });
+    var activeKind = s.mode==='place' ? s.formType : (s.mode==='move' && s.sel ? (s.arts.find(function(a){ return a.id===s.sel; })||{}).kind : null);
+
+    var floors=s.floors.map(function(f,fi){
+      var owner={}, occ={};
+      s.rooms.forEach(function(rm){ if(rm.floor!==fi) return; Object.keys(rm.cells).forEach(function(k){ owner[k]=rm; }); });
+      s.arts.forEach(function(a){ var rm=roomIdx[a.room]; if(rm&&rm.floor===fi) occ[a.r+'-'+a.c]=a; });
+      var cells=[], hab=0;
+      for(var r=0;r<ROWS;r++){
+        for(var c=0;c<COLS;c++){
+          var k=r+'-'+c;
+          if(!f.cells[k]) continue;
+          hab++;
+          var o=owner[k]||null;
+          var sh=[];
+          [[r-1,c,'inset 0 W 0 C'],[r+1,c,'inset 0 -W 0 C'],[r,c-1,'inset W 0 0 C'],[r,c+1,'inset -W 0 0 C']].forEach(function(sd){
+            var nk=sd[0]+'-'+sd[1];
+            if(!f.cells[nk]){ sh.push(sd[2].replace('W','2px').replace('C','var(--wall)')); return; }
+            var no=owner[nk]||null;
+            if(o && (!no || no.id!==o.id)) sh.push(sd[2].replace('W','1.5px').replace('C','var(--room-line)'));
+          });
+          if(!o) sh.push('inset -1px -1px 0 var(--grid-line)');
+          var cls=o?'g-'+GROUP[o.type]:'free';
+          var drop=false;
+          if(activeKind){ drop=self.check(fi,r,c,activeKind,s.mode==='move'?s.sel:null).ok; cls+=drop?' drop':' nodrop'; }
+          if(drag&&drag.floor===fi&&drag.over===k) cls+=drag.ok?' target':' bad';
+          var lab=colName(c)+(r+1);
+          cells.push({key:fi+':'+r+':'+c, cls:cls, ti: drop?'0':'-1',
+            st:'grid-row: '+(r+2)+'; grid-column: '+(c+2)+'; box-shadow: '+sh.join(', '),
+            title: lab+(o?' · '+o.name:'')});
+        }
+      }
+      var labels=[];
+      s.rooms.forEach(function(rm){ if(rm.floor!==fi) return; var b=bbox(rm.cells); if(!b) return;
+        labels.push({name:rm.name, st:'grid-row: '+(b.r0+2)+' / '+(b.r1+3)+'; grid-column: '+(b.c0+2)+' / '+(b.c1+3)}); });
+      var toks=[];
+      s.arts.forEach(function(a){
+        var rm=roomIdx[a.room]; if(!rm||rm.floor!==fi) return;
+        var kk=K[a.kind], sel=s.sel===a.id;
+        toks.push({id:a.id, icon:kk.icon, sel:sel,
+          cls:(sel?'sel':'')+(drag&&drag.id===a.id?' dragging':''),
+          aria:a.code+' · '+kk.label+' · '+rm.name,
+          st:'grid-row: '+(a.r+2)+'; grid-column: '+(a.c+2)+(s.mode?'; pointer-events: none':''),
+          down:function(e){ self.tokDown(a.id,fi,e); },
+          key:function(e){ if(e.detail!==0) return; self.setState({sel:sel?null:a.id}); }
+        });
+      });
+      return {num:fi+1,name:f.name,cells:cells,labels:labels,toks:toks,hasCells:hab>0,noCells:hab===0,
+        stats: hab ? toks.length+' artefactos' : 'Sin planta',
+        click:function(e){ self.gridClick(fi,e); },
+        move:function(e){ self.gridMove(fi,e); },
+        up:function(e){ self.gridUp(fi,e); },
+        cancel:function(){ self.dragInfo=null; self.setState({drag:null}); }};
+    });
+
+    var catalog=KINDS.map(function(k){ var n=s.arts.filter(function(a){ return a.kind===k.k; }).length;
+      return {label:k.label, icon:k.icon, count:n+(n===1?' instalado':' instalados'), on:s.formType===k.k, cls:s.formType===k.k?'on':'',
+        pick:function(){ self.setState({formType:k.k, formCode:self.nextCode(k.k)}); }}; });
+
+    var sa=s.sel?s.arts.find(function(a){ return a.id===s.sel; }):null;
+    var sel={};
+    if(sa){ var rm=roomIdx[sa.room]; sel={icon:K[sa.kind].icon, code:sa.code, kind:K[sa.kind].label, where:(rm?rm.name+' · ':'')+'celda '+colName(sa.c)+(sa.r+1)}; }
+    var bannerKind = s.mode==='place' ? K[s.formType] : (sa?K[sa.kind]:K.pc);
+
+    return {
+      theme:this.props.theme||'auto',
+      cols:COLS, colLabels:colLabels, rowLabels:rowLabels, floors:floors,
+      typeOpts:KINDS.map(function(k){ return {k:k.k,label:k.label}; }),
+      formType:s.formType, formCode:s.formCode,
+      onType:function(e){ var v=e.target.value; self.setState({formType:v, formCode:self.nextCode(v)}); },
+      onCode:function(e){ self.setState({formCode:e.target.value}); },
+      busy:!!s.mode, cantPlace:!!s.mode || !s.formCode.trim(),
+      startPlace:function(){ self.setState({mode:'place',sel:null}); },
+      startMove:function(){ self.setState({mode:'move'}); },
+      cancelMode:function(){ self.setState({mode:null}); },
+      hasBanner:!!s.mode,
+      bannerVerb: s.mode==='move'?'Moviendo':'Colocando',
+      bannerCode: s.mode==='move'?(sa?sa.code:''):s.formCode,
+      bannerIcon: bannerKind.icon,
+      hasSel:!!sa && s.mode!=='place', sel:sel,
+      clearSel:function(){ self.setState({sel:null,mode:null}); },
+      removeSel:function(){ var code=sa?sa.code:''; self.setState(function(st){ return {arts:st.arts.filter(function(x){ return x.id!==st.sel; }),sel:null,mode:null}; }); self.toast(code+' quitado'); },
+      catalog:catalog, artTotal:s.arts.length+' artefactos',
+      summary:s.arts.length+' artefactos en '+s.rooms.length+' espacios',
+      sliderRef:this.sliderRef,
+      onScroll:function(e){ var el=e.currentTarget; self.slider=el; var i=Math.round(el.scrollLeft/self.step(el)); i=Math.max(0,Math.min(s.floors.length-1,i)); if(i!==self.state.idx) self.setState({idx:i}); },
+      dots:s.floors.map(function(f,i){ return {cls:i===s.idx?'active':'', label:'Ir a '+f.name, go:function(e){ self.goTo(i,e); }}; }),
+      navCls: s.floors.length<=2 ? 'fnav-m' : '',
+      prev:function(e){ self.goTo(Math.max(0,s.idx-1),e); },
+      next:function(e){ self.goTo(Math.min(s.floors.length-1,s.idx+1),e); },
+      saveAll:function(){ self.toast('Artefactos guardados'); },
+      showToast:s.showToast, toastText:s.toastText
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Room Map · Dibujar planta</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#654FF0}a:hover{color:#4a36c9}
+.rm{
+  --color-primary:#654FF0;--color-on-primary:#FFFFFF;--color-accent:#e8a33d;--color-danger:#ba2c0d;
+  --color-background:#FFFFFF;--color-on-background:#1C1C1E;--color-surface:#F2F2F7;--color-on-surface:#1C1C1E;
+  --color-outline:#D1D1D6;--color-muted:#6E6E73;--color-surface-sunken:#dfdfe3;--color-selection:#654ff026;
+  --cell-on:#654ff02e;--cell-on-hover:#654ff047;--grid-line:#1c1c1e14;--wall:#2b2b33;--primary-ink:#4f3bd6;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  background:var(--color-background);color:var(--color-on-background);
+  min-height:100vh;display:flex;flex-direction:column;box-sizing:border-box;
+}
+.rm *{box-sizing:border-box}
+.rm.theme-dark{
+  --color-background:#0D1117;--color-on-background:#E6EDF3;--color-surface:#161B22;--color-on-surface:#E6EDF3;
+  --color-outline:#30363D;--color-muted:#8B949E;--color-surface-sunken:#0a0d12;--color-selection:#654ff040;
+  --cell-on:#654ff04d;--cell-on-hover:#654ff073;--grid-line:#e6edf314;--wall:#c9c2ff;--primary-ink:#a99bff;
+}
+@media (prefers-color-scheme: dark){
+  .rm.theme-auto{
+    --color-background:#0D1117;--color-on-background:#E6EDF3;--color-surface:#161B22;--color-on-surface:#E6EDF3;
+    --color-outline:#30363D;--color-muted:#8B949E;--color-surface-sunken:#0a0d12;--color-selection:#654ff040;
+    --cell-on:#654ff04d;--cell-on-hover:#654ff073;--grid-line:#e6edf314;--wall:#c9c2ff;--primary-ink:#a99bff;
+  }
+}
+.rm button{font:inherit;color:inherit;cursor:pointer}
+.rm input{font:inherit;color:inherit}
+.btn{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 16px;border-radius:10px;border:1px solid var(--color-outline);background:var(--color-background);font-size:14px;font-weight:600}
+.btn:hover{background:var(--color-surface)}
+.btn-primary{background:var(--color-primary);border-color:var(--color-primary);color:var(--color-on-primary) !important}
+.btn-primary:hover{background:#5540dc}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed}
+.icon-btn{width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;border:1px solid var(--color-outline);background:var(--color-background)}
+.icon-btn:hover{background:var(--color-surface)}
+.step{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--color-muted);white-space:nowrap}
+.step .num{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:1.5px solid var(--color-outline);font-size:12px;font-weight:700}
+.step.active{color:var(--color-on-background);font-weight:600}
+.step.active .num{background:var(--color-primary);border-color:var(--color-primary);color:#fff}
+.step-sep{width:24px;height:1.5px;background:var(--color-outline)}
+@media (max-width:760px){.step:not(.active) .lbl{display:none}.step-sep{width:12px}}
+.slider{display:flex;gap:24px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding:4px 24px 16px;scrollbar-width:thin}
+.floor{flex:0 0 calc((100% - 24px) / 2);scroll-snap-align:start;min-width:0;background:var(--color-surface);border:1px solid var(--color-outline);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.floor-add{flex:0 0 220px;scroll-snap-align:start;border:2px dashed var(--color-outline);border-radius:16px;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--color-muted);font-weight:600;min-height:320px}
+.floor-add:hover{border-color:var(--color-primary);color:var(--primary-ink)}
+@media (max-width:760px){.slider{padding:4px 16px 16px;gap:16px;scroll-padding:0 16px}.floor{flex-basis:100%}.floor-add{flex-basis:100%}}
+.name-input{border:1px solid transparent;background:transparent;border-radius:8px;padding:6px 8px;font-size:17px;font-weight:700;min-width:0;width:100%}
+.name-input:hover{border-color:var(--color-outline)}
+.name-input:focus{outline:none;border-color:var(--color-primary);background:var(--color-background)}
+.grid{display:grid;user-select:none;-webkit-user-select:none;touch-action:none;background:var(--color-background);border-radius:10px;padding:6px 8px 8px 4px}
+.lbl-col,.lbl-row{font-size:10px;color:var(--color-muted);display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.lbl-col{height:18px}
+.cell{aspect-ratio:1/1;border:0;padding:0;margin:0;background:transparent;box-shadow:inset -1px -1px 0 var(--grid-line);border-radius:0;display:block;width:100%}
+.cell:hover{background:var(--color-selection)}
+.cell.on{background:var(--cell-on)}
+.cell.on:hover{background:var(--cell-on-hover)}
+.cell:focus-visible{outline:2px solid var(--color-primary);outline-offset:-2px;position:relative;z-index:1}
+.dot{width:10px;height:10px;border-radius:50%;border:0;padding:0;background:var(--color-outline)}
+.dot.active{background:var(--color-primary);width:24px;border-radius:6px}
+.num-input{width:56px;height:36px;border:1px solid var(--color-outline);border-radius:8px;background:var(--color-background);text-align:center;font-weight:600}
+.num-input:disabled{background:var(--color-surface);color:var(--color-muted)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--color-on-background);color:var(--color-background);padding:10px 16px;border-radius:10px;font-size:14px;font-weight:600;display:flex;gap:8px;align-items:center;z-index:10}
+.swatch{width:16px;height:16px;border-radius:3px;display:inline-block}
+</style>
+</helmet>
+<div class="rm theme-{{theme}}">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 24px; border-bottom: 1px solid var(--color-outline)">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true"><rect x="2" y="2" width="11" height="11" rx="2.5" fill="#654FF0"></rect><rect x="15" y="2" width="11" height="11" rx="2.5" fill="#654FF0" opacity=".45"></rect><rect x="2" y="15" width="11" height="11" rx="2.5" fill="#654FF0" opacity=".45"></rect><rect x="15" y="15" width="11" height="11" rx="2.5" stroke="#654FF0" stroke-width="2" stroke-dasharray="3 2.5"></rect></svg>
+      <span style="font-size: 18px; font-weight: 800; letter-spacing: -0.02em">Room Map</span>
+      <span style="font-size: 13px; color: var(--color-muted); padding-left: 10px; border-left: 1px solid var(--color-outline)">Clínica Central</span>
+    </div>
+    <nav aria-label="Etapas" style="display: flex; align-items: center; gap: 8px">
+      <div class="step active"><span class="num">1</span><span class="lbl">Planta</span></div>
+      <span class="step-sep"></span>
+      <a class="step" href="Espacios.dc.html" style="text-decoration: none"><span class="num">2</span><span class="lbl">Espacios</span></a>
+      <span class="step-sep"></span>
+      <div class="step"><span class="num">3</span><span class="lbl">Artefactos</span></div>
+      <span class="step-sep"></span>
+      <div class="step"><span class="num">4</span><span class="lbl">Operación</span></div>
+    </nav>
+    <button class="btn" onClick="{{save}}">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h11l3 3v15H5z"></path><path d="M8 3v6h8V3"></path><path d="M8 21v-7h8v7"></path></svg>
+      Guardar
+    </button>
+  </header>
+
+  <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; padding: 20px 24px 16px">
+    <div style="display: flex; flex-direction: column; gap: 4px; max-width: 620px">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--primary-ink)">Paso 1 de 4</span>
+      <h1 style="margin: 0; font-size: 26px; letter-spacing: -0.02em">Dibuja el espacio habitable de cada planta</h1>
+      <p style="margin: 0; font-size: 14px; line-height: 1.5; color: var(--color-muted)">Haz clic o arrastra sobre la cuadrícula para habilitar celdas. Si empiezas sobre una celda habilitada, arrastrar la quita.</p>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+      <div style="display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 12px; border: 1px solid var(--color-outline); border-radius: 12px; background: var(--color-surface)">
+        <span style="font-size: 13px; color: var(--color-muted)">Cuadrícula del edificio</span>
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-muted)">Col
+          <input class="num-input" type="number" min="6" max="40" value="{{cols}}" onChange="{{onCols}}" disabled="{{gridLocked}}">
+        </label>
+        <span aria-hidden="true" style="color: var(--color-muted)">×</span>
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-muted)">Filas
+          <input class="num-input" type="number" min="4" max="40" value="{{rows}}" onChange="{{onRows}}" disabled="{{gridLocked}}">
+        </label>
+        <button class="icon-btn" onClick="{{toggleLock}}" aria-label="{{lockLabel}}" title="{{lockLabel}}" aria-pressed="{{gridLocked}}">
+          <sc-if value="{{gridLocked}}" hint-placeholder-val="{{ true }}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+          </sc-if>
+          <sc-if value="{{gridUnlocked}}" hint-placeholder-val="{{ false }}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e8a33d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 7.5-2"></path></svg>
+          </sc-if>
+        </button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px">
+        <button class="icon-btn" onClick="{{prev}}" aria-label="Planta anterior">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+        </button>
+        <div style="display: flex; align-items: center; gap: 6px">
+          <sc-for list="{{dots}}" as="d" hint-placeholder-count="3">
+            <button class="dot {{d.cls}}" onClick="{{d.go}}" aria-label="{{d.label}}"></button>
+          </sc-for>
+        </div>
+        <button class="icon-btn" onClick="{{next}}" aria-label="Planta siguiente">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <sc-if value="{{gridUnlocked}}" hint-placeholder-val="{{ false }}">
+    <div role="status" style="margin: 0 24px 12px; padding: 10px 14px; border-radius: 10px; background: #e8a33d26; border: 1px solid #e8a33d80; font-size: 13px; line-height: 1.45">Cuadrícula desbloqueada. El tamaño se comparte entre todas las plantas y define las coordenadas (A1, B2…) que se guardan en cada espacio. Cámbialo solo si el edificio cambia.</div>
+  </sc-if>
+
+  <div class="slider" ref="{{sliderRef}}" onScroll="{{onScroll}}" style="height: 641px">
+    <sc-for list="{{floors}}" as="f" hint-placeholder-count="3">
+      <article class="floor" aria-label="{{f.name}}">
+        <div style="display: flex; align-items: center; gap: 10px">
+          <span style="flex: none; width: 32px; height: 32px; border-radius: 8px; background: var(--color-primary); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px">{{f.num}}</span>
+          <input class="name-input" type="text" value="{{f.name}}" onChange="{{f.rename}}" aria-label="Nombre de la planta">
+          <span style="flex: none; font-size: 12px; color: var(--color-muted); font-variant-numeric: tabular-nums; white-space: nowrap">{{f.countLabel}}</span>
+        </div>
+        <div class="grid" style="grid-template-columns: 22px repeat({{cols}}, minmax(0, 1fr))" onPointerDown="{{f.down}}" onPointerMove="{{f.move}}" onPointerUp="{{f.up}}" onPointerCancel="{{f.up}}" onClick="{{f.keyToggle}}">
+          <span></span>
+          <sc-for list="{{letters}}" as="L" hint-placeholder-count="20">
+            <span class="lbl-col">{{L.l}}</span>
+          </sc-for>
+          <sc-for list="{{f.rows}}" as="row" hint-placeholder-count="14">
+            <div style="display: contents">
+              <span class="lbl-row">{{row.n}}</span>
+              <sc-for list="{{row.cells}}" as="cell" hint-placeholder-count="20">
+                <button class="cell {{cell.cls}}" style="{{cell.sh}}" data-cell="{{cell.key}}" title="{{cell.label}}" aria-label="{{cell.aria}}" aria-pressed="{{cell.on}}"></button>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--color-muted)">
+          <span style="display: flex; align-items: center; gap: 6px"><span class="swatch" style="background: var(--cell-on); box-shadow: inset 0 0 0 2px var(--wall)"></span>Habitable · {{f.pct}} de la planta</span>
+          <button class="btn" style="min-height: 32px; padding: 0 10px; font-size: 12px; font-weight: 600" onClick="{{f.clear}}">Limpiar</button>
+        </div>
+      </article>
+    </sc-for>
+    <button class="floor-add" onClick="{{addFloor}}">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+      Agregar planta
+    </button>
+  </div>
+
+  <footer style="margin-top: auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 24px; border-top: 1px solid var(--color-outline); background: var(--color-background)">
+    <span style="font-size: 13px; color: var(--color-muted)">{{summary}}</span>
+    <a class="btn btn-primary" href="Espacios.dc.html" style="text-decoration: none">
+      Siguiente: Espacios
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+    </a>
+  </footer>
+
+  <sc-if value="{{showToast}}" hint-placeholder-val="{{ false }}">
+    <div class="toast" role="status">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg>
+      Plantas guardadas
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["auto","light","dark"],"default":"auto"},"cols":{"editor":"int","min":6,"max":40,"default":20},"rows":{"editor":"int","min":4,"max":40,"default":14},"$preview":{"width":1440,"height":900}}'>
+function colName(i){var s='';i=i+1;while(i>0){var m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26);}return s;}
+function rect(cells,c0,r0,c1,r1){for(var r=r0;r<=r1;r++){for(var c=c0;c<=c1;c++){cells[r+'-'+c]=true;}}return cells;}
+function unrect(cells,c0,r0,c1,r1){for(var r=r0;r<=r1;r++){for(var c=c0;c<=c1;c++){delete cells[r+'-'+c];}}return cells;}
+function line(a,b){var pts=[];var x0=a.c,y0=a.r,x1=b.c,y1=b.r;var dx=Math.abs(x1-x0),dy=-Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1,err=dx+dy;while(true){pts.push({r:y0,c:x0});if(x0===x1&&y0===y1)break;var e2=2*err;if(e2>=dy){err+=dy;x0+=sx;}if(e2<=dx){err+=dx;y0+=sy;}}return pts;}
+
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    var p1=rect({},1,1,16,11); unrect(p1,11,1,16,4); rect(p1,6,12,10,12);
+    var p2=rect({},1,1,9,12); rect(p2,10,5,16,12);
+    this.state={
+      cols: props.cols || 20,
+      rows: props.rows || 14,
+      gridLocked: true,
+      idx: 0,
+      showToast: false,
+      floors: [
+        {id:'f1', name:'Piso 1 · Recepción', cells:p1},
+        {id:'f2', name:'Piso 2 · Boxes', cells:p2},
+        {id:'f3', name:'Piso 3', cells:{}}
+      ]
+    };
+    this.paint=null;
+    this.sliderRef=(el)=>{ if(el) this.slider=el; };
+  }
+  componentDidUpdate(prev){
+    if(prev.cols!==this.props.cols && this.props.cols) this.setState({cols:this.props.cols});
+    if(prev.rows!==this.props.rows && this.props.rows) this.setState({rows:this.props.rows});
+  }
+  componentWillUnmount(){ clearTimeout(this.toastT); }
+  pt(x,y){
+    var el=document.elementFromPoint(x,y);
+    var t=el&&el.closest?el.closest('[data-cell]'):null;
+    if(!t) return null;
+    var a=t.getAttribute('data-cell').split(':').map(Number);
+    return {f:a[0],r:a[1],c:a[2]};
+  }
+  apply(fi,pts,on){
+    this.setState(function(s){
+      var floors=s.floors.slice();
+      var cells=Object.assign({},floors[fi].cells);
+      pts.forEach(function(p){var k=p.r+'-'+p.c; if(on) cells[k]=true; else delete cells[k];});
+      floors[fi]=Object.assign({},floors[fi],{cells:cells});
+      return {floors:floors};
+    });
+  }
+  down(fi,e){
+    if(e.button!==undefined && e.button!==0) return;
+    var p=this.pt(e.clientX,e.clientY);
+    if(!p||p.f!==fi) return;
+    e.preventDefault();
+    var on=!this.state.floors[fi].cells[p.r+'-'+p.c];
+    this.paint={f:fi,on:on,last:p};
+    try{ e.currentTarget.setPointerCapture(e.pointerId); }catch(_){}
+    this.apply(fi,[p],on);
+  }
+  move(fi,e){
+    if(!this.paint||this.paint.f!==fi) return;
+    var p=this.pt(e.clientX,e.clientY);
+    if(!p||p.f!==fi) return;
+    var l=this.paint.last;
+    if(l.r===p.r&&l.c===p.c) return;
+    this.apply(fi,line(l,p),this.paint.on);
+    this.paint.last=p;
+  }
+  up(){ this.paint=null; }
+  keyToggle(fi,e){
+    if(e.detail!==0) return;
+    var t=e.target&&e.target.closest?e.target.closest('[data-cell]'):null;
+    if(!t) return;
+    var a=t.getAttribute('data-cell').split(':').map(Number);
+    var on=!this.state.floors[fi].cells[a[1]+'-'+a[2]];
+    this.apply(fi,[{r:a[1],c:a[2]}],on);
+  }
+  getSlider(e){
+    if(this.slider) return this.slider;
+    var root=e&&e.currentTarget&&e.currentTarget.closest?e.currentTarget.closest('.rm'):null;
+    this.slider=root?root.querySelector('.slider'):null;
+    return this.slider;
+  }
+  step(el){
+    var first=el&&el.firstElementChild;
+    return first?first.getBoundingClientRect().width+parseFloat(getComputedStyle(el).columnGap||'24'):(el?el.clientWidth:1);
+  }
+  goTo(i,e){
+    var el=this.getSlider(e); if(!el) return;
+    el.scrollTo({left:i*this.step(el),behavior:'smooth'});
+  }
+  renderVals(){
+    var self=this, s=this.state, cols=s.cols, rows=s.rows;
+    var letters=[]; for(var c=0;c<cols;c++) letters.push({l:colName(c)});
+    var total=0;
+    var floors=s.floors.map(function(f,fi){
+      var count=0, R=[];
+      for(var r=0;r<rows;r++){
+        var cells=[];
+        for(var c=0;c<cols;c++){
+          var on=!!f.cells[r+'-'+c];
+          var sh='';
+          if(on){
+            count++;
+            var parts=[];
+            if(!f.cells[(r-1)+'-'+c]||r===0) parts.push('inset 0 2px 0 var(--wall)');
+            if(!f.cells[(r+1)+'-'+c]||r===rows-1) parts.push('inset 0 -2px 0 var(--wall)');
+            if(!f.cells[r+'-'+(c-1)]||c===0) parts.push('inset 2px 0 0 var(--wall)');
+            if(!f.cells[r+'-'+(c+1)]||c===cols-1) parts.push('inset -2px 0 0 var(--wall)');
+            sh=parts.length?'box-shadow: '+parts.join(', '):'';
+          }
+          var lab=colName(c)+(r+1);
+          cells.push({key:fi+':'+r+':'+c, cls:on?'on':'', on:on, sh:sh, label:lab, aria:lab+(on?', habitable':', libre')});
+        }
+        R.push({n:r+1, cells:cells});
+      }
+      total+=count;
+      return {
+        num: fi+1,
+        name: f.name,
+        rows: R,
+        countLabel: count+' celdas',
+        pct: Math.round(count*100/(cols*rows))+'%',
+        rename: function(e){ var v=e.target.value; self.setState(function(st){ var fl=st.floors.slice(); fl[fi]=Object.assign({},fl[fi],{name:v}); return {floors:fl}; }); },
+        down: function(e){ self.down(fi,e); },
+        move: function(e){ self.move(fi,e); },
+        up: function(){ self.up(); },
+        keyToggle: function(e){ self.keyToggle(fi,e); },
+        clear: function(){ self.setState(function(st){ var fl=st.floors.slice(); fl[fi]=Object.assign({},fl[fi],{cells:{}}); return {floors:fl}; }); }
+      };
+    });
+    var dots=s.floors.map(function(f,i){ return {cls:i===s.idx?'active':'', label:'Ir a '+f.name, go:function(e){ self.goTo(i,e); }}; });
+    return {
+      theme: this.props.theme || 'auto',
+      cols: cols, rows: rows, letters: letters, floors: floors, dots: dots,
+      gridLocked: s.gridLocked, gridUnlocked: !s.gridLocked,
+      lockLabel: s.gridLocked ? 'Desbloquear tamaño de cuadrícula' : 'Bloquear tamaño de cuadrícula',
+      toggleLock: function(){ self.setState({gridLocked:!s.gridLocked}); },
+      onCols: function(e){ var v=Math.max(6,Math.min(40,parseInt(e.target.value,10)||cols)); self.setState({cols:v}); },
+      onRows: function(e){ var v=Math.max(4,Math.min(40,parseInt(e.target.value,10)||rows)); self.setState({rows:v}); },
+      sliderRef: this.sliderRef,
+      onScroll: function(e){ var el=e.currentTarget; self.slider=el; var i=Math.round(el.scrollLeft/self.step(el)); i=Math.max(0,Math.min(s.floors.length-1,i)); if(i!==self.state.idx) self.setState({idx:i}); },
+      prev: function(e){ self.goTo(Math.max(0,s.idx-1),e); },
+      next: function(e){ self.goTo(Math.min(s.floors.length,s.idx+1),e); },
+      addFloor: function(e){
+        var el=self.getSlider(e);
+        self.setState(function(st){ var n=st.floors.length+1; return {floors:st.floors.concat([{id:'f'+Date.now(), name:'Piso '+n, cells:{}}])}; }, function(){ if(el) el.scrollTo({left:el.scrollWidth,behavior:'smooth'}); });
+      },
+      save: function(){ self.setState({showToast:true}); clearTimeout(self.toastT); self.toastT=setTimeout(function(){ self.setState({showToast:false}); },2200); },
+      summary: s.floors.length+' plantas · '+total+' celdas habitables · cuadrícula '+cols+' × '+rows+' (A1 – '+colName(cols-1)+rows+')',
+      noCells: total===0,
+      showToast: s.showToast
+    };
+  }
+}
+</script>
+</body>
+</html>

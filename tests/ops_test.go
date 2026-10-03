@@ -36,6 +36,10 @@ func (r *mockRoute) Accepts(args model.Fielder) router.Route {
 	return r
 }
 
+func (r *mockRoute) Describe(summary string) router.Route {
+	return r
+}
+
 type mockRegistry struct {
 	routes []*mockRoute
 }

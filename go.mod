@@ -3,7 +3,7 @@ module github.com/veltylabs/room_layout
 go 1.26.8
 
 require (
-	webtyp.com/components v0.7.0
+	webtyp.com/components v0.8.0
 	webtyp.com/ddl v0.0.20
 	webtyp.com/dom v0.13.17
 	webtyp.com/events v0.0.5
@@ -12,7 +12,7 @@ require (
 	webtyp.com/layout v0.3.2
 	webtyp.com/model v0.2.0
 	webtyp.com/orm v0.12.6
-	webtyp.com/router v0.2.1
+	webtyp.com/router v0.3.0
 	webtyp.com/storage v0.1.1
 	webtyp.com/svg v0.3.14
 	webtyp.com/time v0.5.7
@@ -22,7 +22,7 @@ require (
 
 require (
 	webtyp.com/color v0.1.2 // indirect
-	webtyp.com/css v0.4.22 // indirect
+	webtyp.com/css v0.4.24 // indirect
 	webtyp.com/date v0.0.7 // indirect
 	webtyp.com/fmt v1.0.0
 	webtyp.com/font v0.0.5 // indirect
