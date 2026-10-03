@@ -8,6 +8,10 @@ import (
 )
 
 type Floor struct {
+	Cols int64
+	Rows int64
+	GridLocked bool
+	HabitableCells string
 	Id string
 	TenantId string
 	Name string
@@ -19,11 +23,15 @@ func (m *Floor) ModelName() string { return "floor" }
 
 func (m *Floor) Schema() []model.Field { return FloorModel.Fields }
 
-func (m *Floor) Pointers() []any { return []any{&m.Id, &m.TenantId, &m.Name, &m.Position, &m.UpdatedAt} }
+func (m *Floor) Pointers() []any { return []any{&m.Cols, &m.Rows, &m.GridLocked, &m.HabitableCells, &m.Id, &m.TenantId, &m.Name, &m.Position, &m.UpdatedAt} }
 
 func (m *Floor) IsNil() bool { return m == nil }
 
 func (m *Floor) EncodeFields(w model.FieldWriter) {
+	w.Int("cols", m.Cols)
+	w.Int("rows", m.Rows)
+	w.Bool("grid_locked", m.GridLocked)
+	w.String("habitable_cells", m.HabitableCells)
 	if m.Id != "" { w.String("id", m.Id) }
 	w.String("tenant_id", m.TenantId)
 	w.String("name", m.Name)
@@ -32,6 +40,10 @@ func (m *Floor) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *Floor) DecodeFields(r model.FieldReader) {
+	if v, ok := r.Int("cols"); ok { m.Cols = v }
+	if v, ok := r.Int("rows"); ok { m.Rows = v }
+	if v, ok := r.Bool("grid_locked"); ok { m.GridLocked = v }
+	if v, ok := r.String("habitable_cells"); ok { m.HabitableCells = v }
 	if v, ok := r.String("id"); ok { m.Id = v }
 	if v, ok := r.String("tenant_id"); ok { m.TenantId = v }
 	if v, ok := r.String("name"); ok { m.Name = v }
@@ -53,12 +65,20 @@ func (m *Floor) Validate(action byte) error {
 }
 
 var Floor_ = struct {
+	Cols string
+	Rows string
+	GridLocked string
+	HabitableCells string
 	Id string
 	TenantId string
 	Name string
 	Position string
 	UpdatedAt string
 }{
+	Cols: "cols",
+	Rows: "rows",
+	GridLocked: "grid_locked",
+	HabitableCells: "habitable_cells",
 	Id: "id",
 	TenantId: "tenant_id",
 	Name: "name",
@@ -84,6 +104,8 @@ func ReadAllFloor(qb *orm.QB) (FloorList, error) {
 }
 
 type Room struct {
+	RoomType string
+	Cells string
 	Id string
 	TenantId string
 	FloorId string
@@ -98,11 +120,13 @@ func (m *Room) ModelName() string { return "room" }
 
 func (m *Room) Schema() []model.Field { return RoomModel.Fields }
 
-func (m *Room) Pointers() []any { return []any{&m.Id, &m.TenantId, &m.FloorId, &m.Code, &m.Name, &m.Notes, &m.IsActive, &m.UpdatedAt} }
+func (m *Room) Pointers() []any { return []any{&m.RoomType, &m.Cells, &m.Id, &m.TenantId, &m.FloorId, &m.Code, &m.Name, &m.Notes, &m.IsActive, &m.UpdatedAt} }
 
 func (m *Room) IsNil() bool { return m == nil }
 
 func (m *Room) EncodeFields(w model.FieldWriter) {
+	w.String("room_type", m.RoomType)
+	w.String("cells", m.Cells)
 	if m.Id != "" { w.String("id", m.Id) }
 	w.String("tenant_id", m.TenantId)
 	w.String("floor_id", m.FloorId)
@@ -114,6 +138,8 @@ func (m *Room) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *Room) DecodeFields(r model.FieldReader) {
+	if v, ok := r.String("room_type"); ok { m.RoomType = v }
+	if v, ok := r.String("cells"); ok { m.Cells = v }
 	if v, ok := r.String("id"); ok { m.Id = v }
 	if v, ok := r.String("tenant_id"); ok { m.TenantId = v }
 	if v, ok := r.String("floor_id"); ok { m.FloorId = v }
@@ -138,6 +164,8 @@ func (m *Room) Validate(action byte) error {
 }
 
 var Room_ = struct {
+	RoomType string
+	Cells string
 	Id string
 	TenantId string
 	FloorId string
@@ -147,6 +175,8 @@ var Room_ = struct {
 	IsActive string
 	UpdatedAt string
 }{
+	RoomType: "room_type",
+	Cells: "cells",
 	Id: "id",
 	TenantId: "tenant_id",
 	FloorId: "floor_id",
@@ -176,8 +206,109 @@ func ReadAllRoom(qb *orm.QB) (RoomList, error) {
 
 func (m *Room) SchemaExt() []model.FieldExt {
 	return []model.FieldExt{
-		{Field: RoomModel.Fields[2], Ref: "floor", RefColumn: "id", OnDelete: ""},
+		{Field: RoomModel.Fields[4], Ref: "floor", RefColumn: "id", OnDelete: ""},
 	}
+}
+
+type RoomArtifact struct {
+	Id string
+	TenantId string
+	RoomId string
+	Kind string
+	Code string
+	Cell string
+	Status string
+	Reason string
+	NextMaintenance string
+	Items string
+}
+
+func (m *RoomArtifact) ModelName() string { return "room_artifact" }
+
+func (m *RoomArtifact) Schema() []model.Field { return RoomArtifactModel.Fields }
+
+func (m *RoomArtifact) Pointers() []any { return []any{&m.Id, &m.TenantId, &m.RoomId, &m.Kind, &m.Code, &m.Cell, &m.Status, &m.Reason, &m.NextMaintenance, &m.Items} }
+
+func (m *RoomArtifact) IsNil() bool { return m == nil }
+
+func (m *RoomArtifact) EncodeFields(w model.FieldWriter) {
+	if m.Id != "" { w.String("id", m.Id) }
+	w.String("tenant_id", m.TenantId)
+	w.String("room_id", m.RoomId)
+	w.String("kind", m.Kind)
+	w.String("code", m.Code)
+	w.String("cell", m.Cell)
+	w.String("status", m.Status)
+	w.String("reason", m.Reason)
+	w.String("next_maintenance", m.NextMaintenance)
+	w.String("items", m.Items)
+}
+
+func (m *RoomArtifact) DecodeFields(r model.FieldReader) {
+	if v, ok := r.String("id"); ok { m.Id = v }
+	if v, ok := r.String("tenant_id"); ok { m.TenantId = v }
+	if v, ok := r.String("room_id"); ok { m.RoomId = v }
+	if v, ok := r.String("kind"); ok { m.Kind = v }
+	if v, ok := r.String("code"); ok { m.Code = v }
+	if v, ok := r.String("cell"); ok { m.Cell = v }
+	if v, ok := r.String("status"); ok { m.Status = v }
+	if v, ok := r.String("reason"); ok { m.Reason = v }
+	if v, ok := r.String("next_maintenance"); ok { m.NextMaintenance = v }
+	if v, ok := r.String("items"); ok { m.Items = v }
+}
+
+type RoomArtifactList []*RoomArtifact
+
+func (s *RoomArtifactList) Len() int             { return len(*s) }
+func (s *RoomArtifactList) At(i int) model.Fielder { return (*s)[i] }
+func (s *RoomArtifactList) Append() model.Fielder  { v := &RoomArtifact{}; *s = append(*s, v); return v }
+func (s *RoomArtifactList) IsNil() bool          { return s == nil }
+func (s *RoomArtifactList) EncodeFields(_ model.FieldWriter) {}
+func (s *RoomArtifactList) DecodeFields(_ model.FieldReader) {}
+
+func (m *RoomArtifact) Validate(action byte) error {
+	return model.ValidateFields(action, m)
+}
+
+var RoomArtifact_ = struct {
+	Id string
+	TenantId string
+	RoomId string
+	Kind string
+	Code string
+	Cell string
+	Status string
+	Reason string
+	NextMaintenance string
+	Items string
+}{
+	Id: "id",
+	TenantId: "tenant_id",
+	RoomId: "room_id",
+	Kind: "kind",
+	Code: "code",
+	Cell: "cell",
+	Status: "status",
+	Reason: "reason",
+	NextMaintenance: "next_maintenance",
+	Items: "items",
+}
+
+func ReadOneRoomArtifact(qb *orm.QB, model *RoomArtifact) (*RoomArtifact, error) {
+	err := qb.ReadOne()
+	if err != nil {
+		return nil, err
+	}
+	return model, nil
+}
+
+func ReadAllRoomArtifact(qb *orm.QB) (RoomArtifactList, error) {
+	var results RoomArtifactList
+	err := qb.ReadAll(
+		func() model.Model { return &RoomArtifact{} },
+		func(m model.Model) { results = append(results, m.(*RoomArtifact)) },
+	)
+	return results, err
 }
 
 type Equipment struct {

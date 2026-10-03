@@ -22,12 +22,11 @@ require (
 
 require (
 	webtyp.com/color v0.1.2 // indirect
-	webtyp.com/css v0.4.24 // indirect
+	webtyp.com/css v0.4.24
 	webtyp.com/date v0.0.7 // indirect
 	webtyp.com/fmt v1.0.0
 	webtyp.com/font v0.0.5 // indirect
 	webtyp.com/html v0.0.24
-	webtyp.com/icons v0.0.7 // indirect
 	webtyp.com/json v0.5.27 // indirect
 	webtyp.com/view v0.6.10
 )

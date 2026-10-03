@@ -140,3 +140,62 @@ func (m *Module) SetRoomEquipment(tenantID, roomID string, equipmentIDs []string
 		return nil
 	})
 }
+
+func (m *Module) SaveRoomArtifact(a RoomArtifact) (RoomArtifact, error) {
+	if a.TenantId == "" {
+		return RoomArtifact{}, ErrTenantRequired
+	}
+	isNew := a.Id == ""
+	if isNew {
+		a.Id = m.deps.IDs.NewID()
+	}
+
+	if err := model.ValidateFields(byte(model.Create), &a); err != nil {
+		return RoomArtifact{}, &ValidationError{Err: err}
+	}
+
+	if isNew {
+		if err := m.db.Create(&a); err != nil {
+			return RoomArtifact{}, err
+		}
+	} else {
+		if err := m.db.Update(&a, orm.Eq("id", a.Id), orm.Eq("tenant_id", a.TenantId)); err != nil {
+			return RoomArtifact{}, err
+		}
+	}
+
+	return a, nil
+}
+
+func (m *Module) ListRoomArtifacts(tenantID string, roomID string) ([]RoomArtifact, error) {
+	if tenantID == "" {
+		return nil, ErrTenantRequired
+	}
+	qb := m.db.Query(&RoomArtifact{}).
+		Where("tenant_id").Eq(tenantID)
+	if roomID != "" {
+		qb = qb.Where("room_id").Eq(roomID)
+	}
+
+	var res []RoomArtifact
+	err := qb.ReadAll(func() model.Model { return &RoomArtifact{} }, func(row model.Model) {
+		if item, ok := row.(*RoomArtifact); ok {
+			res = append(res, *item)
+		}
+	})
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (m *Module) DeleteRoomArtifact(tenantID, id string) error {
+	if tenantID == "" {
+		return ErrTenantRequired
+	}
+	if id == "" {
+		return ErrNotFound
+	}
+	a := RoomArtifact{Id: id, TenantId: tenantID}
+	return m.db.Delete(&a, orm.Eq("id", id), orm.Eq("tenant_id", tenantID))
+}
