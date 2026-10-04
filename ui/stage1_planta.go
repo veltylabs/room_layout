@@ -1,8 +1,8 @@
 package ui
 
 import (
-	"webtyp.com/components/cellgrid"
 	"webtyp.com/components/stepindicator"
+	"webtyp.com/components/themetoggle"
 	"webtyp.com/dom"
 	"webtyp.com/fmt"
 	"webtyp.com/html"
@@ -33,7 +33,7 @@ func (s *Stage1Planta) Render() *dom.Element {
 		},
 	}
 
-	// 1. Top Header
+	// 1. Top Header with ThemeToggle
 	header := html.Header().Class("rm-header").
 		Child(
 			html.Div().Class("rm-brand").
@@ -42,11 +42,15 @@ func (s *Stage1Planta) Render() *dom.Element {
 					html.Span().Class("rm-brand-sub").Text("Clínica Central"),
 				),
 			stepper,
-			html.Button().Class("btn").
-				Child(html.Span().Text("Guardar")).
-				OnClick(func(dom.Event) {
-					root.SaveAll()
-				}),
+			html.Div().Class("rm-header-actions").
+				Child(
+					&themetoggle.ThemeToggle{},
+					html.Button().Class("btn").
+						Child(html.Span().Text("Guardar")).
+						OnClick(func(dom.Event) {
+							root.SaveAll()
+						}),
+				),
 		)
 
 	// 2. Title and Building Grid controls
@@ -135,7 +139,7 @@ func (s *Stage1Planta) Render() *dom.Element {
 				Child(
 					html.Span().Class("rm-step-tag").Text("Paso 1 de 4"),
 					html.H1().Text("Dibuja el espacio habitable de cada planta"),
-					html.P().Text("Haz clic o arrastra sobre la cuadrícula para habilitar celdas habitables. Si empiezas sobre una habilitada, arrastrar la quita."),
+					html.P().Text("Haz clic sobre la cuadrícula para habilitar o deshabilitar celdas habitables."),
 				),
 			html.Div().Class("rm-title-actions").Child(gridCtrl, dotsNav),
 		)
@@ -154,45 +158,79 @@ func (s *Stage1Planta) Render() *dom.Element {
 		fIdx := i
 		f := &root.Floors[fIdx]
 
-		pct := 0
-		totalCells := root.Cols * root.Rows
-		if totalCells > 0 {
-			pct = (len(f.HabitableCells) * 100) / totalCells
-		}
-
 		cardHeader := html.Div().Class("rm-floor-header").
 			Child(
 				html.Span().Class("rm-floor-badge").Text(fmt.Sprint(f.Position)),
 				html.Input("text").Class("name-input").Attr("value", f.Name).
 					OnChange(func(e dom.Event) {
 						// Inline rename
-						// value updated via DOM input
 					}),
-				html.Span().Class("rm-floor-count").Text(fmt.Sprint(len(f.HabitableCells))+" celdas hab."),
+				html.Span().Class("rm-floor-count").
+					BindTextFunc(func() string {
+						_ = root.VerSig.Get()
+						return fmt.Sprint(len(f.HabitableCells)) + " celdas hab."
+					}),
 			)
 
-		// Grid with cellgrid component
-		grid := &cellgrid.CellGrid{
-			Cols: root.Cols,
-			Rows: root.Rows,
-			IsActive: func(r, c int) bool {
-				return CellInList(f.HabitableCells, FormatCell(r, c))
-			},
-			OnCellClick: func(r, c int) {
-				coord := FormatCell(r, c)
-				if CellInList(f.HabitableCells, coord) {
-					f.HabitableCells = RemoveCell(f.HabitableCells, coord)
-				} else {
-					f.HabitableCells = AddCell(f.HabitableCells, coord)
-				}
-				root.Refresh()
-			},
+		// Grid element with letter headers and row numbers
+		gridEl := html.Div().Class("grid").
+			Attr("style", fmt.Sprintf("display: grid; grid-template-columns: 24px repeat(%d, minmax(22px, 1fr)); gap: 2px; padding: 10px; background: var(--color-background); border: 1px solid var(--color-outline); border-radius: 12px; overflow-x: auto;", root.Cols))
+
+		// Column headers
+		gridEl.Child(html.Span()) // Corner
+		for c := 0; c < root.Cols; c++ {
+			gridEl.Child(html.Span().Class("lbl-col").
+				Attr("style", "font-size: 11px; font-weight: 700; color: var(--color-muted); text-align: center; height: 20px; display: flex; align-items: center; justify-content: center;").
+				Text(ColName(c)))
+		}
+
+		for r := 0; r < root.Rows; r++ {
+			rowIdx := r
+			gridEl.Child(html.Span().Class("lbl-row").
+				Attr("style", "font-size: 11px; font-weight: 700; color: var(--color-muted); display: flex; align-items: center; justify-content: center;").
+				Text(fmt.Sprint(rowIdx + 1)))
+
+			for c := 0; c < root.Cols; c++ {
+				colIdx := c
+				coord := FormatCell(rowIdx, colIdx)
+
+				cellBtn := html.Button().Class("cell").
+					Attr("type", "button").
+					Attr("title", coord)
+
+				cellBtn.BindAttrFunc("style", func() string {
+					_ = root.VerSig.Get()
+					if CellInList(f.HabitableCells, coord) {
+						return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-primary); background: var(--color-primary); color: #ffffff; border-radius: 4px; cursor: pointer; box-shadow: 0 0 3px var(--color-primary);"
+					}
+					return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1px solid var(--color-outline); background: var(--color-surface); cursor: pointer; border-radius: 4px;"
+				})
+
+				cellBtn.OnClick(func(dom.Event) {
+					if CellInList(f.HabitableCells, coord) {
+						f.HabitableCells = RemoveCell(f.HabitableCells, coord)
+					} else {
+						f.HabitableCells = AddCell(f.HabitableCells, coord)
+					}
+					root.Refresh()
+				})
+
+				gridEl.Child(cellBtn)
+			}
 		}
 
 		cardFooter := html.Div().Class("rm-floor-footer").
 			Child(
 				html.Span().Class("rm-floor-stat").
-					Text("Habitable: "+fmt.Sprint(pct)+"% de la planta"),
+					BindTextFunc(func() string {
+						_ = root.VerSig.Get()
+						total := root.Cols * root.Rows
+						pct := 0
+						if total > 0 {
+							pct = (len(f.HabitableCells) * 100) / total
+						}
+						return "Habitable: " + fmt.Sprint(pct) + "% de la planta"
+					}),
 				html.Button().Class("btn", "btn-sm").Text("Limpiar").
 					OnClick(func(dom.Event) {
 						f.HabitableCells = nil
@@ -201,7 +239,7 @@ func (s *Stage1Planta) Render() *dom.Element {
 			)
 
 		floorCard := html.Article().Class("floor").
-			Child(cardHeader, grid, cardFooter)
+			Child(cardHeader, gridEl, cardFooter)
 
 		slider.Child(floorCard)
 	}
@@ -218,15 +256,17 @@ func (s *Stage1Planta) Render() *dom.Element {
 	slider.Child(addFloorCard)
 
 	// 5. Total count summary & Footer
-	totalHabitable := 0
-	for _, fl := range root.Floors {
-		totalHabitable += len(fl.HabitableCells)
-	}
-	summaryText := fmt.Sprint(len(root.Floors)) + " plantas configuradas · " + fmt.Sprint(totalHabitable) + " celdas habitables en total"
-
 	footer := html.Footer().Class("rm-footer").
 		Child(
-			html.Span().Class("rm-footer-summary").Text(summaryText),
+			html.Span().Class("rm-footer-summary").
+				BindTextFunc(func() string {
+					_ = root.VerSig.Get()
+					totalHabitable := 0
+					for _, fl := range root.Floors {
+						totalHabitable += len(fl.HabitableCells)
+					}
+					return fmt.Sprint(len(root.Floors)) + " plantas configuradas · " + fmt.Sprint(totalHabitable) + " celdas habitables en total"
+				}),
 			html.Button().Class("btn", "btn-primary").
 				Child(html.Span().Text("Siguiente: Espacios →")).
 				OnClick(func(dom.Event) {

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"webtyp.com/components/segmentedcontrol"
+	"webtyp.com/components/themetoggle"
 	"webtyp.com/dom"
 	"webtyp.com/fmt"
 	"webtyp.com/html"
@@ -69,7 +70,11 @@ func (s *Stage4Operacion) Render() *dom.Element {
 					html.Span().Class("rm-brand-sub").Text("Clínica Central"),
 				),
 			modeSeg,
-			configBtn,
+			html.Div().Class("rm-header-actions").
+				Child(
+					&themetoggle.ThemeToggle{},
+					configBtn,
+				),
 		)
 
 	// Toolbar
@@ -170,38 +175,51 @@ func (s *Stage4Operacion) Render() *dom.Element {
 			)
 
 		gridEl := html.Div().Class("grid").
-			Attr("style", fmt.Sprintf("display: grid; grid-template-columns: repeat(%d, 1fr); grid-template-rows: repeat(%d, 1fr);", root.Cols, root.Rows))
+			Attr("style", fmt.Sprintf("display: grid; grid-template-columns: 24px repeat(%d, minmax(22px, 1fr)); gap: 2px; padding: 10px; background: var(--color-background); border: 1px solid var(--color-outline); border-radius: 12px; overflow-x: auto;", root.Cols))
+
+		// Column headers
+		gridEl.Child(html.Span())
+		for c := 0; c < root.Cols; c++ {
+			gridEl.Child(html.Span().Class("lbl-col").
+				Attr("style", "font-size: 11px; font-weight: 700; color: var(--color-muted); text-align: center; height: 20px; display: flex; align-items: center; justify-content: center;").
+				Text(ColName(c)))
+		}
 
 		for r := 0; r < root.Rows; r++ {
+			rowIdx := r
+			gridEl.Child(html.Span().Class("lbl-row").
+				Attr("style", "font-size: 11px; font-weight: 700; color: var(--color-muted); display: flex; align-items: center; justify-content: center;").
+				Text(fmt.Sprint(rowIdx + 1)))
+
 			for c := 0; c < root.Cols; c++ {
-				coord := FormatCell(r, c)
-				cellEl := html.Div().Class("cell").
-					Attr("style", fmt.Sprintf("grid-row: %d; grid-column: %d;", r+1, c+1))
+				colIdx := c
+				coord := FormatCell(rowIdx, colIdx)
+				cellEl := html.Div().Class("cell")
 
 				if !CellInList(fl.HabitableCells, coord) {
-					cellEl.Class("cell", "non-habitable")
+					cellEl.Attr("style", "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1px dashed var(--color-outline); opacity: 0.12; pointer-events: none; border-radius: 4px;")
 					gridEl.Child(cellEl)
 					continue
 				}
 
 				room := FindRoomByCell(root.Rooms, fl.ID, coord)
 				if room == nil {
-					cellEl.Class("cell", "free")
+					cellEl.Attr("style", "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px dashed var(--color-outline); background: var(--color-surface); border-radius: 4px;")
 					gridEl.Child(cellEl)
 					continue
 				}
 
 				// Room cell
-				cellEl.Class("cell", "g-box")
+				cellStyle := "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-primary); background: var(--color-primary); opacity: 0.85; border-radius: 4px; display: flex; align-items: center; justify-content: center; position: relative;"
 				if room.RoomType == RoomTypeShared {
-					cellEl.Class("cell", "g-shared")
+					cellStyle = "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-muted); background: var(--color-muted); opacity: 0.75; border-radius: 4px; display: flex; align-items: center; justify-content: center; position: relative;"
 				} else if room.RoomType == RoomTypeStore {
-					cellEl.Class("cell", "g-store")
+					cellStyle = "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-accent, #e8a33d); background: var(--color-accent, #e8a33d); opacity: 0.85; border-radius: 4px; display: flex; align-items: center; justify-content: center; position: relative;"
 				}
+				cellEl.Attr("style", cellStyle)
 
-				// Only render overlay on the top-left cell of the room
 				minCol, minRow, _, _ := BoundingBox(room.Cells)
-				if r == minRow && c == minCol {
+				if rowIdx == minRow && colIdx == minCol {
 					ov := s.renderRoomOverlay(room, fl.ID)
 					cellEl.Child(ov)
 				}

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"webtyp.com/components/stepindicator"
+	"webtyp.com/components/themetoggle"
 	"webtyp.com/dom"
 	"webtyp.com/fmt"
 	"webtyp.com/html"
@@ -52,24 +53,28 @@ func (s *Stage2Espacios) Render() *dom.Element {
 					html.Span().Class("rm-brand-sub").Text("Clínica Central"),
 				),
 			stepper,
-			html.Button().Class("btn").
-				Child(html.Span().Text("Guardar")).
-				OnClick(func(dom.Event) {
-					root.SaveAll()
-				}),
+			html.Div().Class("rm-header-actions").
+				Child(
+					&themetoggle.ThemeToggle{},
+					html.Button().Class("btn").
+						Child(html.Span().Text("Guardar")).
+						OnClick(func(dom.Event) {
+							root.SaveAll()
+						}),
+				),
 		)
 
 	// Legend
 	legend := html.Div().Class("rm-legend").
 		Child(
 			html.Span().Class("rm-legend-item").
-				Child(html.Span().Class("sw", "sw-box"), html.Span().Text("Atención")),
+				Child(html.Span().Class("sw", "sw-box").Attr("style", "display:inline-block;width:14px;height:14px;border-radius:3px;background:var(--color-primary);margin-right:6px;"), html.Span().Text("Atención")),
 			html.Span().Class("rm-legend-item").
-				Child(html.Span().Class("sw", "sw-shared"), html.Span().Text("Compartido")),
+				Child(html.Span().Class("sw", "sw-shared").Attr("style", "display:inline-block;width:14px;height:14px;border-radius:3px;background:var(--color-muted);margin-right:6px;"), html.Span().Text("Compartido")),
 			html.Span().Class("rm-legend-item").
-				Child(html.Span().Class("sw", "sw-store"), html.Span().Text("Soporte")),
+				Child(html.Span().Class("sw", "sw-store").Attr("style", "display:inline-block;width:14px;height:14px;border-radius:3px;background:var(--color-accent, #e8a33d);margin-right:6px;"), html.Span().Text("Soporte")),
 			html.Span().Class("rm-legend-item").
-				Child(html.Span().Class("sw", "sw-free"), html.Span().Text("Libre")),
+				Child(html.Span().Class("sw", "sw-free").Attr("style", "display:inline-block;width:14px;height:14px;border-radius:3px;border:1px dashed var(--color-outline);background:var(--color-surface);margin-right:6px;"), html.Span().Text("Libre")),
 		)
 
 	topBar := html.Section().Class("rm-section-title").
@@ -93,7 +98,10 @@ func (s *Stage2Espacios) Render() *dom.Element {
 		banner := html.Div().Class("rm-banner-draft").
 			Child(
 				html.Span().Class("rm-draft-title").
-					Text("✎ Marcando «"+s.DraftName+"» ("+fmt.Sprint(len(s.DraftCells))+" celdas seleccionadas)"),
+					BindTextFunc(func() string {
+						_ = root.VerSig.Get()
+						return "✎ Marcando «" + s.DraftName + "» (" + fmt.Sprint(len(s.DraftCells)) + " celdas seleccionadas)"
+					}),
 				html.Div().Class("rm-draft-actions").
 					Child(
 						html.Button().Class("btn", "btn-primary", "btn-sm").
@@ -145,47 +153,67 @@ func (s *Stage2Espacios) Render() *dom.Element {
 			Child(
 				html.Span().Class("rm-floor-badge").Text(fmt.Sprint(fl.Position)),
 				html.Span().Class("name-input").Text(fl.Name),
-				html.Span().Class("rm-floor-count").Text(fmt.Sprint(len(fl.HabitableCells))+" hab."),
+				html.Span().Class("rm-floor-count").
+					BindTextFunc(func() string {
+						_ = root.VerSig.Get()
+						return fmt.Sprint(len(fl.HabitableCells)) + " hab."
+					}),
 			)
 
 		// Grid: renders only habitable cells with room colors
 		gridEl := html.Div().Class("grid").
-			Attr("style", fmt.Sprintf("display: grid; grid-template-columns: repeat(%d, 1fr); grid-template-rows: repeat(%d, 1fr);", root.Cols, root.Rows))
+			Attr("style", fmt.Sprintf("display: grid; grid-template-columns: 24px repeat(%d, minmax(22px, 1fr)); gap: 2px; padding: 10px; background: var(--color-background); border: 1px solid var(--color-outline); border-radius: 12px; overflow-x: auto;", root.Cols))
+
+		// Column headers
+		gridEl.Child(html.Span())
+		for c := 0; c < root.Cols; c++ {
+			gridEl.Child(html.Span().Class("lbl-col").
+				Attr("style", "font-size: 11px; font-weight: 700; color: var(--color-muted); text-align: center; height: 20px; display: flex; align-items: center; justify-content: center;").
+				Text(ColName(c)))
+		}
 
 		for r := 0; r < root.Rows; r++ {
+			rowIdx := r
+			gridEl.Child(html.Span().Class("lbl-row").
+				Attr("style", "font-size: 11px; font-weight: 700; color: var(--color-muted); display: flex; align-items: center; justify-content: center;").
+				Text(fmt.Sprint(rowIdx + 1)))
+
 			for c := 0; c < root.Cols; c++ {
-				coord := FormatCell(r, c)
-				cellEl := html.Div().Class("cell").
-					Attr("style", fmt.Sprintf("grid-row: %d; grid-column: %d;", r+1, c+1))
+				colIdx := c
+				coord := FormatCell(rowIdx, colIdx)
 
-				if !CellInList(fl.HabitableCells, coord) {
-					// Non-habitable cell: invisible
-					cellEl.Class("cell", "non-habitable")
-					gridEl.Child(cellEl)
-					continue
-				}
+				cellBtn := html.Button().Class("cell").
+					Attr("type", "button").
+					Attr("title", coord)
 
-				// Habitable cell: check if in draft, existing room, or free
-				if s.IsDrafting && isCurrentDraft && CellInList(s.DraftCells, coord) {
-					cellEl.Class("cell", "draft")
-				} else if room := FindRoomByCell(root.Rooms, fl.ID, coord); room != nil {
-					switch room.RoomType {
-					case RoomTypeShared:
-						cellEl.Class("cell", "t-shared")
-					case RoomTypeStore:
-						cellEl.Class("cell", "t-store")
-					default:
-						cellEl.Class("cell", "t-box")
+				cellBtn.BindAttrFunc("style", func() string {
+					_ = root.VerSig.Get()
+					if !CellInList(fl.HabitableCells, coord) {
+						return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1px dashed var(--color-outline); opacity: 0.12; pointer-events: none; border-radius: 4px;"
 					}
-					cellEl.Attr("title", room.Name)
-				} else {
-					cellEl.Class("cell", "free")
-					if s.IsDrafting && isCurrentDraft {
-						cellEl.Class("cell", "free", "paint")
-					}
-				}
 
-				cellEl.OnClick(func(dom.Event) {
+					// Habitable cell
+					if s.IsDrafting && isCurrentDraft && CellInList(s.DraftCells, coord) {
+						return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 2px solid #ffffff; background: var(--color-primary); color: #ffffff; border-radius: 4px; cursor: pointer; box-shadow: 0 0 5px var(--color-primary);"
+					}
+
+					room := FindRoomByCell(root.Rooms, fl.ID, coord)
+					if room != nil {
+						switch room.RoomType {
+						case RoomTypeShared:
+							return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-muted); background: var(--color-muted); opacity: 0.75; color: #ffffff; border-radius: 4px; cursor: pointer;"
+						case RoomTypeStore:
+							return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-accent, #e8a33d); background: var(--color-accent, #e8a33d); opacity: 0.85; color: #ffffff; border-radius: 4px; cursor: pointer;"
+						default:
+							return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-primary); background: var(--color-primary); opacity: 0.85; color: #ffffff; border-radius: 4px; cursor: pointer;"
+						}
+					}
+
+					// Free habitable cell
+					return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px dashed var(--color-outline); background: var(--color-surface); cursor: pointer; border-radius: 4px;"
+				})
+
+				cellBtn.OnClick(func(dom.Event) {
 					if s.IsDrafting && isCurrentDraft {
 						// Overlap guard: cannot select if in another room
 						if otherRoom := FindRoomByCell(root.Rooms, fl.ID, coord); otherRoom != nil {
@@ -200,7 +228,7 @@ func (s *Stage2Espacios) Render() *dom.Element {
 					}
 				})
 
-				gridEl.Child(cellEl)
+				gridEl.Child(cellBtn)
 			}
 		}
 
@@ -280,12 +308,13 @@ func (s *Stage2Espacios) Render() *dom.Element {
 						),
 				),
 			html.Button().Class("btn", "btn-primary").
-				Text(func() string {
+				BindTextFunc(func() string {
+					_ = root.VerSig.Get()
 					if s.IsDrafting {
 						return "✓ Guardar espacio (" + fmt.Sprint(len(s.DraftCells)) + " celdas)"
 					}
 					return "✎ Marcar en la planta"
-				}()).
+				}).
 				OnClick(func(dom.Event) {
 					if !s.IsDrafting {
 						s.IsDrafting = true
@@ -311,22 +340,30 @@ func (s *Stage2Espacios) Render() *dom.Element {
 
 	// Panel 2: Espacios creados
 	listPanel := html.Div().Class("panel").
-		Child(html.Span().Class("rm-panel-title").Text("Espacios (" + fmt.Sprint(len(root.Rooms)) + ")"))
+		Child(html.Span().Class("rm-panel-title").
+			BindTextFunc(func() string {
+				_ = root.VerSig.Get()
+				return "Espacios (" + fmt.Sprint(len(root.Rooms)) + ")"
+			}))
 
 	for rIdx := range root.Rooms {
 		rm := &root.Rooms[rIdx]
 		idx := rIdx
 
 		swCls := "sw-box"
+		swColor := "var(--color-primary)"
 		if rm.RoomType == RoomTypeShared {
 			swCls = "sw-shared"
+			swColor = "var(--color-muted)"
 		} else if rm.RoomType == RoomTypeStore {
 			swCls = "sw-store"
+			swColor = "var(--color-accent, #e8a33d)"
 		}
 
 		item := html.Div().Class("room-item").
 			Child(
-				html.Span().Class("sw", swCls),
+				html.Span().Class("sw", swCls).
+					Attr("style", fmt.Sprintf("display:inline-block;width:14px;height:14px;border-radius:3px;background:%s;margin-right:8px;flex:none;", swColor)),
 				html.Div().Class("rm-room-info").
 					Child(
 						html.Span().Class("rm-room-name").Text(rm.Name),
@@ -334,7 +371,6 @@ func (s *Stage2Espacios) Render() *dom.Element {
 					),
 				html.Button().Class("btn", "btn-sm", "btn-danger").Text("✕").
 					OnClick(func(dom.Event) {
-						// Delete room
 						var updated []RoomData
 						for j, room := range root.Rooms {
 							if j != idx {
@@ -352,19 +388,21 @@ func (s *Stage2Espacios) Render() *dom.Element {
 	columns.Child(content, aside)
 
 	// Footer
-	totalOccupied := 0
-	for _, rm := range root.Rooms {
-		totalOccupied += len(rm.Cells)
-	}
-	summaryText := fmt.Sprint(len(root.Rooms)) + " espacios definidos · " + fmt.Sprint(totalOccupied) + " celdas ocupadas"
-
 	footer := html.Footer().Class("rm-footer").
 		Child(
 			html.Button().Class("btn").Text("← Planta").
 				OnClick(func(dom.Event) {
 					root.GoToStage(0)
 				}),
-			html.Span().Class("rm-footer-summary").Text(summaryText),
+			html.Span().Class("rm-footer-summary").
+				BindTextFunc(func() string {
+					_ = root.VerSig.Get()
+					totalOccupied := 0
+					for _, rm := range root.Rooms {
+						totalOccupied += len(rm.Cells)
+					}
+					return fmt.Sprint(len(root.Rooms)) + " espacios definidos · " + fmt.Sprint(totalOccupied) + " celdas ocupadas"
+				}),
 			html.Button().Class("btn", "btn-primary").
 				Child(html.Span().Text("Siguiente: Artefactos →")).
 				OnClick(func(dom.Event) {

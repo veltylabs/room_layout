@@ -37,6 +37,9 @@ type RootView struct {
 	ActiveStageSig *dom.SignalString
 	ActiveFloor    int
 
+	verCount       int
+	VerSig         *dom.SignalString
+
 	Cols       int
 	Rows       int
 	GridLocked bool
@@ -60,6 +63,9 @@ func (r *RootView) Init(_ dom.Ctx) {
 	if r.ActiveStageSig == nil {
 		r.ActiveStageSig = dom.NewString(fmt.Sprint(r.ActiveStage))
 	}
+	if r.VerSig == nil {
+		r.VerSig = dom.NewString("0")
+	}
 	r.stage1 = &Stage1Planta{Root: r}
 	r.stage2 = &Stage2Espacios{Root: r}
 	r.stage3 = &Stage3Artefactos{Root: r}
@@ -81,6 +87,10 @@ func (r *RootView) GoToStage(idx int) {
 }
 
 func (r *RootView) Refresh() {
+	r.verCount++
+	if r.VerSig != nil {
+		r.VerSig.Set(fmt.Sprint(r.verCount))
+	}
 	if r.ActiveStageSig != nil {
 		r.ActiveStageSig.Set(fmt.Sprint(r.ActiveStage))
 	}
