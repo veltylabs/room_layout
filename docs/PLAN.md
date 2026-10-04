@@ -3,8 +3,9 @@ PLAN: "feat(room_layout): 4-stage interactive room map dashboard and data models
 TAG: v0.3.0
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 6576315291210265492
+PR: https://github.com/veltylabs/room_layout/pull/3
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
