@@ -88,6 +88,12 @@ func (r *RootView) GoToStage(idx int) {
 
 func (r *RootView) Refresh() {
 	r.verCount++
+	if r.stage1 != nil {
+		r.stage1.RebuildFloors()
+	}
+	if r.stage2 != nil {
+		r.stage2.RebuildFloors()
+	}
 	if r.VerSig != nil {
 		r.VerSig.Set(fmt.Sprint(r.verCount))
 	}

@@ -12,8 +12,9 @@ type Stage1Planta struct {
 	dom.Element
 	Root *RootView
 
-	isDragging bool
-	dragMode   bool
+	isDragging  bool
+	dragMode    bool
+	sliderNodes *dom.SignalNodes
 }
 
 func (s *Stage1Planta) Render() *dom.Element {
@@ -59,43 +60,89 @@ func (s *Stage1Planta) Render() *dom.Element {
 	// 2. Title and Building Grid controls
 	colInput := html.Input("number").Class("num-input").
 		Attr("min", "6").Attr("max", "40").
-		Attr("value", fmt.Sprint(root.Cols))
-	if root.GridLocked {
-		colInput.Attr("disabled", "disabled")
-	}
-	colInput.OnChange(func(e dom.Event) {
-		val := colInput.String()
-		if v, _, ok := ParseCell("A" + val); ok && v > 4 && v <= 40 {
-			root.Cols = v
-			root.Refresh()
-		}
-	})
+		BindAttrFunc("value", func() string {
+			_ = root.VerSig.Get()
+			return fmt.Sprint(root.Cols)
+		}).
+		BindAttrFunc("style", func() string {
+			_ = root.VerSig.Get()
+			if root.GridLocked {
+				return "pointer-events: none; opacity: 0.6; cursor: not-allowed; width: 50px; text-align: center; border-radius: 4px; border: 1px solid var(--color-outline); background: var(--color-surface);"
+			}
+			return "pointer-events: auto; opacity: 1; cursor: text; width: 50px; text-align: center; border-radius: 4px; border: 1.5px solid var(--color-primary); background: var(--color-surface); font-weight: 700;"
+		}).
+		OnInput(func(e dom.Event) {
+			if root.GridLocked {
+				return
+			}
+			v := ParsePositiveInt(e.TargetValue())
+			if v >= 6 && v <= 40 && v != root.Cols {
+				root.Cols = v
+				root.Refresh()
+			}
+		}).
+		OnChange(func(e dom.Event) {
+			if root.GridLocked {
+				return
+			}
+			v := ParsePositiveInt(e.TargetValue())
+			if v >= 6 && v <= 40 && v != root.Cols {
+				root.Cols = v
+				root.Refresh()
+			}
+		})
 
 	rowInput := html.Input("number").Class("num-input").
 		Attr("min", "4").Attr("max", "40").
-		Attr("value", fmt.Sprint(root.Rows))
-	if root.GridLocked {
-		rowInput.Attr("disabled", "disabled")
-	}
-	rowInput.OnChange(func(e dom.Event) {
-		val := rowInput.String()
-		if v, _, ok := ParseCell("A" + val); ok && v > 2 && v <= 40 {
-			root.Rows = v
-			root.Refresh()
-		}
-	})
+		BindAttrFunc("value", func() string {
+			_ = root.VerSig.Get()
+			return fmt.Sprint(root.Rows)
+		}).
+		BindAttrFunc("style", func() string {
+			_ = root.VerSig.Get()
+			if root.GridLocked {
+				return "pointer-events: none; opacity: 0.6; cursor: not-allowed; width: 50px; text-align: center; border-radius: 4px; border: 1px solid var(--color-outline); background: var(--color-surface);"
+			}
+			return "pointer-events: auto; opacity: 1; cursor: text; width: 50px; text-align: center; border-radius: 4px; border: 1.5px solid var(--color-primary); background: var(--color-surface); font-weight: 700;"
+		}).
+		OnInput(func(e dom.Event) {
+			if root.GridLocked {
+				return
+			}
+			v := ParsePositiveInt(e.TargetValue())
+			if v >= 4 && v <= 40 && v != root.Rows {
+				root.Rows = v
+				root.Refresh()
+			}
+		}).
+		OnChange(func(e dom.Event) {
+			if root.GridLocked {
+				return
+			}
+			v := ParsePositiveInt(e.TargetValue())
+			if v >= 4 && v <= 40 && v != root.Rows {
+				root.Rows = v
+				root.Refresh()
+			}
+		})
+
+	lockIcon := html.Span().Class("icon-padlock").
+		BindTextFunc(func() string {
+			_ = root.VerSig.Get()
+			if root.GridLocked {
+				return "🔒"
+			}
+			return "🔓"
+		})
 
 	lockBtn := html.Button().Class("icon-btn").
+		Attr("type", "button").
 		Attr("title", "Bloquear/Desbloquear cuadrícula").
+		Child(lockIcon).
 		OnClick(func(dom.Event) {
 			root.GridLocked = !root.GridLocked
 			root.Refresh()
 		})
-	if root.GridLocked {
-		lockBtn.Child(html.Span().Class("icon-padlock").Text("🔒"))
-	} else {
-		lockBtn.Child(html.Span().Class("icon-padlock-unlocked").Text("🔓"))
-	}
 
 	gridCtrl := html.Div().Class("rm-grid-control").
 		Child(
@@ -124,14 +171,15 @@ func (s *Stage1Planta) Render() *dom.Element {
 	dotsNav.Child(prevBtn)
 	for i := range root.Floors {
 		idx := i
-		dot := html.Button().Class("dot")
-		if idx == activeFloor {
-			dot.Class("dot", "active")
-		}
-		dot.OnClick(func(dom.Event) {
-			root.ActiveFloor = idx
-			root.Refresh()
-		})
+		dot := html.Button().Class("dot").
+			BindClassFunc("active", func() bool {
+				_ = root.VerSig.Get()
+				return root.ActiveFloor == idx
+			}).
+			OnClick(func(dom.Event) {
+				root.ActiveFloor = idx
+				root.Refresh()
+			})
 		dotsNav.Child(dot)
 	}
 	dotsNav.Child(nextBtn)
@@ -148,14 +196,54 @@ func (s *Stage1Planta) Render() *dom.Element {
 		)
 
 	// 3. Unlocked Warning Banner
-	var warningBanner *dom.Element
-	if !root.GridLocked {
-		warningBanner = html.Div().Class("rm-banner-warn").
-			Text("⚠️ Cuadrícula desbloqueada. El tamaño se comparte entre todas las plantas y define las coordenadas (A1, B2…) de cada espacio. Modifícalo con precaución.")
-	}
+	warningBanner := html.Div().Class("rm-banner-warn").
+		BindAttrFunc("style", func() string {
+			_ = root.VerSig.Get()
+			if root.GridLocked {
+				return "display: none;"
+			}
+			return "background: rgba(232, 163, 61, 0.15); border: 1px solid var(--color-accent, #e8a33d); color: var(--color-on-surface); padding: 8px 14px; border-radius: 8px; font-size: 13px; margin: 8px 0;"
+		}).
+		Text("⚠️ Cuadrícula desbloqueada. El tamaño se comparte entre todas las plantas y define las coordenadas (A1, B2…) de cada espacio. Modifícalo con precaución.")
 
 	// 4. Floor Slider
-	slider := html.Div().Class("rm-slider")
+	s.sliderNodes = dom.NewNodes(s.buildFloorCards()...)
+	slider := html.Div().Class("rm-slider").BindChildren(s.sliderNodes)
+
+	// 5. Total count summary & Footer
+	footer := html.Footer().Class("rm-footer").
+		Child(
+			html.Span().Class("rm-footer-summary").
+				BindTextFunc(func() string {
+					_ = root.VerSig.Get()
+					totalHabitable := 0
+					for _, fl := range root.Floors {
+						totalHabitable += len(fl.HabitableCells)
+					}
+					return fmt.Sprint(len(root.Floors)) + " plantas configuradas · " + fmt.Sprint(totalHabitable) + " celdas habitables en total"
+				}),
+			html.Button().Class("btn", "btn-primary").
+				Child(html.Span().Text("Siguiente: Espacios →")).
+				OnClick(func(dom.Event) {
+					root.GoToStage(1)
+				}),
+		)
+
+	layout := html.Div().Class("rm-stage")
+	layout.Child(header, topBar, warningBanner, slider, footer)
+
+	return layout
+}
+
+func (s *Stage1Planta) RebuildFloors() {
+	if s.sliderNodes != nil {
+		s.sliderNodes.Set(s.buildFloorCards())
+	}
+}
+
+func (s *Stage1Planta) buildFloorCards() []*dom.Element {
+	root := s.Root
+	var cards []*dom.Element
 
 	for i := range root.Floors {
 		fIdx := i
@@ -166,7 +254,7 @@ func (s *Stage1Planta) Render() *dom.Element {
 				html.Span().Class("rm-floor-badge").Text(fmt.Sprint(f.Position)),
 				html.Input("text").Class("name-input").Attr("value", f.Name).
 					OnChange(func(e dom.Event) {
-						// Inline rename
+						f.Name = e.TargetValue()
 					}),
 				html.Span().Class("rm-floor-count").
 					BindTextFunc(func() string {
@@ -267,13 +355,26 @@ func (s *Stage1Planta) Render() *dom.Element {
 			)
 
 		floorCard := html.Article().Class("floor").
+			Key("floor-"+f.ID).
+			BindClassFunc("active", func() bool {
+				_ = root.VerSig.Get()
+				return root.ActiveFloor == fIdx
+			}).
+			BindAttrFunc("style", func() string {
+				_ = root.VerSig.Get()
+				if root.ActiveFloor == fIdx {
+					return "display: flex; flex-direction: column; gap: 8px;"
+				}
+				return "display: none;"
+			}).
 			Child(cardHeader, gridEl, cardFooter)
 
-		slider.Child(floorCard)
+		cards = append(cards, floorCard)
 	}
 
 	// "+ Agregar planta" Card
 	addFloorCard := html.Button().Class("floor-add").
+		Key("floor-add-btn").
 		Child(
 			html.Span().Class("icon-add").Text("+"),
 			html.Span().Text("Agregar planta"),
@@ -281,33 +382,7 @@ func (s *Stage1Planta) Render() *dom.Element {
 		OnClick(func(dom.Event) {
 			root.AddFloor("Piso " + fmt.Sprint(len(root.Floors)+1))
 		})
-	slider.Child(addFloorCard)
+	cards = append(cards, addFloorCard)
 
-	// 5. Total count summary & Footer
-	footer := html.Footer().Class("rm-footer").
-		Child(
-			html.Span().Class("rm-footer-summary").
-				BindTextFunc(func() string {
-					_ = root.VerSig.Get()
-					totalHabitable := 0
-					for _, fl := range root.Floors {
-						totalHabitable += len(fl.HabitableCells)
-					}
-					return fmt.Sprint(len(root.Floors)) + " plantas configuradas · " + fmt.Sprint(totalHabitable) + " celdas habitables en total"
-				}),
-			html.Button().Class("btn", "btn-primary").
-				Child(html.Span().Text("Siguiente: Espacios →")).
-				OnClick(func(dom.Event) {
-					root.GoToStage(1)
-				}),
-		)
-
-	layout := html.Div().Class("rm-stage")
-	layout.Child(header, topBar)
-	if warningBanner != nil {
-		layout.Child(warningBanner)
-	}
-	layout.Child(slider, footer)
-
-	return layout
+	return cards
 }

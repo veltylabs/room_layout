@@ -186,3 +186,43 @@ func TestDragStrokeHelpers(t *testing.T) {
 	}
 }
 
+func TestGridResizeAndLock(t *testing.T) {
+	// 1. Test ParsePositiveInt
+	if ui.ParsePositiveInt("25") != 25 {
+		t.Fatalf("expected 25, got %d", ui.ParsePositiveInt("25"))
+	}
+	if ui.ParsePositiveInt("abc") != 0 {
+		t.Fatalf("expected 0 for invalid string")
+	}
+	if ui.ParsePositiveInt("0") != 0 {
+		t.Fatalf("expected 0")
+	}
+	if ui.ParsePositiveInt("14") != 14 {
+		t.Fatalf("expected 14, got %d", ui.ParsePositiveInt("14"))
+	}
+
+	// 2. Test RootView grid unlock and resize
+	mod, _ := ui.Browser(nil, nil, "tenantA")
+	rootView := mod.View().(*ui.RootView)
+	_ = rootView.Render()
+
+	// Initial default is locked, 20 cols x 14 rows
+	if !rootView.GridLocked {
+		t.Fatalf("expected initial GridLocked=true")
+	}
+	if rootView.Cols != 20 || rootView.Rows != 14 {
+		t.Fatalf("expected 20x14, got %dx%d", rootView.Cols, rootView.Rows)
+	}
+
+	// Toggle lock
+	rootView.GridLocked = false
+	rootView.Cols = 25
+	rootView.Rows = 16
+	rootView.Refresh()
+
+	if rootView.Cols != 25 || rootView.Rows != 16 {
+		t.Fatalf("expected resized to 25x16, got %dx%d", rootView.Cols, rootView.Rows)
+	}
+}
+
+

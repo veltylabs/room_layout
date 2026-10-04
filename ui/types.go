@@ -148,6 +148,18 @@ func ParseCell(cell string) (int, int, bool) {
 	return row - 1, col, true
 }
 
+// ParsePositiveInt parses a positive integer from string without stdlib strconv.
+func ParsePositiveInt(s string) int {
+	n := 0
+	for i := 0; i < len(s); i++ {
+		b := s[i]
+		if b >= '0' && b <= '9' {
+			n = n*10 + int(b-'0')
+		}
+	}
+	return n
+}
+
 // CellInList verifica existencia por búsqueda lineal (sin usar mapa).
 func CellInList(cells []string, target string) bool {
 	for _, c := range cells {
