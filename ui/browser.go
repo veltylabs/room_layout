@@ -40,9 +40,8 @@ type RootView struct {
 	verCount       int
 	VerSig         *dom.SignalString
 
-	Cols       int
-	Rows       int
-	GridLocked bool
+	Cols int
+	Rows int
 
 	Floors    []FloorData
 	Rooms     []RoomData
@@ -88,18 +87,28 @@ func (r *RootView) GoToStage(idx int) {
 
 func (r *RootView) Refresh() {
 	r.verCount++
-	if r.stage1 != nil {
-		r.stage1.RebuildFloors()
-	}
-	if r.stage2 != nil {
-		r.stage2.RebuildFloors()
-	}
 	if r.VerSig != nil {
 		r.VerSig.Set(fmt.Sprint(r.verCount))
 	}
 	if r.ActiveStageSig != nil {
 		r.ActiveStageSig.Set(fmt.Sprint(r.ActiveStage))
 	}
+}
+
+func (r *RootView) RebuildAllFloors() {
+	if r.stage1 != nil {
+		r.stage1.RebuildFloors()
+	}
+	if r.stage2 != nil {
+		r.stage2.RebuildFloors()
+	}
+	if r.stage3 != nil {
+		r.stage3.RebuildFloors()
+	}
+	if r.stage4 != nil {
+		r.stage4.RebuildFloors()
+	}
+	r.Refresh()
 }
 
 func (r *RootView) NewID() string {
@@ -117,7 +126,7 @@ func (r *RootView) AddFloor(name string) {
 	}
 	r.Floors = append(r.Floors, f)
 	r.ActiveFloor = len(r.Floors) - 1
-	r.Refresh()
+	r.RebuildAllFloors()
 }
 
 func (r *RootView) SaveAll() {
@@ -392,7 +401,6 @@ func Browser(caller router.Caller, ids model.IDGenerator, tenantID string, opts 
 		ActiveFloor: 0,
 		Cols:        20,
 		Rows:        14,
-		GridLocked:  true,
 		Floors:      floors,
 		Rooms:       rooms,
 		Artifacts:   artifacts,

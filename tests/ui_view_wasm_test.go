@@ -201,24 +201,20 @@ func TestGridResizeAndLock(t *testing.T) {
 		t.Fatalf("expected 14, got %d", ui.ParsePositiveInt("14"))
 	}
 
-	// 2. Test RootView grid unlock and resize
+	// 2. Test RootView grid resize and RebuildAllFloors
 	mod, _ := ui.Browser(nil, nil, "tenantA")
 	rootView := mod.View().(*ui.RootView)
 	_ = rootView.Render()
 
-	// Initial default is locked, 20 cols x 14 rows
-	if !rootView.GridLocked {
-		t.Fatalf("expected initial GridLocked=true")
-	}
+	// Initial default is 20 cols x 14 rows
 	if rootView.Cols != 20 || rootView.Rows != 14 {
 		t.Fatalf("expected 20x14, got %dx%d", rootView.Cols, rootView.Rows)
 	}
 
-	// Toggle lock
-	rootView.GridLocked = false
+	// Resize dimensions and rebuild floors
 	rootView.Cols = 25
 	rootView.Rows = 16
-	rootView.Refresh()
+	rootView.RebuildAllFloors()
 
 	if rootView.Cols != 25 || rootView.Rows != 16 {
 		t.Fatalf("expected resized to 25x16, got %dx%d", rootView.Cols, rootView.Rows)
