@@ -15,6 +15,7 @@ type Stage3Artefactos struct {
 	IsPlacing          bool
 	PlacingKind        string
 	SelectedArtifactID string
+	sliderNodes        *dom.SignalNodes
 }
 
 func (s *Stage3Artefactos) Render() *dom.Element {
@@ -83,145 +84,8 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 		content.Child(banner)
 	}
 
-	slider := html.Div().Class("rm-slider")
-
-	for i := range root.Floors {
-		fl := &root.Floors[i]
-
-		floorCard := html.Article().Class("floor")
-		fHeader := html.Div().Class("rm-floor-header").
-			Child(
-				html.Span().Class("rm-floor-badge").Text(fmt.Sprint(fl.Position)),
-				html.Span().Class("name-input").Text(fl.Name),
-				html.Span().Class("rm-floor-count").
-					BindTextFunc(func() string {
-						_ = root.VerSig.Get()
-						return fmt.Sprint(len(fl.HabitableCells)) + " hab."
-					}),
-			)
-
-		gridEl := html.Div().Class("grid").
-			Attr("style", fmt.Sprintf("display: grid; grid-template-columns: 24px repeat(%d, minmax(22px, 1fr)); gap: 2px; padding: 10px; background: var(--color-background); border: 1px solid var(--color-outline); border-radius: 12px; overflow-x: auto;", root.Cols))
-
-		// Column headers
-		gridEl.Child(html.Span())
-		for c := 0; c < root.Cols; c++ {
-			gridEl.Child(html.Span().Class("lbl-col").
-				Attr("style", "font-size: 11px; font-weight: 700; color: var(--color-muted); text-align: center; height: 20px; display: flex; align-items: center; justify-content: center;").
-				Text(ColName(c)))
-		}
-
-		for r := 0; r < root.Rows; r++ {
-			rowIdx := r
-			gridEl.Child(html.Span().Class("lbl-row").
-				Attr("style", "font-size: 11px; font-weight: 700; color: var(--color-muted); display: flex; align-items: center; justify-content: center;").
-				Text(fmt.Sprint(rowIdx + 1)))
-
-			for c := 0; c < root.Cols; c++ {
-				colIdx := c
-				coord := FormatCell(rowIdx, colIdx)
-
-				cellBtn := html.Div().Class("cell")
-
-				cellBtn.BindAttrFunc("style", func() string {
-					_ = root.VerSig.Get()
-					if !CellInList(fl.HabitableCells, coord) {
-						return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1px dashed var(--color-outline); opacity: 0.12; pointer-events: none; border-radius: 4px;"
-					}
-
-					room := FindRoomByCell(root.Rooms, fl.ID, coord)
-					if room != nil {
-						if s.IsPlacing && FindArtifactByCell(root.Artifacts, fl.ID, coord) == nil {
-							return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 2px dashed var(--color-primary); background: var(--color-selection); cursor: copy; border-radius: 4px; display: flex; align-items: center; justify-content: center;"
-						}
-						switch room.RoomType {
-						case RoomTypeShared:
-							return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-muted); background: var(--color-muted); opacity: 0.75; border-radius: 4px; display: flex; align-items: center; justify-content: center;"
-						case RoomTypeStore:
-							return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-accent, #e8a33d); background: var(--color-accent, #e8a33d); opacity: 0.85; border-radius: 4px; display: flex; align-items: center; justify-content: center;"
-						default:
-							return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-primary); background: var(--color-primary); opacity: 0.85; border-radius: 4px; display: flex; align-items: center; justify-content: center;"
-						}
-					}
-
-					return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px dashed var(--color-outline); background: var(--color-surface); border-radius: 4px; display: flex; align-items: center; justify-content: center;"
-				})
-
-				room := FindRoomByCell(root.Rooms, fl.ID, coord)
-
-				// Check if artifact is placed here
-				art := FindArtifactByCell(root.Artifacts, fl.ID, coord)
-				if art != nil {
-					artifact := *art
-					tokEl := html.Button().Class("tok").
-						Attr("type", "button").
-						Attr("title", artifact.Code+" ("+artifactKindLabel(artifact.Kind)+")").
-						Child(html.Span().Class("tok-code").Text(artifactKindCode(artifact.Kind)))
-
-					tokStyle := "width: 24px; height: 24px; border-radius: 50%; font-weight: 800; font-size: 10px; display: inline-flex; align-items: center; justify-content: center; background: var(--color-background); border: 2px solid var(--color-primary); color: var(--color-primary); box-shadow: 0 1px 4px rgba(0,0,0,0.3); cursor: pointer;"
-					if artifact.Status == StatusWarn {
-						tokStyle = "width: 24px; height: 24px; border-radius: 50%; font-weight: 800; font-size: 10px; display: inline-flex; align-items: center; justify-content: center; background: var(--color-background); border: 2px solid var(--color-accent, #e8a33d); color: var(--color-accent, #e8a33d); box-shadow: 0 1px 4px rgba(0,0,0,0.3); cursor: pointer;"
-						tokEl.Child(html.Span().Class("bang").Attr("style", "position:absolute;top:-4px;right:-4px;width:12px;height:12px;border-radius:50%;background:var(--color-accent, #e8a33d);color:#fff;font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;").Text("!"))
-					} else if artifact.Status == StatusCrit {
-						tokStyle = "width: 24px; height: 24px; border-radius: 50%; font-weight: 800; font-size: 10px; display: inline-flex; align-items: center; justify-content: center; background: rgba(186, 44, 13, 0.2); border: 2px solid var(--color-danger, #ba2c0d); color: var(--color-danger, #ba2c0d); box-shadow: 0 1px 4px rgba(0,0,0,0.3); cursor: pointer;"
-						tokEl.Child(html.Span().Class("bang").Attr("style", "position:absolute;top:-4px;right:-4px;width:12px;height:12px;border-radius:50%;background:var(--color-danger, #ba2c0d);color:#fff;font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;").Text("!"))
-					}
-
-					if s.SelectedArtifactID == artifact.ID {
-						tokStyle += " box-shadow: 0 0 0 3px #ffffff, 0 0 6px var(--color-primary); background: var(--color-primary); color: #ffffff;"
-					}
-					tokEl.Attr("style", tokStyle)
-
-					tokEl.OnClick(func(dom.Event) {
-						s.SelectedArtifactID = artifact.ID
-						s.IsPlacing = false
-						root.Refresh()
-					})
-
-					cellBtn.Child(tokEl)
-				} else if s.IsPlacing && room != nil {
-					// Drop target available
-					cellBtn.OnClick(func(dom.Event) {
-						// Overlap guard: Max 1 agenda per room
-						if s.PlacingKind == ArtifactAgenda {
-							for _, a := range root.Artifacts {
-								if a.RoomID == room.ID && a.Kind == ArtifactAgenda {
-									return
-								}
-							}
-						}
-
-						codeCount := 1
-						for _, a := range root.Artifacts {
-							if a.Kind == s.PlacingKind {
-								codeCount++
-							}
-						}
-						code := artifactKindCode(s.PlacingKind) + "-" + fmt.Sprintf("%02d", codeCount)
-
-						newArt := ArtifactData{
-							ID:      root.NewID(),
-							RoomID:  room.ID,
-							FloorID: fl.ID,
-							Kind:    s.PlacingKind,
-							Code:    code,
-							Cell:    coord,
-							Status:  StatusOk,
-						}
-						root.Artifacts = append(root.Artifacts, newArt)
-						s.SelectedArtifactID = newArt.ID
-						s.IsPlacing = false
-						root.Refresh()
-					})
-				}
-
-				gridEl.Child(cellBtn)
-			}
-		}
-
-		floorCard.Child(fHeader, gridEl)
-		slider.Child(floorCard)
-	}
+	s.sliderNodes = dom.NewNodes(s.buildFloorCards()...)
+	slider := html.Div().Class("rm-slider").BindChildren(s.sliderNodes)
 
 	content.Child(slider)
 
@@ -393,6 +257,171 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 		Child(header, topBar, columns, footer)
 
 	return layout
+}
+
+func (s *Stage3Artefactos) RebuildFloors() {
+	if s.sliderNodes != nil {
+		s.sliderNodes.Set(s.buildFloorCards())
+	}
+}
+
+func (s *Stage3Artefactos) buildFloorCards() []*dom.Element {
+	root := s.Root
+	var cards []*dom.Element
+
+	for i := range root.Floors {
+		fl := &root.Floors[i]
+		fIdx := i
+
+		floorCard := html.Article().Class("floor")
+		fHeader := html.Div().Class("rm-floor-header").
+			Child(
+				html.Span().Class("rm-floor-badge").Text(fmt.Sprint(fl.Position)),
+				html.Span().Class("name-input").Text(fl.Name),
+				html.Span().Class("rm-floor-count").
+					BindTextFunc(func() string {
+						_ = root.VerSig.Get()
+						return fmt.Sprint(len(fl.HabitableCells)) + " hab."
+					}),
+			)
+
+		gridEl := html.Div().Class("grid").
+			Attr("style", fmt.Sprintf("display: grid; grid-template-columns: 24px repeat(%d, minmax(22px, 1fr)); gap: 2px; padding: 10px; background: var(--color-background); border: 1px solid var(--color-outline); border-radius: 12px; overflow-x: auto;", root.Cols))
+
+		// Column headers
+		gridEl.Child(html.Span())
+		for c := 0; c < root.Cols; c++ {
+			gridEl.Child(html.Span().Class("lbl-col").
+				Attr("style", "font-size: 11px; font-weight: 700; color: var(--color-muted); text-align: center; height: 20px; display: flex; align-items: center; justify-content: center;").
+				Text(ColName(c)))
+		}
+
+		for r := 0; r < root.Rows; r++ {
+			rowIdx := r
+			gridEl.Child(html.Span().Class("lbl-row").
+				Attr("style", "font-size: 11px; font-weight: 700; color: var(--color-muted); display: flex; align-items: center; justify-content: center;").
+				Text(fmt.Sprint(rowIdx + 1)))
+
+			for c := 0; c < root.Cols; c++ {
+				colIdx := c
+				coord := FormatCell(rowIdx, colIdx)
+
+				cellBtn := html.Div().Class("cell")
+
+				cellBtn.BindAttrFunc("style", func() string {
+					_ = root.VerSig.Get()
+					if !CellInList(fl.HabitableCells, coord) {
+						return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1px dashed var(--color-outline); opacity: 0.12; pointer-events: none; border-radius: 4px;"
+					}
+
+					room := FindRoomByCell(root.Rooms, fl.ID, coord)
+					if room != nil {
+						if s.IsPlacing && FindArtifactByCell(root.Artifacts, fl.ID, coord) == nil {
+							return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 2px dashed var(--color-primary); background: var(--color-selection); cursor: copy; border-radius: 4px; display: flex; align-items: center; justify-content: center;"
+						}
+						switch room.RoomType {
+						case RoomTypeShared:
+							return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-muted); background: var(--color-muted); opacity: 0.75; border-radius: 4px; display: flex; align-items: center; justify-content: center;"
+						case RoomTypeStore:
+							return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-accent, #e8a33d); background: var(--color-accent, #e8a33d); opacity: 0.85; border-radius: 4px; display: flex; align-items: center; justify-content: center;"
+						default:
+							return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-primary); background: var(--color-primary); opacity: 0.85; border-radius: 4px; display: flex; align-items: center; justify-content: center;"
+						}
+					}
+
+					return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px dashed var(--color-outline); background: var(--color-surface); border-radius: 4px; display: flex; align-items: center; justify-content: center;"
+				})
+
+				room := FindRoomByCell(root.Rooms, fl.ID, coord)
+
+				// Check if artifact is placed here
+				art := FindArtifactByCell(root.Artifacts, fl.ID, coord)
+				if art != nil {
+					artifact := *art
+					tokEl := html.Button().Class("tok").
+						Attr("type", "button").
+						Attr("title", artifact.Code+" ("+artifactKindLabel(artifact.Kind)+")").
+						Child(html.Span().Class("tok-code").Text(artifactKindCode(artifact.Kind)))
+
+					tokStyle := "width: 24px; height: 24px; border-radius: 50%; font-weight: 800; font-size: 10px; display: inline-flex; align-items: center; justify-content: center; background: var(--color-background); border: 2px solid var(--color-primary); color: var(--color-primary); box-shadow: 0 1px 4px rgba(0,0,0,0.3); cursor: pointer;"
+					if artifact.Status == StatusWarn {
+						tokStyle = "width: 24px; height: 24px; border-radius: 50%; font-weight: 800; font-size: 10px; display: inline-flex; align-items: center; justify-content: center; background: var(--color-background); border: 2px solid var(--color-accent, #e8a33d); color: var(--color-accent, #e8a33d); box-shadow: 0 1px 4px rgba(0,0,0,0.3); cursor: pointer;"
+						tokEl.Child(html.Span().Class("bang").Attr("style", "position:absolute;top:-4px;right:-4px;width:12px;height:12px;border-radius:50%;background:var(--color-accent, #e8a33d);color:#fff;font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;").Text("!"))
+					} else if artifact.Status == StatusCrit {
+						tokStyle = "width: 24px; height: 24px; border-radius: 50%; font-weight: 800; font-size: 10px; display: inline-flex; align-items: center; justify-content: center; background: rgba(186, 44, 13, 0.2); border: 2px solid var(--color-danger, #ba2c0d); color: var(--color-danger, #ba2c0d); box-shadow: 0 1px 4px rgba(0,0,0,0.3); cursor: pointer;"
+						tokEl.Child(html.Span().Class("bang").Attr("style", "position:absolute;top:-4px;right:-4px;width:12px;height:12px;border-radius:50%;background:var(--color-danger, #ba2c0d);color:#fff;font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;").Text("!"))
+					}
+
+					if s.SelectedArtifactID == artifact.ID {
+						tokStyle += " box-shadow: 0 0 0 3px #ffffff, 0 0 6px var(--color-primary); background: var(--color-primary); color: #ffffff;"
+					}
+					tokEl.Attr("style", tokStyle)
+
+					tokEl.OnClick(func(dom.Event) {
+						s.SelectedArtifactID = artifact.ID
+						s.IsPlacing = false
+						root.Refresh()
+					})
+
+					cellBtn.Child(tokEl)
+				} else if s.IsPlacing && room != nil {
+					// Drop target available
+					cellBtn.OnClick(func(dom.Event) {
+						// Overlap guard: Max 1 agenda per room
+						if s.PlacingKind == ArtifactAgenda {
+							for _, a := range root.Artifacts {
+								if a.RoomID == room.ID && a.Kind == ArtifactAgenda {
+									return
+								}
+							}
+						}
+
+						codeCount := 1
+						for _, a := range root.Artifacts {
+							if a.Kind == s.PlacingKind {
+								codeCount++
+							}
+						}
+						code := artifactKindCode(s.PlacingKind) + "-" + fmt.Sprintf("%02d", codeCount)
+
+						newArt := ArtifactData{
+							ID:      root.NewID(),
+							RoomID:  room.ID,
+							FloorID: fl.ID,
+							Kind:    s.PlacingKind,
+							Code:    code,
+							Cell:    coord,
+							Status:  StatusOk,
+						}
+						root.Artifacts = append(root.Artifacts, newArt)
+						s.SelectedArtifactID = newArt.ID
+						s.IsPlacing = false
+						root.Refresh()
+					})
+				}
+
+				gridEl.Child(cellBtn)
+			}
+		}
+
+		floorCard.Key(fmt.Sprintf("floor-s3-%s-%dx%d", fl.ID, root.Cols, root.Rows)).
+			BindClassFunc("active", func() bool {
+				_ = root.VerSig.Get()
+				return root.ActiveFloor == fIdx
+			}).
+			BindAttrFunc("style", func() string {
+				_ = root.VerSig.Get()
+				if root.ActiveFloor == fIdx {
+					return "display: flex; flex-direction: column; gap: 8px;"
+				}
+				return "display: none;"
+			}).
+			Child(fHeader, gridEl)
+
+		cards = append(cards, floorCard)
+	}
+
+	return cards
 }
 
 func catalogItem(kind, label, code string, s *Stage3Artefactos, root *RootView) *dom.Element {

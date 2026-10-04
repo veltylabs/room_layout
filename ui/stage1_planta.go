@@ -57,7 +57,58 @@ func (s *Stage1Planta) Render() *dom.Element {
 				),
 		)
 
-	// 2. Title and Building Grid controls
+	decColBtn := html.Button().Class("icon-btn").
+		Attr("type", "button").
+		Attr("title", "Quitar columna").
+		Attr("style", "padding: 2px 7px; font-weight: 700; cursor: pointer; border-radius: 4px; border: 1px solid var(--color-outline); background: var(--color-surface);").
+		Text("−").
+		OnClick(func(dom.Event) {
+			if root.Cols > 6 {
+				root.GridLocked = false
+				root.Cols--
+				root.Refresh()
+			}
+		})
+
+	incColBtn := html.Button().Class("icon-btn").
+		Attr("type", "button").
+		Attr("title", "Añadir columna").
+		Attr("style", "padding: 2px 7px; font-weight: 700; cursor: pointer; border-radius: 4px; border: 1px solid var(--color-outline); background: var(--color-surface);").
+		Text("+").
+		OnClick(func(dom.Event) {
+			if root.Cols < 40 {
+				root.GridLocked = false
+				root.Cols++
+				root.Refresh()
+			}
+		})
+
+	decRowBtn := html.Button().Class("icon-btn").
+		Attr("type", "button").
+		Attr("title", "Quitar fila").
+		Attr("style", "padding: 2px 7px; font-weight: 700; cursor: pointer; border-radius: 4px; border: 1px solid var(--color-outline); background: var(--color-surface);").
+		Text("−").
+		OnClick(func(dom.Event) {
+			if root.Rows > 4 {
+				root.GridLocked = false
+				root.Rows--
+				root.Refresh()
+			}
+		})
+
+	incRowBtn := html.Button().Class("icon-btn").
+		Attr("type", "button").
+		Attr("title", "Añadir fila").
+		Attr("style", "padding: 2px 7px; font-weight: 700; cursor: pointer; border-radius: 4px; border: 1px solid var(--color-outline); background: var(--color-surface);").
+		Text("+").
+		OnClick(func(dom.Event) {
+			if root.Rows < 40 {
+				root.GridLocked = false
+				root.Rows++
+				root.Refresh()
+			}
+		})
+
 	colInput := html.Input("number").Class("num-input").
 		Attr("min", "6").Attr("max", "40").
 		BindAttrFunc("value", func() string {
@@ -67,26 +118,22 @@ func (s *Stage1Planta) Render() *dom.Element {
 		BindAttrFunc("style", func() string {
 			_ = root.VerSig.Get()
 			if root.GridLocked {
-				return "pointer-events: none; opacity: 0.6; cursor: not-allowed; width: 50px; text-align: center; border-radius: 4px; border: 1px solid var(--color-outline); background: var(--color-surface);"
+				return "opacity: 0.85; width: 44px; text-align: center; border-radius: 4px; border: 1px solid var(--color-outline); background: var(--color-surface);"
 			}
-			return "pointer-events: auto; opacity: 1; cursor: text; width: 50px; text-align: center; border-radius: 4px; border: 1.5px solid var(--color-primary); background: var(--color-surface); font-weight: 700;"
+			return "opacity: 1; cursor: text; width: 44px; text-align: center; border-radius: 4px; border: 1.5px solid var(--color-primary); background: var(--color-surface); font-weight: 700;"
 		}).
 		OnInput(func(e dom.Event) {
-			if root.GridLocked {
-				return
-			}
 			v := ParsePositiveInt(e.TargetValue())
 			if v >= 6 && v <= 40 && v != root.Cols {
+				root.GridLocked = false
 				root.Cols = v
 				root.Refresh()
 			}
 		}).
 		OnChange(func(e dom.Event) {
-			if root.GridLocked {
-				return
-			}
 			v := ParsePositiveInt(e.TargetValue())
 			if v >= 6 && v <= 40 && v != root.Cols {
+				root.GridLocked = false
 				root.Cols = v
 				root.Refresh()
 			}
@@ -101,26 +148,22 @@ func (s *Stage1Planta) Render() *dom.Element {
 		BindAttrFunc("style", func() string {
 			_ = root.VerSig.Get()
 			if root.GridLocked {
-				return "pointer-events: none; opacity: 0.6; cursor: not-allowed; width: 50px; text-align: center; border-radius: 4px; border: 1px solid var(--color-outline); background: var(--color-surface);"
+				return "opacity: 0.85; width: 44px; text-align: center; border-radius: 4px; border: 1px solid var(--color-outline); background: var(--color-surface);"
 			}
-			return "pointer-events: auto; opacity: 1; cursor: text; width: 50px; text-align: center; border-radius: 4px; border: 1.5px solid var(--color-primary); background: var(--color-surface); font-weight: 700;"
+			return "opacity: 1; cursor: text; width: 44px; text-align: center; border-radius: 4px; border: 1.5px solid var(--color-primary); background: var(--color-surface); font-weight: 700;"
 		}).
 		OnInput(func(e dom.Event) {
-			if root.GridLocked {
-				return
-			}
 			v := ParsePositiveInt(e.TargetValue())
 			if v >= 4 && v <= 40 && v != root.Rows {
+				root.GridLocked = false
 				root.Rows = v
 				root.Refresh()
 			}
 		}).
 		OnChange(func(e dom.Event) {
-			if root.GridLocked {
-				return
-			}
 			v := ParsePositiveInt(e.TargetValue())
 			if v >= 4 && v <= 40 && v != root.Rows {
+				root.GridLocked = false
 				root.Rows = v
 				root.Refresh()
 			}
@@ -147,9 +190,9 @@ func (s *Stage1Planta) Render() *dom.Element {
 	gridCtrl := html.Div().Class("rm-grid-control").
 		Child(
 			html.Span().Class("rm-grid-lbl").Text("Cuadrícula del edificio:"),
-			html.Label().Class("rm-grid-field").Text("Col ").Child(colInput),
+			html.Span().Class("rm-grid-field").Text("Col ").Child(decColBtn, colInput, incColBtn),
 			html.Span().Text(" × "),
-			html.Label().Class("rm-grid-field").Text("Filas ").Child(rowInput),
+			html.Span().Class("rm-grid-field").Text("Filas ").Child(decRowBtn, rowInput, incRowBtn),
 			lockBtn,
 		)
 
@@ -355,7 +398,7 @@ func (s *Stage1Planta) buildFloorCards() []*dom.Element {
 			)
 
 		floorCard := html.Article().Class("floor").
-			Key("floor-"+f.ID).
+			Key(fmt.Sprintf("floor-%s-%dx%d", f.ID, root.Cols, root.Rows)).
 			BindClassFunc("active", func() bool {
 				_ = root.VerSig.Get()
 				return root.ActiveFloor == fIdx

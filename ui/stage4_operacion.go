@@ -20,6 +20,7 @@ type Stage4Operacion struct {
 	SelectedRoomID   string
 	SelectedDoctorID string
 	DoctorSearch     string
+	sliderNodes      *dom.SignalNodes
 }
 
 func (s *Stage4Operacion) Render() *dom.Element {
@@ -161,17 +162,80 @@ func (s *Stage4Operacion) Render() *dom.Element {
 
 	// Left: Content (Floor Map Canvas)
 	content := html.Div().Class("rm-content")
-	slider := html.Div().Class("rm-slider")
+	s.sliderNodes = dom.NewNodes(s.buildFloorCards()...)
+	slider := html.Div().Class("rm-slider").BindChildren(s.sliderNodes)
+	content.Child(slider)
+
+	// Right: Aside (Selected Room Detail OR Doctors & Alerts)
+	aside := html.Aside().Class("rm-aside")
+
+	var selectedRoom *RoomData
+	if s.SelectedRoomID != "" {
+		for i := range root.Rooms {
+			if root.Rooms[i].ID == s.SelectedRoomID {
+				selectedRoom = &root.Rooms[i]
+				break
+			}
+		}
+	}
+
+	if selectedRoom != nil {
+		roomDetailPanel := s.renderRoomDetailPanel(selectedRoom)
+		aside.Child(roomDetailPanel)
+	} else {
+		// Professionals & Alerts Panel
+		proPanel := s.renderProfessionalsPanel()
+		alertsPanel := s.renderAlertsPanel()
+		aside.Child(proPanel, alertsPanel)
+	}
+
+	columns.Child(content, aside)
+
+	// Footer
+	footer := html.Footer().Class("rm-footer").
+		Child(
+			html.Button().Class("btn").Text("← Artefactos").
+				OnClick(func(dom.Event) {
+					root.GoToStage(2)
+				}),
+			html.Span().Class("rm-footer-summary").
+				Text("Dashboard de Operación · Clínica Central"),
+			html.Button().Class("btn", "btn-primary").
+				Child(html.Span().Text("Guardar cambios")).
+				OnClick(func(dom.Event) {
+					root.SaveAll()
+				}),
+		)
+
+	layout := html.Div().Class("rm-stage").
+		Child(header, toolbar, columns, footer)
+
+	return layout
+}
+
+func (s *Stage4Operacion) RebuildFloors() {
+	if s.sliderNodes != nil {
+		s.sliderNodes.Set(s.buildFloorCards())
+	}
+}
+
+func (s *Stage4Operacion) buildFloorCards() []*dom.Element {
+	root := s.Root
+	var cards []*dom.Element
 
 	for i := range root.Floors {
 		fl := &root.Floors[i]
 
-		floorCard := html.Article().Class("floor")
+		floorCard := html.Article().Class("floor").Key(fmt.Sprintf("floor-s4-%s-%dx%d", fl.ID, root.Cols, root.Rows))
 		fHeader := html.Div().Class("rm-floor-header").
 			Child(
 				html.Span().Class("rm-floor-badge").Text(fmt.Sprint(fl.Position)),
 				html.Span().Class("name-input").Text(fl.Name),
-				html.Span().Class("rm-floor-count").Text(fmt.Sprint(len(fl.HabitableCells))+" hab."),
+				html.Span().Class("rm-floor-count").
+					BindTextFunc(func() string {
+						_ = root.VerSig.Get()
+						return fmt.Sprint(len(fl.HabitableCells)) + " hab."
+					}),
 			)
 
 		gridEl := html.Div().Class("grid").
@@ -229,56 +293,10 @@ func (s *Stage4Operacion) Render() *dom.Element {
 		}
 
 		floorCard.Child(fHeader, gridEl)
-		slider.Child(floorCard)
+		cards = append(cards, floorCard)
 	}
 
-	content.Child(slider)
-
-	// Right: Aside (Selected Room Detail OR Doctors & Alerts)
-	aside := html.Aside().Class("rm-aside")
-
-	var selectedRoom *RoomData
-	if s.SelectedRoomID != "" {
-		for i := range root.Rooms {
-			if root.Rooms[i].ID == s.SelectedRoomID {
-				selectedRoom = &root.Rooms[i]
-				break
-			}
-		}
-	}
-
-	if selectedRoom != nil {
-		roomDetailPanel := s.renderRoomDetailPanel(selectedRoom)
-		aside.Child(roomDetailPanel)
-	} else {
-		// Professionals & Alerts Panel
-		proPanel := s.renderProfessionalsPanel()
-		alertsPanel := s.renderAlertsPanel()
-		aside.Child(proPanel, alertsPanel)
-	}
-
-	columns.Child(content, aside)
-
-	// Footer
-	footer := html.Footer().Class("rm-footer").
-		Child(
-			html.Button().Class("btn").Text("← Artefactos").
-				OnClick(func(dom.Event) {
-					root.GoToStage(2)
-				}),
-			html.Span().Class("rm-footer-summary").
-				Text("Dashboard de Operación · Clínica Central"),
-			html.Button().Class("btn", "btn-primary").
-				Child(html.Span().Text("Guardar cambios")).
-				OnClick(func(dom.Event) {
-					root.SaveAll()
-				}),
-		)
-
-	layout := html.Div().Class("rm-stage").
-		Child(header, toolbar, columns, footer)
-
-	return layout
+	return cards
 }
 
 func (s *Stage4Operacion) renderRoomOverlay(room *RoomData, floorID string) *dom.Element {

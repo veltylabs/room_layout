@@ -455,7 +455,7 @@ func (s *Stage2Espacios) buildFloorCards() []*dom.Element {
 			}
 		}
 
-		floorCard.Key("floor-" + fl.ID).
+		floorCard.Key(fmt.Sprintf("floor-s2-%s-%dx%d", fl.ID, root.Cols, root.Rows)).
 			BindClassFunc("active", func() bool {
 				_ = root.VerSig.Get()
 				return root.ActiveFloor == fIdx
