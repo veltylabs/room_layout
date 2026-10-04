@@ -220,5 +220,3 @@ func TestGridResizeAndLock(t *testing.T) {
 		t.Fatalf("expected resized to 25x16, got %dx%d", rootView.Cols, rootView.Rows)
 	}
 }
-
-

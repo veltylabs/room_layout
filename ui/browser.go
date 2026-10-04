@@ -96,17 +96,23 @@ func (r *RootView) Refresh() {
 }
 
 func (r *RootView) RebuildAllFloors() {
-	if r.stage1 != nil {
-		r.stage1.RebuildFloors()
-	}
-	if r.stage2 != nil {
-		r.stage2.RebuildFloors()
-	}
-	if r.stage3 != nil {
-		r.stage3.RebuildFloors()
-	}
-	if r.stage4 != nil {
-		r.stage4.RebuildFloors()
+	switch r.ActiveStage {
+	case 0:
+		if r.stage1 != nil {
+			r.stage1.RebuildFloors()
+		}
+	case 1:
+		if r.stage2 != nil {
+			r.stage2.RebuildFloors()
+		}
+	case 2:
+		if r.stage3 != nil {
+			r.stage3.RebuildFloors()
+		}
+	case 3:
+		if r.stage4 != nil {
+			r.stage4.RebuildFloors()
+		}
 	}
 	r.Refresh()
 }
@@ -147,10 +153,10 @@ func (r *RootView) Render() *dom.Element {
 	showStage4 := dom.DeriveBool(func() bool { return r.ActiveStageSig.Get() == "3" })
 
 	container.Child(
-		dom.Show(showStage1, r.stage1),
-		dom.Show(showStage2, r.stage2),
-		dom.Show(showStage3, r.stage3),
-		dom.Show(showStage4, r.stage4),
+		dom.Show(showStage1, func() *dom.Element { return r.stage1.Render() }),
+		dom.Show(showStage2, func() *dom.Element { return r.stage2.Render() }),
+		dom.Show(showStage3, func() *dom.Element { return r.stage3.Render() }),
+		dom.Show(showStage4, func() *dom.Element { return r.stage4.Render() }),
 	)
 
 	return container
