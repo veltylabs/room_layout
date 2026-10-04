@@ -11,6 +11,9 @@ import (
 type Stage1Planta struct {
 	dom.Element
 	Root *RootView
+
+	isDragging bool
+	dragMode   bool
 }
 
 func (s *Stage1Planta) Render() *dom.Element {
@@ -174,7 +177,13 @@ func (s *Stage1Planta) Render() *dom.Element {
 
 		// Grid element with letter headers and row numbers
 		gridEl := html.Div().Class("grid").
-			Attr("style", fmt.Sprintf("display: grid; grid-template-columns: 24px repeat(%d, minmax(22px, 1fr)); gap: 2px; padding: 10px; background: var(--color-background); border: 1px solid var(--color-outline); border-radius: 12px; overflow-x: auto;", root.Cols))
+			Attr("style", fmt.Sprintf("display: grid; grid-template-columns: 24px repeat(%d, minmax(22px, 1fr)); gap: 2px; padding: 10px; background: var(--color-background); border: 1px solid var(--color-outline); border-radius: 12px; overflow-x: auto; touch-action: none; user-select: none; -webkit-user-select: none;", root.Cols)).
+			OnPointerUp(func(dom.Event) {
+				s.isDragging = false
+			}).
+			OnPointerLeave(func(dom.Event) {
+				s.isDragging = false
+			})
 
 		// Column headers
 		gridEl.Child(html.Span()) // Corner
@@ -201,18 +210,37 @@ func (s *Stage1Planta) Render() *dom.Element {
 				cellBtn.BindAttrFunc("style", func() string {
 					_ = root.VerSig.Get()
 					if CellInList(f.HabitableCells, coord) {
-						return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-primary); background: var(--color-primary); color: #ffffff; border-radius: 4px; cursor: pointer; box-shadow: 0 0 3px var(--color-primary);"
+						return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-primary); background: var(--color-primary); color: #ffffff; border-radius: 4px; cursor: pointer; box-shadow: 0 0 3px var(--color-primary); touch-action: none; user-select: none; -webkit-user-select: none;"
 					}
-					return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1px solid var(--color-outline); background: var(--color-surface); cursor: pointer; border-radius: 4px;"
+					return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1px solid var(--color-outline); background: var(--color-surface); cursor: pointer; border-radius: 4px; touch-action: none; user-select: none; -webkit-user-select: none;"
 				})
 
-				cellBtn.OnClick(func(dom.Event) {
-					if CellInList(f.HabitableCells, coord) {
-						f.HabitableCells = RemoveCell(f.HabitableCells, coord)
-					} else {
+				cellBtn.OnPointerDown(func(e dom.Event) {
+					e.ReleasePointerCapture()
+					isHab := CellInList(f.HabitableCells, coord)
+					s.dragMode = !isHab
+					s.isDragging = true
+					if s.dragMode {
 						f.HabitableCells = AddCell(f.HabitableCells, coord)
+					} else {
+						f.HabitableCells = RemoveCell(f.HabitableCells, coord)
 					}
 					root.Refresh()
+				})
+
+				cellBtn.OnPointerEnter(func(e dom.Event) {
+					if s.isDragging {
+						if s.dragMode {
+							f.HabitableCells = AddCell(f.HabitableCells, coord)
+						} else {
+							f.HabitableCells = RemoveCell(f.HabitableCells, coord)
+						}
+						root.Refresh()
+					}
+				})
+
+				cellBtn.OnPointerUp(func(dom.Event) {
+					s.isDragging = false
 				})
 
 				gridEl.Child(cellBtn)

@@ -17,6 +17,9 @@ type Stage2Espacios struct {
 	DraftName    string
 	DraftType    string // "box", "shared", "store"
 	DraftCells   []string
+
+	isDragging bool
+	dragMode   bool
 }
 
 func (s *Stage2Espacios) Render() *dom.Element {
@@ -162,7 +165,13 @@ func (s *Stage2Espacios) Render() *dom.Element {
 
 		// Grid: renders only habitable cells with room colors
 		gridEl := html.Div().Class("grid").
-			Attr("style", fmt.Sprintf("display: grid; grid-template-columns: 24px repeat(%d, minmax(22px, 1fr)); gap: 2px; padding: 10px; background: var(--color-background); border: 1px solid var(--color-outline); border-radius: 12px; overflow-x: auto;", root.Cols))
+			Attr("style", fmt.Sprintf("display: grid; grid-template-columns: 24px repeat(%d, minmax(22px, 1fr)); gap: 2px; padding: 10px; background: var(--color-background); border: 1px solid var(--color-outline); border-radius: 12px; overflow-x: auto; touch-action: none; user-select: none; -webkit-user-select: none;", root.Cols)).
+			OnPointerUp(func(dom.Event) {
+				s.isDragging = false
+			}).
+			OnPointerLeave(func(dom.Event) {
+				s.isDragging = false
+			})
 
 		// Column headers
 		gridEl.Child(html.Span())
@@ -194,38 +203,59 @@ func (s *Stage2Espacios) Render() *dom.Element {
 
 					// Habitable cell
 					if s.IsDrafting && isCurrentDraft && CellInList(s.DraftCells, coord) {
-						return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 2px solid #ffffff; background: var(--color-primary); color: #ffffff; border-radius: 4px; cursor: pointer; box-shadow: 0 0 5px var(--color-primary);"
+						return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 2px solid #ffffff; background: var(--color-primary); color: #ffffff; border-radius: 4px; cursor: pointer; box-shadow: 0 0 5px var(--color-primary); touch-action: none; user-select: none; -webkit-user-select: none;"
 					}
 
 					room := FindRoomByCell(root.Rooms, fl.ID, coord)
 					if room != nil {
 						switch room.RoomType {
 						case RoomTypeShared:
-							return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-muted); background: var(--color-muted); opacity: 0.75; color: #ffffff; border-radius: 4px; cursor: pointer;"
+							return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-muted); background: var(--color-muted); opacity: 0.75; color: #ffffff; border-radius: 4px; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none;"
 						case RoomTypeStore:
-							return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-accent, #e8a33d); background: var(--color-accent, #e8a33d); opacity: 0.85; color: #ffffff; border-radius: 4px; cursor: pointer;"
+							return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-accent, #e8a33d); background: var(--color-accent, #e8a33d); opacity: 0.85; color: #ffffff; border-radius: 4px; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none;"
 						default:
-							return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-primary); background: var(--color-primary); opacity: 0.85; color: #ffffff; border-radius: 4px; cursor: pointer;"
+							return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-primary); background: var(--color-primary); opacity: 0.85; color: #ffffff; border-radius: 4px; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none;"
 						}
 					}
 
 					// Free habitable cell
-					return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px dashed var(--color-outline); background: var(--color-surface); cursor: pointer; border-radius: 4px;"
+					return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px dashed var(--color-outline); background: var(--color-surface); cursor: pointer; border-radius: 4px; touch-action: none; user-select: none; -webkit-user-select: none;"
 				})
 
-				cellBtn.OnClick(func(dom.Event) {
+				cellBtn.OnPointerDown(func(e dom.Event) {
 					if s.IsDrafting && isCurrentDraft {
-						// Overlap guard: cannot select if in another room
+						e.ReleasePointerCapture()
 						if otherRoom := FindRoomByCell(root.Rooms, fl.ID, coord); otherRoom != nil {
 							return
 						}
-						if CellInList(s.DraftCells, coord) {
-							s.DraftCells = RemoveCell(s.DraftCells, coord)
-						} else {
+						isDrafted := CellInList(s.DraftCells, coord)
+						s.dragMode = !isDrafted
+						s.isDragging = true
+						if s.dragMode {
 							s.DraftCells = AddCell(s.DraftCells, coord)
+						} else {
+							s.DraftCells = RemoveCell(s.DraftCells, coord)
 						}
 						root.Refresh()
 					}
+				})
+
+				cellBtn.OnPointerEnter(func(e dom.Event) {
+					if s.isDragging && s.IsDrafting && isCurrentDraft {
+						if otherRoom := FindRoomByCell(root.Rooms, fl.ID, coord); otherRoom != nil {
+							return
+						}
+						if s.dragMode {
+							s.DraftCells = AddCell(s.DraftCells, coord)
+						} else {
+							s.DraftCells = RemoveCell(s.DraftCells, coord)
+						}
+						root.Refresh()
+					}
+				})
+
+				cellBtn.OnPointerUp(func(dom.Event) {
+					s.isDragging = false
 				})
 
 				gridEl.Child(cellBtn)

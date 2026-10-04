@@ -148,3 +148,41 @@ func TestCoordinateAndSliceHelpers(t *testing.T) {
 		t.Fatalf("unexpected label: %s", label)
 	}
 }
+
+func TestDragStrokeHelpers(t *testing.T) {
+	// Simulate pointer drag stroke in Stage 1:
+	// Start pointer down on A1 (not in list) -> dragMode = true (paint)
+	var habitable []string
+	dragMode := !ui.CellInList(habitable, "A1")
+	if !dragMode {
+		t.Fatal("expected dragMode=true to paint empty cell")
+	}
+	habitable = ui.AddCell(habitable, "A1")
+
+	// Drag across A2, A3, B3
+	stroke := []string{"A2", "A3", "B3"}
+	for _, coord := range stroke {
+		if dragMode {
+			habitable = ui.AddCell(habitable, coord)
+		}
+	}
+
+	if len(habitable) != 4 {
+		t.Fatalf("expected 4 cells after drag paint, got %d", len(habitable))
+	}
+
+	// Now simulate erase drag starting on A2 (already in list) -> dragMode = false (erase)
+	eraseMode := !ui.CellInList(habitable, "A2")
+	if eraseMode {
+		t.Fatal("expected dragMode=false to erase populated cell")
+	}
+	habitable = ui.RemoveCell(habitable, "A2")
+
+	// Drag across A3
+	habitable = ui.RemoveCell(habitable, "A3")
+
+	if len(habitable) != 2 || ui.CellInList(habitable, "A2") || ui.CellInList(habitable, "A3") {
+		t.Fatalf("expected A2 and A3 erased, got %v", habitable)
+	}
+}
+

@@ -5,7 +5,7 @@ go 1.26.8
 require (
 	webtyp.com/components v0.8.0
 	webtyp.com/ddl v0.0.20
-	webtyp.com/dom v0.13.17
+	webtyp.com/dom v0.13.18
 	webtyp.com/events v0.0.5
 	webtyp.com/form v0.4.19
 	webtyp.com/input v0.0.10
