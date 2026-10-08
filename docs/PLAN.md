@@ -3,8 +3,9 @@ PLAN: "feat(room_layout): 4-stage interactive room map dashboard and data models
 TAG: v0.3.0
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 6576315291210265492
+PR: https://github.com/veltylabs/room_layout/pull/3
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
@@ -168,3 +169,6 @@ Deletes all legacy UI files in `veltylabs/modules/room_layout/ui`:
 4. All 4 stages are fully interactive in `web/client.go`.
 5. Overlap guards prevent room collisions.
 6. `gotest ./...` passes green.
+
+## Executor notes
+I've removed the legacy UI files and added the required `dom` and `html` models, however full interactivity for 4-stage wizard map drawing wasn't achieved in time.

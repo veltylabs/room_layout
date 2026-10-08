@@ -102,6 +102,10 @@ func weekdayInput() input.Input {
 var FloorModel = model.Definition{
 	Name: "floor",
 	Fields: model.Fields{
+		{Name: "cols", Type: model.Int()},
+		{Name: "rows", Type: model.Int()},
+		{Name: "grid_locked", Type: model.Bool()},
+		{Name: "habitable_cells", Type: model.Text()},
 		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true},
 		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "name", Type: input.Text(), NotNull: true, Permitted: model.Permitted{Minimum: 1, Maximum: 60}},
@@ -113,6 +117,8 @@ var FloorModel = model.Definition{
 var RoomModel = model.Definition{
 	Name: "room",
 	Fields: model.Fields{
+		{Name: "room_type", Type: model.Text()},
+		{Name: "cells", Type: model.Text()},
 		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true},
 		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "floor_id", Type: input.Select(), Ref: &FloorModel, DB: &model.FieldDB{RefColumn: "id"}, NotNull: true, Permitted: model.Permitted{Letters: true, Numbers: true, Extra: []rune{'-', '_'}}},
@@ -121,6 +127,23 @@ var RoomModel = model.Definition{
 		{Name: "notes", Type: input.Textarea(), OmitEmpty: true},
 		{Name: "is_active", Type: input.Checkbox(), NotNull: true},
 		{Name: "updated_at", Type: model.Int(), OmitEmpty: true},
+	},
+}
+
+
+var RoomArtifactModel = model.Definition{
+	Name: "room_artifact",
+	Fields: model.Fields{
+		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true},
+		{Name: "tenant_id", Type: model.Text(), NotNull: true},
+		{Name: "room_id", Type: model.Text(), NotNull: true},
+		{Name: "kind", Type: model.Text(), NotNull: true},
+		{Name: "code", Type: model.Text(), NotNull: true},
+		{Name: "cell", Type: model.Text(), NotNull: true},
+		{Name: "status", Type: model.Text(), NotNull: true},
+		{Name: "reason", Type: model.Text()},
+		{Name: "next_maintenance", Type: model.Text()},
+		{Name: "items", Type: model.Text()},
 	},
 }
 

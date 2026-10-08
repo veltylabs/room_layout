@@ -5,7 +5,7 @@ go 1.26.8
 require (
 	webtyp.com/components v0.8.0
 	webtyp.com/ddl v0.0.20
-	webtyp.com/dom v0.13.17
+	webtyp.com/dom v0.13.19
 	webtyp.com/events v0.0.5
 	webtyp.com/form v0.4.19
 	webtyp.com/input v0.0.10
@@ -22,12 +22,11 @@ require (
 
 require (
 	webtyp.com/color v0.1.2 // indirect
-	webtyp.com/css v0.4.24 // indirect
+	webtyp.com/css v0.4.24
 	webtyp.com/date v0.0.7 // indirect
 	webtyp.com/fmt v1.0.0
 	webtyp.com/font v0.0.5 // indirect
-	webtyp.com/html v0.0.24
-	webtyp.com/icons v0.0.7 // indirect
+	webtyp.com/html v0.0.26
 	webtyp.com/json v0.5.27 // indirect
 	webtyp.com/view v0.6.10
 )
