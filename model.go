@@ -52,24 +52,32 @@ const (
 	TopicShiftOccurrenceMoved     = "room_layout.shift.occurrence_moved"
 )
 
+// domainError is the concrete type of this package's sentinel errors. Code
+// compares them by asserting this type and comparing the value: == between two
+// error values compiles, under TinyGo, to runtime.interfaceEqual, which pulls
+// internal/reflectlite into the wasm binary.
+type domainError string
+
+func (e domainError) Error() string { return string(e) }
+
 // Errores de dominio.
-var (
-	ErrNotFound           = fmt.Err("room_layout: not found")
-	ErrTenantRequired     = fmt.Err("room_layout: tenant_id is required")
-	ErrCodeAlreadyExists  = fmt.Err("room_layout: room code already exists in this tenant")
-	ErrFloorInUse         = fmt.Err("room_layout: floor still has rooms")
-	ErrInvalidRange       = fmt.Err("room_layout: start must be before end, both within 00:00 and 24:00")
-	ErrInvalidDate        = fmt.Err("room_layout: invalid date, expected YYYY-MM-DD")
-	ErrInvalidWeekday     = fmt.Err("room_layout: day_of_week must be 0..6")
-	ErrUnknownCategory    = fmt.Err("room_layout: unknown category")
-	ErrUnknownOccupant    = fmt.Err("room_layout: unknown occupant")
-	ErrOccupantRequired   = fmt.Err("room_layout: occupant_id or occupant_label is required")
-	ErrCategoryNotAllowed = fmt.Err("room_layout: room is not enabled for this category")
-	ErrCategoryInUse      = fmt.Err("room_layout: category still has active shifts in this room")
-	ErrRoomOverlap        = fmt.Err("room_layout: room already has a shift in that time range")
-	ErrOccupantOverlap    = fmt.Err("room_layout: occupant already has a shift in that time range")
-	ErrOutsideBounds      = fmt.Err("room_layout: shift is outside the establishment's opening hours for that date")
-	ErrNotWeekly          = fmt.Err("room_layout: only a weekly shift can have one occurrence cancelled")
+const (
+	ErrNotFound           domainError = "room_layout: not found"
+	ErrTenantRequired     domainError = "room_layout: tenant_id is required"
+	ErrCodeAlreadyExists  domainError = "room_layout: room code already exists in this tenant"
+	ErrFloorInUse         domainError = "room_layout: floor still has rooms"
+	ErrInvalidRange       domainError = "room_layout: start must be before end, both within 00:00 and 24:00"
+	ErrInvalidDate        domainError = "room_layout: invalid date, expected YYYY-MM-DD"
+	ErrInvalidWeekday     domainError = "room_layout: day_of_week must be 0..6"
+	ErrUnknownCategory    domainError = "room_layout: unknown category"
+	ErrUnknownOccupant    domainError = "room_layout: unknown occupant"
+	ErrOccupantRequired   domainError = "room_layout: occupant_id or occupant_label is required"
+	ErrCategoryNotAllowed domainError = "room_layout: room is not enabled for this category"
+	ErrCategoryInUse      domainError = "room_layout: category still has active shifts in this room"
+	ErrRoomOverlap        domainError = "room_layout: room already has a shift in that time range"
+	ErrOccupantOverlap    domainError = "room_layout: occupant already has a shift in that time range"
+	ErrOutsideBounds      domainError = "room_layout: shift is outside the establishment's opening hours for that date"
+	ErrNotWeekly          domainError = "room_layout: only a weekly shift can have one occurrence cancelled"
 )
 
 type ValidationError struct {
@@ -129,7 +137,6 @@ var RoomModel = model.Definition{
 		{Name: "updated_at", Type: model.Int(), OmitEmpty: true},
 	},
 }
-
 
 var RoomArtifactModel = model.Definition{
 	Name: "room_artifact",

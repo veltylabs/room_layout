@@ -16,7 +16,7 @@ const (
 	OpSaveFloor              = "save_floor"
 	OpDeleteFloor            = "delete_floor"
 	OpListRooms              = "list_rooms"
-	OpGetRoom               = "get_room"
+	OpGetRoom                = "get_room"
 	OpSaveRoom               = "save_room"
 	OpDeactivateRoom         = "deactivate_room"
 	OpListEquipment          = "list_equipment"
@@ -43,13 +43,22 @@ func mapErrorStatus(err error) int {
 	if err == nil {
 		return 200
 	}
-	if err == ErrNotFound {
+	if _, ok := err.(*ValidationError); ok {
+		return 400
+	}
+	// One assertion, then a switch on the concrete value: == between error
+	// values would pull reflection into the wasm binary under TinyGo.
+	e, ok := err.(domainError)
+	if !ok {
+		return 500
+	}
+	switch e {
+	case ErrNotFound:
 		return 404
-	}
-	if err == ErrCodeAlreadyExists || err == ErrFloorInUse || err == ErrCategoryInUse || err == ErrRoomOverlap || err == ErrOccupantOverlap {
+	case ErrCodeAlreadyExists, ErrFloorInUse, ErrCategoryInUse, ErrRoomOverlap, ErrOccupantOverlap:
 		return 409
-	}
-	if _, ok := err.(*ValidationError); ok || err == ErrTenantRequired || err == ErrInvalidRange || err == ErrInvalidDate || err == ErrInvalidWeekday || err == ErrUnknownCategory || err == ErrUnknownOccupant || err == ErrOccupantRequired || err == ErrCategoryNotAllowed || err == ErrOutsideBounds || err == ErrNotWeekly {
+	case ErrTenantRequired, ErrInvalidRange, ErrInvalidDate, ErrInvalidWeekday, ErrUnknownCategory,
+		ErrUnknownOccupant, ErrOccupantRequired, ErrCategoryNotAllowed, ErrOutsideBounds, ErrNotWeekly:
 		return 400
 	}
 	return 500
