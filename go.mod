@@ -12,13 +12,15 @@ require (
 	webtyp.com/layout v0.3.2
 	webtyp.com/model v0.2.2
 	webtyp.com/orm v0.12.6
-	webtyp.com/router v0.3.0
+	webtyp.com/router v0.4.0
 	webtyp.com/storage v0.1.4
 	webtyp.com/svg v0.3.14
 	webtyp.com/time v0.5.7
 	webtyp.com/unixid v0.3.0
 	webtyp.com/widget v0.6.32
 )
+
+require webtyp.com/escape v0.1.0 // indirect
 
 require (
 	webtyp.com/color v0.1.2 // indirect
@@ -27,6 +29,6 @@ require (
 	webtyp.com/fmt v1.0.0
 	webtyp.com/font v0.0.5 // indirect
 	webtyp.com/html v0.0.26
-	webtyp.com/json v0.5.27 // indirect
+	webtyp.com/json v0.5.29 // indirect
 	webtyp.com/view v0.6.10
 )
