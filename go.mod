@@ -22,7 +22,7 @@ require (
 
 require (
 	webtyp.com/escape v0.1.0 // indirect
-	webtyp.com/lang v0.1.3 // indirect
+	webtyp.com/lang v0.1.5 // indirect
 	webtyp.com/msgtype v0.1.0 // indirect
 )
 
