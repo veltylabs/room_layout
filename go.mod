@@ -28,7 +28,7 @@ require (
 
 require (
 	webtyp.com/color v0.1.2 // indirect
-	webtyp.com/css v0.4.29
+	webtyp.com/css v0.4.30
 	webtyp.com/date v0.0.9 // indirect
 	webtyp.com/fmt v1.0.0
 	webtyp.com/font v0.0.5 // indirect
