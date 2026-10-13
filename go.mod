@@ -9,7 +9,7 @@ require (
 	webtyp.com/events v0.0.6
 	webtyp.com/form v0.4.34
 	webtyp.com/input v0.0.20
-	webtyp.com/layout v0.3.43
+	webtyp.com/layout v0.3.45
 	webtyp.com/model v0.2.2
 	webtyp.com/orm v0.12.6
 	webtyp.com/router v0.4.2
