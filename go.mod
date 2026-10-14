@@ -7,7 +7,7 @@ require (
 	webtyp.com/ddl v0.0.20
 	webtyp.com/dom v0.13.26
 	webtyp.com/events v0.0.6
-	webtyp.com/form v0.4.34
+	webtyp.com/form v0.4.41
 	webtyp.com/input v0.0.20
 	webtyp.com/layout v0.3.45
 	webtyp.com/model v0.2.3
