@@ -19,7 +19,7 @@ func (m *Module) SaveFloor(f Floor) (Floor, error) {
 	if err := model.ValidateFields(byte(model.Create), &f); err != nil {
 		return Floor{}, &ValidationError{Err: err}
 	}
-	f.UpdatedAt = m.now() / 1_000_000_000
+	f.UpdatedAt = m.now().Unix()
 
 	if isNew {
 		if err := m.db.Create(&f); err != nil {

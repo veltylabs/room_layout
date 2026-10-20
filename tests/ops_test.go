@@ -31,6 +31,10 @@ func (r *mockRoute) Public() router.Route {
 	return r
 }
 
+func (r *mockRoute) RequiresMFA() router.Route {
+	return r
+}
+
 func (r *mockRoute) Accepts(args model.Fielder) router.Route {
 	r.argsSchema = args
 	return r

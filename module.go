@@ -17,7 +17,7 @@ type OccupantReader interface {
 }
 
 type BoundsReader interface {
-	GetDayBounds(date int64) (time.DayBounds, error)
+	GetDayBounds(date time.Unix) (time.DayBounds, error)
 }
 
 type Deps struct {
@@ -28,7 +28,7 @@ type Deps struct {
 	Timezone   string            // requerido
 	Bounds     BoundsReader      // opcional
 	Publisher  events.Publisher  // opcional
-	Clock      func() int64      // opcional
+	Clock      func() time.Nano  // opcional
 }
 
 type Module struct {
@@ -54,7 +54,7 @@ func New(db *orm.DB, deps Deps) (*Module, error) {
 		return nil, fmt.Err("room_layout: Deps.Timezone is required")
 	}
 	if deps.Clock == nil {
-		deps.Clock = time.Now
+		deps.Clock = time.NowNano
 	}
 	return &Module{
 		db:       db,
@@ -72,6 +72,6 @@ func (m *Module) publish(topic string, payload model.Encodable) {
 	}
 }
 
-func (m *Module) now() int64 {
+func (m *Module) now() time.Nano {
 	return m.deps.Clock()
 }

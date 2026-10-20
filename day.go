@@ -6,21 +6,21 @@ import (
 	"webtyp.com/time"
 )
 
-func (m *Module) localNow() (int64, int) {
-	return m.localAt(m.now() / 1_000_000_000)
+func (m *Module) localNow() (time.Unix, int) {
+	return m.localAt(m.now().Unix())
 }
 
 // localAt splits an instant (Unix seconds UTC) into the local day it falls on, as the day key the shifts use (its
 // midnight UTC), and the minute of that local day.
-func (m *Module) localAt(sec int64) (int64, int) {
+func (m *Module) localAt(sec time.Unix) (time.Unix, int) {
 	D := time.MidnightUTC(sec)
 	min := int((sec - time.LocalMinutesToUnixUTC(D, 0, m.deps.Timezone)) / 60)
 	if min < 0 {
-		D -= 86400
+		D -= time.Day
 		min = int((sec - time.LocalMinutesToUnixUTC(D, 0, m.deps.Timezone)) / 60)
 	}
 	if min >= 1440 {
-		D += 86400
+		D += time.Day
 		min = int((sec - time.LocalMinutesToUnixUTC(D, 0, m.deps.Timezone)) / 60)
 	}
 	return D, min
@@ -31,7 +31,7 @@ func (m *Module) localAt(sec int64) (int64, int) {
 // covers [start, end). found is false when no shift covers it. When two shifts cover it, the room with the lowest id
 // wins. Other modules declare this method in a narrow interface of their own (clinical_encounter uses it to know the box
 // an attention happened in) and the application passes this module.
-func (m *Module) RoomOfOccupant(tenantID, occupantID string, at int64) (roomID string, found bool, err error) {
+func (m *Module) RoomOfOccupant(tenantID, occupantID string, at time.Unix) (roomID string, found bool, err error) {
 	if tenantID == "" {
 		return "", false, ErrTenantRequired
 	}
@@ -96,7 +96,7 @@ func containsString(list []string, target string) bool {
 	return false
 }
 
-func (m *Module) shiftsOn(tenantID string, date int64) ([]RoomShift, error) {
+func (m *Module) shiftsOn(tenantID string, date time.Unix) ([]RoomShift, error) {
 	if m.deps.Bounds != nil {
 		bounds, err := m.deps.Bounds.GetDayBounds(date)
 		if err != nil {
@@ -163,7 +163,7 @@ func (m *Module) shiftsOn(tenantID string, date int64) ([]RoomShift, error) {
 	return res, nil
 }
 
-func (m *Module) ListRoomDay(tenantID, roomID string, date int64) ([]DayShift, error) {
+func (m *Module) ListRoomDay(tenantID, roomID string, date time.Unix) ([]DayShift, error) {
 	if tenantID == "" {
 		return nil, ErrTenantRequired
 	}
@@ -369,7 +369,7 @@ func (m *Module) ListBoard(tenantID, categoryID, equipmentID string) ([]BoardRoo
 	return res, nil
 }
 
-func (m *Module) FindFreeRooms(tenantID string, date int64, startMin, endMin int, categoryID string) ([]FreeRoom, error) {
+func (m *Module) FindFreeRooms(tenantID string, date time.Unix, startMin, endMin int, categoryID string) ([]FreeRoom, error) {
 	if tenantID == "" {
 		return nil, ErrTenantRequired
 	}
@@ -475,7 +475,7 @@ func (m *Module) FindFreeRooms(tenantID string, date int64, startMin, endMin int
 	return res, nil
 }
 
-func (m *Module) ListPublicAvailability(date int64, categoryID string) ([]PublicSlot, error) {
+func (m *Module) ListPublicAvailability(date time.Unix, categoryID string) ([]PublicSlot, error) {
 	tenantID := m.deps.TenantID
 	bounds := time.Unbounded()
 	if m.deps.Bounds != nil {

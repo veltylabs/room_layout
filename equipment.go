@@ -20,7 +20,7 @@ func (m *Module) SaveEquipment(e Equipment) (Equipment, error) {
 		return Equipment{}, &ValidationError{Err: err}
 	}
 
-	e.UpdatedAt = m.now() / 1_000_000_000
+	e.UpdatedAt = m.now().Unix()
 	if isNew {
 		if err := m.db.Create(&e); err != nil {
 			return Equipment{}, err

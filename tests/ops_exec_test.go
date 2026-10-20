@@ -38,6 +38,8 @@ func (c *testOpContext) Write(b []byte) (int, error)       { return len(b), nil 
 func (c *testOpContext) SetValue(k, v string)               {}
 func (c *testOpContext) Value(k string) string             { return "" }
 func (c *testOpContext) Param(k string) string             { return "" }
+func (c *testOpContext) Assurance() model.Assurance        { return model.AssuranceNone }
+func (c *testOpContext) SetAssurance(a model.Assurance)    {}
 func (c *testOpContext) SetCookie(ck router.Cookie)        {}
 func (c *testOpContext) Cookie(k string) (router.Cookie, bool) { return router.Cookie{}, false }
 func (c *testOpContext) SetUserID(id string)                {}

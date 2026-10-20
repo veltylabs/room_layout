@@ -68,7 +68,7 @@ ejecutado desde la raíz del repositorio.
 
 ## Lector para otros módulos
 
-`RoomOfOccupant(tenantID, occupantID, at)`: el box donde un profesional tiene turno en ese instante (segundos Unix). Detalle en
+`RoomOfOccupant(tenantID, occupantID, at)`: el box donde un profesional tiene turno en ese instante (time.Unix). Detalle en
 `docs/ARCHITECTURE.md` §5b.
 
 ## Archivos Clave

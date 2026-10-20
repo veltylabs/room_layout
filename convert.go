@@ -5,22 +5,22 @@ import (
 	"webtyp.com/time"
 )
 
-func parseDate(s string) (int64, error) {
+func parseDate(s string) (time.Unix, error) {
 	if s == "" {
 		return 0, nil
 	}
-	nano, err := time.ParseDate(s)
+	u, err := time.ParseDate(s)
 	if err != nil {
 		return 0, ErrInvalidDate
 	}
-	return nano / 1_000_000_000, nil
+	return u, nil
 }
 
-func formatDate(sec int64) string {
+func formatDate(sec time.Unix) string {
 	if sec <= 0 {
 		return ""
 	}
-	return time.FormatDate(sec * 1_000_000_000)
+	return time.FormatDate(sec)
 }
 
 func parseHour(s string) (int, error) {
