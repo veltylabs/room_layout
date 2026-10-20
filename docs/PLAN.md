@@ -2,8 +2,10 @@
 PLAN: "refactor: typed instants of webtyp/time v0.6 in room_layout — every instant field is time.Unix or time.Nano, no unit arithmetic"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 2613046217209865043
+PR: https://github.com/veltylabs/room_layout/pull/4
+REVIEWED_COMMIT: 52f38a886285fd2866cdbd4a32f0cad650cc788e
 ---
 
 > Read AGENTS.md at the repo root before any change. This plan is complete: do not guess; if something does not fit, stop and ask in the PR.
