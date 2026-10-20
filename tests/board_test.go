@@ -21,7 +21,6 @@ func TestShiftsOnAndBoard(t *testing.T) {
 	_ = env.mod.SetRoomCategories("tenantA", r.Id, []string{"cat1"})
 
 	dateSec, _ := time.ParseDate("2026-03-16")
-	dateSec = dateSec / 1_000_000_000
 
 	// Local time 10:30 on March 16 (minute 630)
 	env.clockSec = time.LocalMinutesToUnixUTC(dateSec+3*3600, 630, "America/Santiago")
@@ -108,7 +107,6 @@ func TestMoveShiftOccurrence(t *testing.T) {
 	})
 
 	dateSec, _ := time.ParseDate("2026-03-16") // Monday
-	dateSec = dateSec / 1_000_000_000
 
 	// Move to r2 should fail because cat1 is not enabled for r2
 	_, err := env.mod.MoveShiftOccurrence("tenantA", weeklyShift.Id, dateSec, r2.Id)

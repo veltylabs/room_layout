@@ -33,7 +33,7 @@ func (m *Module) SaveShift(tenantID string, f RoomShiftForm) (RoomShift, error) 
 
 	// 4. Weekly vs Dated check
 	var dow int
-	var specDate int64
+	var specDate time.Unix
 	if f.Date == "" {
 		if f.DayOfWeek == "" {
 			return RoomShift{}, ErrInvalidWeekday
@@ -156,7 +156,7 @@ func (m *Module) SaveShift(tenantID string, f RoomShiftForm) (RoomShift, error) 
 		return RoomShift{}, err
 	}
 
-	candidate.UpdatedAt = m.now() / 1_000_000_000
+	candidate.UpdatedAt = m.now().Unix()
 	if candidate.Id == "" {
 		candidate.Id = m.deps.IDs.NewID()
 		if err := m.db.Create(&candidate); err != nil {
@@ -232,12 +232,12 @@ func (m *Module) checkOverlap(cand RoomShift) error {
 	return nil
 }
 
-func (m *Module) isShiftCancelled(tenantID, shiftID string, date int64) (bool, error) {
+func (m *Module) isShiftCancelled(tenantID, shiftID string, date time.Unix) (bool, error) {
 	var found bool
 	err := m.db.Query(&RoomShiftCancellation{}).
 		Where("tenant_id").Eq(tenantID).
 		Where("shift_id").Eq(shiftID).
-		Where("specific_date").Eq(date).
+		Where("specific_date").Eq(int64(date)).
 		Limit(1).
 		ReadAll(func() model.Model { return &RoomShiftCancellation{} }, func(row model.Model) {
 			found = true
@@ -320,7 +320,7 @@ func (m *Module) DeleteShift(tenantID, id string) error {
 	return nil
 }
 
-func (m *Module) CancelShiftOccurrence(tenantID, shiftID string, date int64) error {
+func (m *Module) CancelShiftOccurrence(tenantID, shiftID string, date time.Unix) error {
 	if tenantID == "" {
 		return ErrTenantRequired
 	}
@@ -373,7 +373,7 @@ func (m *Module) CancelShiftOccurrence(tenantID, shiftID string, date int64) err
 	return nil
 }
 
-func (m *Module) MoveShiftOccurrence(tenantID, shiftID string, date int64, targetRoomID string) (RoomShift, error) {
+func (m *Module) MoveShiftOccurrence(tenantID, shiftID string, date time.Unix, targetRoomID string) (RoomShift, error) {
 	if tenantID == "" {
 		return RoomShift{}, ErrTenantRequired
 	}
@@ -470,7 +470,7 @@ func (m *Module) MoveShiftOccurrence(tenantID, shiftID string, date int64, targe
 				StartMin:      s.StartMin,
 				EndMin:        s.EndMin,
 				IsActive:      true,
-				UpdatedAt:     m.now() / 1_000_000_000,
+				UpdatedAt:     m.now().Unix(),
 			}
 			if err := m.checkOverlap(newShift); err != nil {
 				return err
@@ -482,7 +482,7 @@ func (m *Module) MoveShiftOccurrence(tenantID, shiftID string, date int64, targe
 		} else { // Dated
 			updatedShift := s
 			updatedShift.RoomId = targetRoomID
-			updatedShift.UpdatedAt = m.now() / 1_000_000_000
+			updatedShift.UpdatedAt = m.now().Unix()
 			if err := m.checkOverlap(updatedShift); err != nil {
 				return err
 			}

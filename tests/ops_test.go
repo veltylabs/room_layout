@@ -26,6 +26,10 @@ func (r *mockRoute) Authenticated() router.Route {
 	return r
 }
 
+func (r *mockRoute) RequiresMFA() router.Route {
+	return r
+}
+
 func (r *mockRoute) Public() router.Route {
 	r.isPublic = true
 	return r

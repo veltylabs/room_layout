@@ -118,7 +118,7 @@ var FloorModel = model.Definition{
 		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "name", Type: input.Text(), NotNull: true, Permitted: model.Permitted{Minimum: 1, Maximum: 60}},
 		{Name: "position", Type: input.Number(), OmitEmpty: true},
-		{Name: "updated_at", Type: model.Int(), OmitEmpty: true},
+		{Name: "updated_at", Type: model.UnixTime(), OmitEmpty: true},
 	},
 }
 
@@ -134,7 +134,7 @@ var RoomModel = model.Definition{
 		{Name: "name", Type: input.Text(), NotNull: true, Permitted: model.Permitted{Minimum: 1, Maximum: 120}},
 		{Name: "notes", Type: input.Textarea(), OmitEmpty: true},
 		{Name: "is_active", Type: input.Checkbox(), NotNull: true},
-		{Name: "updated_at", Type: model.Int(), OmitEmpty: true},
+		{Name: "updated_at", Type: model.UnixTime(), OmitEmpty: true},
 	},
 }
 
@@ -160,7 +160,7 @@ var EquipmentModel = model.Definition{
 		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true},
 		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "name", Type: input.Text(), NotNull: true, Permitted: model.Permitted{Minimum: 1, Maximum: 80}},
-		{Name: "updated_at", Type: model.Int(), OmitEmpty: true},
+		{Name: "updated_at", Type: model.UnixTime(), OmitEmpty: true},
 	},
 }
 
@@ -192,11 +192,11 @@ var RoomShiftModel = model.Definition{
 		{Name: "occupant_id", Type: model.Text(), OmitEmpty: true},
 		{Name: "occupant_label", Type: model.Text(), NotNull: true},
 		{Name: "day_of_week", Type: model.Int()},
-		{Name: "specific_date", Type: model.Int()},
+		{Name: "specific_date", Type: model.UnixTime()},
 		{Name: "start_min", Type: model.Int(), NotNull: true},
 		{Name: "end_min", Type: model.Int(), NotNull: true},
 		{Name: "is_active", Type: model.Bool(), NotNull: true},
-		{Name: "updated_at", Type: model.Int(), OmitEmpty: true},
+		{Name: "updated_at", Type: model.UnixTime(), OmitEmpty: true},
 	},
 }
 
@@ -205,7 +205,7 @@ var RoomShiftCancellationModel = model.Definition{
 	Fields: model.Fields{
 		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "shift_id", Type: model.Text(), Ref: &RoomShiftModel, DB: &model.FieldDB{PK: true, RefColumn: "id"}, NotNull: true},
-		{Name: "specific_date", Type: model.Int(), DB: &model.FieldDB{PK: true}, NotNull: true},
+		{Name: "specific_date", Type: model.UnixTime(), DB: &model.FieldDB{PK: true}, NotNull: true},
 	},
 }
 

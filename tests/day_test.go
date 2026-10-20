@@ -21,7 +21,6 @@ func TestListRoomDay(t *testing.T) {
 	_ = env.mod.SetRoomCategories("tenantA", r.Id, []string{"cat1"})
 
 	dateSec, _ := time.ParseDate("2026-03-16") // Monday
-	dateSec = dateSec / 1_000_000_000
 
 	_, err := env.mod.SaveShift("tenantA", roomlayout.RoomShiftForm{
 		RoomId:        r.Id,

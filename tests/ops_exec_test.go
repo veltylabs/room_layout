@@ -42,6 +42,8 @@ func (c *testOpContext) SetCookie(ck router.Cookie)        {}
 func (c *testOpContext) Cookie(k string) (router.Cookie, bool) { return router.Cookie{}, false }
 func (c *testOpContext) SetUserID(id string)                {}
 func (c *testOpContext) UserID() string                     { return "user1" }
+func (c *testOpContext) Assurance() model.Assurance          { return model.AssuranceMultiFactor }
+func (c *testOpContext) SetAssurance(a model.Assurance)      {}
 
 func (c *testOpContext) Decode(into model.Decodable) error {
 	if c.decodeErr != nil {

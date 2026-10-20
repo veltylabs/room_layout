@@ -67,7 +67,7 @@ func (f *fakeOccupants) OccupantOptions(tenantID string) ([]fmt.KeyValue, error)
 }
 
 type boundEntry struct {
-	date   int64
+	date   time.Unix
 	bounds time.DayBounds
 }
 
@@ -79,7 +79,7 @@ func newFakeBounds() *fakeBounds {
 	return &fakeBounds{}
 }
 
-func (f *fakeBounds) GetDayBounds(date int64) (time.DayBounds, error) {
+func (f *fakeBounds) GetDayBounds(date time.Unix) (time.DayBounds, error) {
 	for _, b := range f.bounds {
 		if b.date == date {
 			return b.bounds, nil
@@ -88,7 +88,7 @@ func (f *fakeBounds) GetDayBounds(date int64) (time.DayBounds, error) {
 	return time.DayBounds{Open: true, OpenMin: 480, CloseMin: 1200}, nil // 08:00 - 20:00
 }
 
-func (f *fakeBounds) setBounds(date int64, b time.DayBounds) {
+func (f *fakeBounds) setBounds(date time.Unix, b time.DayBounds) {
 	for i, entry := range f.bounds {
 		if entry.date == date {
 			f.bounds[i].bounds = b
@@ -105,7 +105,7 @@ type testEnv struct {
 	occs      *fakeOccupants
 	bounds    *fakeBounds
 	publisher *mockPublisher
-	clockSec  int64
+	clockSec  time.Unix
 	mod       *roomlayout.Module
 }
 
@@ -143,8 +143,8 @@ func newTestEnv(tenantID string) *testEnv {
 		Timezone:   "America/Santiago",
 		Bounds:     bounds,
 		Publisher:  pub,
-		Clock: func() int64 {
-			return env.clockSec * 1_000_000_000
+		Clock: func() time.Nano {
+			return env.clockSec.Nano()
 		},
 	}
 

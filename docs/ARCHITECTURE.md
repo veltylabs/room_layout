@@ -90,7 +90,7 @@ La pantalla del módulo en el navegador (`ui.Browser`) expone 6 pestañas organi
 
 ## 5b. Lectores para otros módulos
 
-`RoomOfOccupant(tenantID, occupantID string, at int64) (roomID string, found bool, err error)`: el box donde un ocupante
+`RoomOfOccupant(tenantID, occupantID string, at time.Unix) (roomID string, found bool, err error)`: el box donde un ocupante
 (profesional) tiene un turno que cubre el instante `at` (segundos Unix UTC, leído en la zona horaria del módulo). Cuentan los
 turnos semanales y los de fecha; no cuentan una ocurrencia cancelada ni un box inactivo; un turno cubre `[inicio, fin)`. Sin
 turno, `found` es falso. Otro módulo lo declara en una interfaz estrecha propia y la aplicación le pasa este módulo: así

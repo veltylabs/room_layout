@@ -3,6 +3,7 @@ package roomlayout
 import (
 	"webtyp.com/model"
 	"webtyp.com/router"
+	"webtyp.com/time"
 )
 
 var _ router.OperationModule = (*Module)(nil)
@@ -521,7 +522,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 		if tenantID == "" {
 			tenantID = m.tenantID
 		}
-		var dateSec int64
+		var dateSec time.Unix
 		if args.Date != "" {
 			d, err := parseDate(args.Date)
 			if err != nil {

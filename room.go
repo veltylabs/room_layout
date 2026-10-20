@@ -39,7 +39,7 @@ func (m *Module) SaveRoom(r Room) (Room, error) {
 		return Room{}, ErrCodeAlreadyExists
 	}
 
-	r.UpdatedAt = m.now() / 1_000_000_000
+	r.UpdatedAt = m.now().Unix()
 	if isNew {
 		if err := m.db.Create(&r); err != nil {
 			return Room{}, err
@@ -111,7 +111,7 @@ func (m *Module) DeactivateRoom(tenantID, id string) error {
 		return err
 	}
 	r.IsActive = false
-	r.UpdatedAt = m.now() / 1_000_000_000
+	r.UpdatedAt = m.now().Unix()
 	if err := m.db.Update(&r, orm.Eq("id", id), orm.Eq("tenant_id", tenantID)); err != nil {
 		return err
 	}
