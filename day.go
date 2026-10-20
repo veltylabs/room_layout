@@ -7,18 +7,48 @@ import (
 )
 
 func (m *Module) localNow() (int64, int) {
-	nowSec := m.now() / 1_000_000_000
-	D := time.MidnightUTC(nowSec)
-	min := int((nowSec - time.LocalMinutesToUnixUTC(D, 0, m.deps.Timezone)) / 60)
+	return m.localAt(m.now() / 1_000_000_000)
+}
+
+// localAt splits an instant (Unix seconds UTC) into the local day it falls on, as the day key the shifts use (its
+// midnight UTC), and the minute of that local day.
+func (m *Module) localAt(sec int64) (int64, int) {
+	D := time.MidnightUTC(sec)
+	min := int((sec - time.LocalMinutesToUnixUTC(D, 0, m.deps.Timezone)) / 60)
 	if min < 0 {
 		D -= 86400
-		min = int((nowSec - time.LocalMinutesToUnixUTC(D, 0, m.deps.Timezone)) / 60)
+		min = int((sec - time.LocalMinutesToUnixUTC(D, 0, m.deps.Timezone)) / 60)
 	}
 	if min >= 1440 {
 		D += 86400
-		min = int((nowSec - time.LocalMinutesToUnixUTC(D, 0, m.deps.Timezone)) / 60)
+		min = int((sec - time.LocalMinutesToUnixUTC(D, 0, m.deps.Timezone)) / 60)
 	}
 	return D, min
+}
+
+// RoomOfOccupant returns the room where occupantID has a shift covering the instant at (Unix seconds UTC, read in the
+// module's timezone): weekly and dated shifts count, a cancelled occurrence or an inactive room does not, and a shift
+// covers [start, end). found is false when no shift covers it. When two shifts cover it, the room with the lowest id
+// wins. Other modules declare this method in a narrow interface of their own (clinical_encounter uses it to know the box
+// an attention happened in) and the application passes this module.
+func (m *Module) RoomOfOccupant(tenantID, occupantID string, at int64) (roomID string, found bool, err error) {
+	if tenantID == "" {
+		return "", false, ErrTenantRequired
+	}
+	if occupantID == "" {
+		return "", false, nil
+	}
+	date, minute := m.localAt(at)
+	shifts, err := m.shiftsOn(tenantID, date)
+	if err != nil {
+		return "", false, err
+	}
+	for _, s := range shifts { // shiftsOn orders by room id, then start
+		if s.OccupantId == occupantID && int64(minute) >= s.StartMin && int64(minute) < s.EndMin {
+			return s.RoomId, true, nil
+		}
+	}
+	return "", false, nil
 }
 
 func isRoomActive(rooms []Room, roomID string) bool {

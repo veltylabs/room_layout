@@ -66,6 +66,11 @@ ejecutado desde la raíz del repositorio.
 | `find_free_rooms` | `room` | `Read` |
 | `list_public_availability` | — | `Public` |
 
+## Lector para otros módulos
+
+`RoomOfOccupant(tenantID, occupantID, at)`: el box donde un profesional tiene turno en ese instante (segundos Unix). Detalle en
+`docs/ARCHITECTURE.md` §5b.
+
 ## Archivos Clave
 
 - `model.go`: Definición de modelos, parámetros y respuestas.
