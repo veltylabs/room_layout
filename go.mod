@@ -10,7 +10,7 @@ require (
 	webtyp.com/form v0.4.43
 	webtyp.com/input v0.0.20
 	webtyp.com/layout v0.3.45
-	webtyp.com/model v0.2.3
+	webtyp.com/model v0.2.4
 	webtyp.com/orm v0.12.6
 	webtyp.com/router v0.4.2
 	webtyp.com/storage v0.1.8
