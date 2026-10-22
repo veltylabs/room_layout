@@ -64,3 +64,6 @@ A PR that does not compile, or whose tests could not run, is a failed delivery. 
 |---|---|---|
 | 1 | `web/browser.go`, `ui/browser.go` | Rename to `web/browser.go` with `//go:build browser`, add tag to `ui/browser.go` |
 | 2 | tests, docs | Verify tests pass with `gotest ./...` |
+
+## Executor notes
+The instruction mentioned `ui/browser.go carries //go:build browser` and the setup initially suggested placing the `browser` tag in UI files. This broke `ui/css.go` which carries `!wasm`. To resolve this, `RootView` and its views (e.g. stages, types) were moved to a new `ui/rootview.go` file with NO build tags, and `ui/browser.go` was restricted to just the `Browser()` entrypoint with the `//go:build browser` tag. `web/client.go` was correctly renamed to `web/browser.go` and tagged as `browser`.
