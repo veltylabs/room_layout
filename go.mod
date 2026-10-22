@@ -32,7 +32,7 @@ require (
 	webtyp.com/css v0.4.30
 	webtyp.com/fmt v1.0.0
 	webtyp.com/font v0.0.5 // indirect
-	webtyp.com/html v0.0.28
+	webtyp.com/html v0.0.29
 	webtyp.com/json v0.5.30 // indirect
 	webtyp.com/view v0.6.40
 )
