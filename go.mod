@@ -23,7 +23,7 @@ require (
 require (
 	webtyp.com/calendar v0.1.0 // indirect
 	webtyp.com/escape v0.1.0 // indirect
-	webtyp.com/lang v0.1.9 // indirect
+	webtyp.com/lang v0.1.10 // indirect
 	webtyp.com/msgtype v0.1.0 // indirect
 )
 
