@@ -34,5 +34,5 @@ require (
 	webtyp.com/font v0.0.5 // indirect
 	webtyp.com/html v0.0.30
 	webtyp.com/json v0.5.30 // indirect
-	webtyp.com/view v0.6.44
+	webtyp.com/view v0.6.45
 )
