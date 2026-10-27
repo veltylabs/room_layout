@@ -3,8 +3,10 @@ PLAN: "feat: migrate ui to view.Screen and drop layout dependency"
 TAG: v0.3.49
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 4424302593314798312
+PR: https://github.com/veltylabs/room_layout/pull/6
+REVIEWED_COMMIT: 2c568008245fdb2530f577262ea77e3833fd64a9
 ---
 
 > Read AGENTS.md at the repo root before any change.

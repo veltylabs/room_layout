@@ -64,7 +64,7 @@ func (s *RoomShiftForm) Item() view.Item {
 	}
 }
 
-func NewFloorView(caller router.Caller) view.Presenter {
+func NewFloorView(caller router.Caller, opts ...view.Option) view.Presenter {
 	lister := view.NewCallerLister(
 		caller,
 		view.Ops{
@@ -75,10 +75,11 @@ func NewFloorView(caller router.Caller) view.Presenter {
 		},
 		func() model.ModelSlice { return &FloorList{} },
 	)
-	return view.New(lister, &Floor{})
+	allOpts := append([]view.Option{view.WithTitle("Floors")}, opts...)
+	return view.New(lister, &Floor{}, allOpts...)
 }
 
-func NewRoomView(caller router.Caller) view.Presenter {
+func NewRoomView(caller router.Caller, opts ...view.Option) view.Presenter {
 	lister := view.NewCallerLister(
 		caller,
 		view.Ops{
@@ -88,10 +89,11 @@ func NewRoomView(caller router.Caller) view.Presenter {
 		},
 		func() model.ModelSlice { return &RoomList{} },
 	)
-	return view.New(lister, &Room{})
+	allOpts := append([]view.Option{view.WithTitle("Rooms")}, opts...)
+	return view.New(lister, &Room{}, allOpts...)
 }
 
-func NewEquipmentView(caller router.Caller) view.Presenter {
+func NewEquipmentView(caller router.Caller, opts ...view.Option) view.Presenter {
 	lister := view.NewCallerLister(
 		caller,
 		view.Ops{
@@ -102,7 +104,8 @@ func NewEquipmentView(caller router.Caller) view.Presenter {
 		},
 		func() model.ModelSlice { return &EquipmentList{} },
 	)
-	return view.New(lister, &Equipment{})
+	allOpts := append([]view.Option{view.WithTitle("Equipment")}, opts...)
+	return view.New(lister, &Equipment{}, allOpts...)
 }
 
 type roomShiftLister struct {

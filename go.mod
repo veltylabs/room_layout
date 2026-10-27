@@ -9,7 +9,7 @@ require (
 	webtyp.com/events v0.1.0
 	webtyp.com/form v0.4.52
 	webtyp.com/input v0.0.20
-	webtyp.com/layout v0.3.76
+	webtyp.com/lang v0.1.10
 	webtyp.com/model v0.2.6
 	webtyp.com/orm v0.12.8
 	webtyp.com/router v0.4.8
@@ -23,8 +23,6 @@ require (
 require (
 	webtyp.com/calendar v0.1.0 // indirect
 	webtyp.com/escape v0.1.0 // indirect
-	webtyp.com/lang v0.1.10 // indirect
-	webtyp.com/msgtype v0.1.0 // indirect
 )
 
 require (
