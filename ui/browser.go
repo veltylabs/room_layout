@@ -1,264 +1,57 @@
-//go:build browser
-
 package ui
 
 import (
-	"webtyp.com/layout/platformd"
-	"webtyp.com/model"
+	roomlayout "github.com/veltylabs/room_layout"
+	"webtyp.com/lang"
 	"webtyp.com/router"
+	"webtyp.com/view"
 )
 
-func Browser(caller router.Caller, ids model.IDGenerator, tenantID string, opts ...Option) (platformd.UIModule, error) {
-	o := options{label: DefaultLabel}
-	for _, opt := range opts {
-		opt(&o)
-	}
+const (
+	descSpaces    lang.Text = "Physical spaces, room arrangements and clinical equipment."
+	descRooms     lang.Text = "Rooms, consultations and procedure spaces."
+	descFloors    lang.Text = "Building levels and architectural floors."
+	descEquipment lang.Text = "Clinical and operational equipment allocated to spaces."
 
-	// 1. Initial realistic floors
-	var p1Cells []string
-	for row := 0; row < 12; row++ {
-		for col := 0; col < 16; col++ {
-			if row < 4 && col > 10 {
-				continue // cutout / patio
-			}
-			p1Cells = append(p1Cells, FormatCell(row, col))
-		}
-	}
+	labelRooms     lang.Text = "Rooms"
+	labelFloors    lang.Text = "Floors"
+	labelEquipment lang.Text = "Equipment"
+)
 
-	var p2Cells []string
-	for row := 0; row < 12; row++ {
-		for col := 0; col < 16; col++ {
-			p2Cells = append(p2Cells, FormatCell(row, col))
-		}
-	}
-
-	f1ID := "f1"
-	f2ID := "f2"
-	if ids != nil {
-		f1ID = ids.NewID()
-		f2ID = ids.NewID()
-	}
-
-	floors := []FloorData{
+// Screens declara las pantallas que este módulo ofrece al menú de la app.
+func Screens(caller router.Caller) []view.Screen {
+	return []view.Screen{
 		{
-			ID:             f1ID,
-			Name:           "Piso 1 · Recepción y Atención",
-			Position:       1,
-			HabitableCells: p1Cells,
-		},
-		{
-			ID:             f2ID,
-			Name:           "Piso 2 · Boxes Clínicos",
-			Position:       2,
-			HabitableCells: p2Cells,
-		},
-	}
-
-	// 2. Initial rooms
-	r1ID := "r1"
-	r2ID := "r2"
-	r3ID := "r3"
-	r4ID := "r4"
-	r5ID := "r5"
-	if ids != nil {
-		r1ID = ids.NewID()
-		r2ID = ids.NewID()
-		r3ID = ids.NewID()
-		r4ID = ids.NewID()
-		r5ID = ids.NewID()
-	}
-
-	rooms := []RoomData{
-		{
-			ID:       r1ID,
-			FloorID:  f1ID,
-			Code:     "B-101",
-			Name:     "Consultorio 101",
-			RoomType: RoomTypeBox,
-			Cells:    []string{"B2", "B3", "C2", "C3"},
-		},
-		{
-			ID:       r2ID,
-			FloorID:  f1ID,
-			Code:     "B-102",
-			Name:     "Consultorio 102",
-			RoomType: RoomTypeBox,
-			Cells:    []string{"B5", "B6", "C5", "C6"},
-		},
-		{
-			ID:       r3ID,
-			FloorID:  f1ID,
-			Code:     "B-103",
-			Name:     "Consultorio 103",
-			RoomType: RoomTypeBox,
-			Cells:    []string{"E2", "E3", "F2", "F3"},
-		},
-		{
-			ID:       r4ID,
-			FloorID:  f1ID,
-			Code:     "REC-01",
-			Name:     "Recepción / Espera",
-			RoomType: RoomTypeShared,
-			Cells:    []string{"H2", "H3", "I2", "I3", "J2", "J3"},
-		},
-		{
-			ID:       r5ID,
-			FloorID:  f1ID,
-			Code:     "BOD-01",
-			Name:     "Bodega de Insumos",
-			RoomType: RoomTypeStore,
-			Cells:    []string{"L2", "L3", "M2", "M3"},
+			ID:    ID,
+			Label: lang.Text(DefaultLabel),
+			Icon:  ID,
+			Help:  descSpaces,
+			Children: []view.Screen{
+				{
+					ID:         ID + ".rooms",
+					Label:      labelRooms,
+					Icon:       ID + "_room",
+					Permission: roomlayout.ResourceRoom,
+					Presenter:  roomlayout.NewRoomView(caller, view.WithDescription(descRooms)),
+					Lookups: []view.Lookup{
+						{Field: "floor_id", Source: roomlayout.NewFloorView(caller)},
+					},
+				},
+				{
+					ID:         ID + ".floors",
+					Label:      labelFloors,
+					Icon:       ID + "_floor",
+					Permission: roomlayout.ResourceFloor,
+					Presenter:  roomlayout.NewFloorView(caller, view.WithDescription(descFloors)),
+				},
+				{
+					ID:         ID + ".equipment",
+					Label:      labelEquipment,
+					Icon:       ID + "_equipment",
+					Permission: roomlayout.ResourceEquipment,
+					Presenter:  roomlayout.NewEquipmentView(caller, view.WithDescription(descEquipment)),
+				},
+			},
 		},
 	}
-
-	// 3. Initial artifacts
-	artifacts := []ArtifactData{
-		{
-			ID:      "a1",
-			RoomID:  r1ID,
-			FloorID: f1ID,
-			Kind:    ArtifactPC,
-			Code:    "PC-01",
-			Cell:    "B2",
-			Status:  StatusOk,
-		},
-		{
-			ID:      "a2",
-			RoomID:  r1ID,
-			FloorID: f1ID,
-			Kind:    ArtifactAgenda,
-			Code:    "AG-01",
-			Cell:    "C2",
-			Status:  StatusOk,
-		},
-		{
-			ID:      "a3",
-			RoomID:  r2ID,
-			FloorID: f1ID,
-			Kind:    ArtifactPrinter,
-			Code:    "IMP-01",
-			Cell:    "B5",
-			Status:  StatusWarn,
-			Reason:  "Falta tóner magenta",
-		},
-		{
-			ID:      "a4",
-			RoomID:  r3ID,
-			FloorID: f1ID,
-			Kind:    ArtifactECG,
-			Code:    "ECG-01",
-			Cell:    "E2",
-			Status:  StatusOk,
-		},
-		{
-			ID:      "a5",
-			RoomID:  r3ID,
-			FloorID: f1ID,
-			Kind:    ArtifactGastro,
-			Code:    "GAS-01",
-			Cell:    "F3",
-			Status:  StatusCrit,
-			Reason:  "Falla sensor de presión",
-		},
-		{
-			ID:      "a6",
-			RoomID:  r5ID,
-			FloorID: f1ID,
-			Kind:    ArtifactSupply,
-			Code:    "INS-01",
-			Cell:    "L2",
-			Status:  StatusOk,
-		},
-	}
-
-	// 4. Initial shifts
-	shifts := []ShiftData{
-		{
-			ID:            "s1",
-			RoomID:        r1ID,
-			OccupantID:    "doc1",
-			OccupantLabel: "Dr. Juan Pérez",
-			DayOfWeek:     1, // Lun
-			StartHour:     "09:00",
-			EndHour:       "13:00",
-		},
-		{
-			ID:            "s2",
-			RoomID:        r1ID,
-			OccupantID:    "doc1",
-			OccupantLabel: "Dr. Juan Pérez",
-			DayOfWeek:     2, // Mar
-			StartHour:     "09:00",
-			EndHour:       "13:00",
-		},
-		{
-			ID:            "s3",
-			RoomID:        r2ID,
-			OccupantID:    "doc2",
-			OccupantLabel: "Dra. María González",
-			DayOfWeek:     3, // Mié
-			StartHour:     "09:00",
-			EndHour:       "13:00",
-		},
-		{
-			ID:            "s4",
-			RoomID:        r2ID,
-			OccupantID:    "doc2",
-			OccupantLabel: "Dra. María González",
-			DayOfWeek:     4, // Jue
-			StartHour:     "14:00",
-			EndHour:       "18:00",
-		},
-		{
-			ID:            "s5",
-			RoomID:        r3ID,
-			OccupantID:    "doc3",
-			OccupantLabel: "Dr. Carlos Rojas",
-			DayOfWeek:     5, // Vie
-			StartHour:     "09:00",
-			EndHour:       "13:00",
-		},
-	}
-
-	// 5. Initial doctors
-	doctors := []DoctorData{
-		{
-			ID:              "doc1",
-			Name:            "Dr. Juan Pérez",
-			Specialty:       "Medicina General",
-			Initials:        "JP",
-			WeeklyOccupancy: 80,
-		},
-		{
-			ID:              "doc2",
-			Name:            "Dra. María González",
-			Specialty:       "Cardiología",
-			Initials:        "MG",
-			WeeklyOccupancy: 60,
-		},
-		{
-			ID:              "doc3",
-			Name:            "Dr. Carlos Rojas",
-			Specialty:       "Ginecología",
-			Initials:        "CR",
-			WeeklyOccupancy: 45,
-		},
-	}
-
-	root := &RootView{
-		caller:      caller,
-		ids:         ids,
-		tenantID:    tenantID,
-		ActiveStage: 0,
-		ActiveFloor: 0,
-		Cols:        20,
-		Rows:        14,
-		Floors:      floors,
-		Rooms:       rooms,
-		Artifacts:   artifacts,
-		Shifts:      shifts,
-		Doctors:     doctors,
-	}
-
-	return platformd.NewUIModule(ID, o.label, Icon(ID), root), nil
 }

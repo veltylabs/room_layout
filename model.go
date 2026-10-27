@@ -358,7 +358,7 @@ var MoveShiftOccurrenceArgsModel = model.Definition{
 		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "shift_id", Type: model.Text(), NotNull: true},
 		{Name: "date", Type: model.Text(), NotNull: true},
-		{Name: "target_room_id", Type: model.Text(), NotNull: true},
+		{Name: "target_room_id", Type: model.Text(), Label: "Target room", NotNull: true},
 	},
 }
 
@@ -435,10 +435,10 @@ var BoardRoomModel = model.Definition{
 		{Name: "category_labels", Type: model.Text(), NotNull: true},
 		{Name: "equipment_labels", Type: model.Text(), NotNull: true},
 		{Name: "status", Type: model.Text(), NotNull: true},
-		{Name: "current_occupant_label", Type: model.Text()},
+		{Name: "current_occupant_label", Type: model.Text(), Label: "Current occupant"},
 		{Name: "current_until", Type: model.Text()},
 		{Name: "next_start", Type: model.Text()},
-		{Name: "next_occupant_label", Type: model.Text()},
+		{Name: "next_occupant_label", Type: model.Text(), Label: "Next occupant"},
 		{Name: "today", Type: model.Text(), NotNull: true},
 	},
 }

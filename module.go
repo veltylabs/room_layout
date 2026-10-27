@@ -39,19 +39,19 @@ type Module struct {
 
 func New(db *orm.DB, deps Deps) (*Module, error) {
 	if deps.IDs == nil {
-		return nil, fmt.Err("room_layout: Deps.IDs is required")
+		return nil, fmt.Err("room_layout: Deps.IDs no supplied_1")
 	}
 	if deps.Categories == nil {
-		return nil, fmt.Err("room_layout: Deps.Categories is required")
+		return nil, fmt.Err("room_layout: Deps.Categories no provided_2")
 	}
 	if deps.Occupants == nil {
-		return nil, fmt.Err("room_layout: Deps.Occupants is required")
+		return nil, fmt.Err("room_layout: Deps.Occupants no supplied_2")
 	}
 	if deps.TenantID == "" {
-		return nil, fmt.Err("room_layout: Deps.TenantID is required")
+		return nil, fmt.Err("room_layout: Deps.TenantID no supplied_3")
 	}
 	if deps.Timezone == "" {
-		return nil, fmt.Err("room_layout: Deps.Timezone is required")
+		return nil, fmt.Err("room_layout: Deps.Timezone no supplied_4")
 	}
 	if deps.Clock == nil {
 		deps.Clock = time.NowNano

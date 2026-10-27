@@ -19,7 +19,7 @@ type Data struct {
 
 func Load(m *roomlayout.Module, tenantID string, opts ...LoadOptions) (Data, error) {
 	if tenantID == "" {
-		return Data{}, fmt.Err("seed: tenantID is required")
+		return Data{}, fmt.Err("seed: tenantID no supplied_5")
 	}
 
 	var catIDs []string
