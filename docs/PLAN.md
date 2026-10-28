@@ -78,3 +78,6 @@ with the new names (`Item: model.ItemLabel`…, «`Item()` lo genera ormc»).
 | 2 | `*.go`, `tests/*` | `Item()`, `model.Item` |
 | 3 | `tests/*` | generated item asserted |
 | 4 | comments, docs | new names |
+
+## Executor notes
+- In Stage 1, `RoomShiftFormModel` failed generation via `ormc` because it lacked a primary key property, and modifying the schema for it explicitly adding `DB: &model.FieldDB{PK: true}` broke test instances across the repository that instantiated shifts inline without setting an explicit ID. Therefore, to safely resolve the issue while implementing the `Item:` plan, the item marks for `RoomShiftFormModel` in `model.go` were left off, and `func (m *RoomShiftForm) Item() model.Item` was written manually in `view.go`. Tests remain green.
