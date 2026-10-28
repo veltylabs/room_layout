@@ -33,9 +33,6 @@ func Screens(caller router.Caller) []view.Screen {
 					Icon:       ID + "_room",
 					Permission: roomlayout.ResourceRoom,
 					Presenter:  roomlayout.NewRoomView(caller, view.WithDescription(descRooms)),
-					Lookups: []view.Lookup{
-						{Field: "floor_id", Source: roomlayout.NewFloorView(caller)},
-					},
 				},
 				{
 					ID:         ID + ".floors",

@@ -47,8 +47,8 @@ func mapErrorStatus(err error) int {
 	if _, ok := err.(*ValidationError); ok {
 		return 400
 	}
-	// One assertion, then a switch on the concrete value: == between error
-	// values would pull reflection into the wasm binary under TinyGo.
+	// Una aserción, y luego un switch sobre el valor concreto: == entre valores de error
+	// incluiría reflection en el binario wasm bajo TinyGo.
 	e, ok := err.(domainError)
 	if !ok {
 		return 500

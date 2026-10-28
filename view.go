@@ -7,63 +7,6 @@ import (
 	"webtyp.com/view"
 )
 
-var _ view.Itemizer = (*Floor)(nil)
-var _ view.Itemizer = (*Room)(nil)
-var _ view.Itemizer = (*Equipment)(nil)
-var _ view.Itemizer = (*RoomShiftForm)(nil)
-
-func (f *Floor) Item() view.Item {
-	return view.Item{
-		ID:    f.Id,
-		Label: f.Name,
-	}
-}
-
-func (r *Room) Item() view.Item {
-	return view.Item{
-		ID:    r.Id,
-		Label: r.Code + " · " + r.Name,
-	}
-}
-
-func (e *Equipment) Item() view.Item {
-	return view.Item{
-		ID:    e.Id,
-		Label: e.Name,
-	}
-}
-
-func (s *RoomShiftForm) Item() view.Item {
-	var desc string
-	if s.Date == "" {
-		dowName := s.DayOfWeek
-		switch s.DayOfWeek {
-		case WeekdaySunday:
-			dowName = "Domingo"
-		case WeekdayMonday:
-			dowName = "Lunes"
-		case WeekdayTuesday:
-			dowName = "Martes"
-		case WeekdayWednesday:
-			dowName = "Miércoles"
-		case WeekdayThursday:
-			dowName = "Jueves"
-		case WeekdayFriday:
-			dowName = "Viernes"
-		case WeekdaySaturday:
-			dowName = "Sábado"
-		}
-		desc = fmt.Sprintf("%s %s–%s", dowName, s.Start, s.End)
-	} else {
-		desc = fmt.Sprintf("%s %s–%s", s.Date, s.Start, s.End)
-	}
-	return view.Item{
-		ID:          s.Id,
-		Label:       s.OccupantLabel,
-		Description: desc,
-	}
-}
-
 func NewFloorView(caller router.Caller, opts ...view.Option) view.Presenter {
 	lister := view.NewCallerLister(
 		caller,
@@ -154,6 +97,10 @@ func (l *roomShiftLister) Delete(ids []string, done func(err error)) {
 	}
 	args := DeleteRoomShiftArgs{TenantId: l.tenantID, Id: ids[0]}
 	l.caller.Call(ModelName+"."+OpDeleteRoomShift, &args, nil, done)
+}
+
+func (l *roomShiftLister) Records() *view.Records {
+	return nil
 }
 
 func NewShiftView(caller router.Caller, tenantID, roomID string) view.Presenter {

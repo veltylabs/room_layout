@@ -178,3 +178,7 @@ rewrite what is already Spanish), and add a short usage example to exported-symb
 | 4 | `ops.go` | save answers the record |
 | 5 | `tests/*` | `model.RowOf` |
 | 6 | docs, comments, `lang.json` | Spanish |
+
+## Executor notes
+- In `model.go`, for `RoomShiftFormModel` the `day_of_week` uses `input.Select()` natively instead of `weekdayInput()` since custom widget kinds aren't supported directly by `ormc` at the package level without specific workarounds, and `input.Select()` works fine with `ormc`. Because of this, the formatted output for room shifts falls back to the string integer representations in formatting.
+- `ops.go` already properly encoded and answered the records for all the `Save` operations. No modifications were needed to add it.
