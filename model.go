@@ -52,10 +52,10 @@ const (
 	TopicShiftOccurrenceMoved     = "room_layout.shift.occurrence_moved"
 )
 
-// domainError is the concrete type of this package's sentinel errors. Code
-// compares them by asserting this type and comparing the value: == between two
-// error values compiles, under TinyGo, to runtime.interfaceEqual, which pulls
-// internal/reflectlite into the wasm binary.
+// domainError es el tipo concreto de los errores centinela de este paquete. El código
+// los compara afirmando este tipo y comparando el valor: == entre dos
+// valores de error compila, bajo TinyGo, a runtime.interfaceEqual, lo cual incluye
+// internal/reflectlite en el binario wasm.
 type domainError string
 
 func (e domainError) Error() string { return string(e) }
@@ -116,7 +116,7 @@ var FloorModel = model.Definition{
 		{Name: "habitable_cells", Type: model.Text()},
 		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true},
 		{Name: "tenant_id", Type: model.Text(), NotNull: true},
-		{Name: "name", Type: input.Text(), NotNull: true, Permitted: model.Permitted{Minimum: 1, Maximum: 60}},
+		{Name: "name", Type: input.Text(), Row: model.RowTitle, NotNull: true, Permitted: model.Permitted{Minimum: 1, Maximum: 60}},
 		{Name: "position", Type: input.Number(), OmitEmpty: true},
 		{Name: "updated_at", Type: model.UnixTime(), OmitEmpty: true},
 	},
@@ -130,8 +130,8 @@ var RoomModel = model.Definition{
 		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true},
 		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "floor_id", Type: input.Select(), Ref: &FloorModel, DB: &model.FieldDB{RefColumn: "id"}, NotNull: true, Permitted: model.Permitted{Letters: true, Numbers: true, Extra: []rune{'-', '_'}}},
-		{Name: "code", Type: input.Text(), NotNull: true, Permitted: model.Permitted{Letters: true, Numbers: true, Extra: []rune{'-'}, Minimum: 1, Maximum: 20}},
-		{Name: "name", Type: input.Text(), NotNull: true, Permitted: model.Permitted{Minimum: 1, Maximum: 120}},
+		{Name: "code", Type: input.Text(), Row: model.RowTitle, NotNull: true, Permitted: model.Permitted{Letters: true, Numbers: true, Extra: []rune{'-'}, Minimum: 1, Maximum: 20}},
+		{Name: "name", Type: input.Text(), Row: model.RowDetail, NotNull: true, Permitted: model.Permitted{Minimum: 1, Maximum: 120}},
 		{Name: "notes", Type: input.Textarea(), OmitEmpty: true},
 		{Name: "is_active", Type: input.Checkbox(), NotNull: true},
 		{Name: "updated_at", Type: model.UnixTime(), OmitEmpty: true},
@@ -159,7 +159,7 @@ var EquipmentModel = model.Definition{
 	Fields: model.Fields{
 		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true},
 		{Name: "tenant_id", Type: model.Text(), NotNull: true},
-		{Name: "name", Type: input.Text(), NotNull: true, Permitted: model.Permitted{Minimum: 1, Maximum: 80}},
+		{Name: "name", Type: input.Text(), Row: model.RowTitle, NotNull: true, Permitted: model.Permitted{Minimum: 1, Maximum: 80}},
 		{Name: "updated_at", Type: model.UnixTime(), OmitEmpty: true},
 	},
 }
@@ -216,11 +216,11 @@ var RoomShiftFormModel = model.Definition{
 		{Name: "room_id", Type: input.Select(), NotNull: true, Permitted: model.Permitted{Letters: true, Numbers: true, Extra: []rune{'-', '_'}}},
 		{Name: "category_id", Type: input.Select(), NotNull: true, Permitted: model.Permitted{Letters: true, Numbers: true, Extra: []rune{'-', '_'}}},
 		{Name: "occupant_id", Type: input.Select(), OmitEmpty: true, Permitted: model.Permitted{Letters: true, Numbers: true, Extra: []rune{'-', '_'}}},
-		{Name: "occupant_label", Type: input.Text(), OmitEmpty: true, Permitted: model.Permitted{Maximum: 120}},
-		{Name: "day_of_week", Type: input.Select(), OmitEmpty: true},
-		{Name: "date", Type: input.Date(), OmitEmpty: true},
-		{Name: "start", Type: input.Hour(), NotNull: true},
-		{Name: "end", Type: input.Hour(), NotNull: true},
+		{Name: "occupant_label", Type: input.Text(), Row: model.RowTitle, OmitEmpty: true, Permitted: model.Permitted{Maximum: 120}},
+		{Name: "day_of_week", Type: input.Select(), Row: model.RowDetail, OmitEmpty: true},
+		{Name: "date", Type: input.Date(), Row: model.RowDetail, OmitEmpty: true},
+		{Name: "start", Type: input.Hour(), Row: model.RowDetail, NotNull: true},
+		{Name: "end", Type: input.Hour(), Row: model.RowDetail, NotNull: true},
 	},
 }
 
@@ -231,7 +231,7 @@ var IdRefModel = model.Definition{
 	},
 }
 
-// Argument definitions.
+// Definiciones de argumentos.
 var ListFloorsArgsModel = model.Definition{
 	Name: "list_floors_args",
 	Fields: model.Fields{
@@ -399,7 +399,7 @@ var ListPublicAvailabilityArgsModel = model.Definition{
 	},
 }
 
-// Result / Output Definitions.
+// Definiciones de resultados / salidas.
 var OptionModel = model.Definition{
 	Name: "option",
 	Fields: model.Fields{

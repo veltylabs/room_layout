@@ -61,10 +61,10 @@ erDiagram
         int specific_date PK
     }
 
-    floor ||--o{ room : "contains"
-    room ||--o{ room_equipment : "has"
-    equipment ||--o{ room_equipment : "assigned to"
-    room ||--o{ room_category : "enabled for"
-    room ||--o{ room_shift : "occupies"
-    room_shift ||--o{ room_shift_cancellation : "cancels occurrence"
+    floor ||--o{ room : "contiene"
+    room ||--o{ room_equipment : "tiene"
+    equipment ||--o{ room_equipment : "asignado a"
+    room ||--o{ room_category : "habilitado para"
+    room ||--o{ room_shift : "ocupa"
+    room_shift ||--o{ room_shift_cancellation : "cancela ocurrencia"
 ```

@@ -7,10 +7,11 @@ import (
 	. "webtyp.com/dom"
 	"webtyp.com/html"
 	"webtyp.com/router/loopback"
+	"webtyp.com/view"
 )
 
 func main() {
-	caller := loopback.New()
+	caller := view.NewRecords().Caller(loopback.New())
 	screens := ui.Screens(caller)
 	appNode := html.Div().Child(
 		html.H1().Text(string(screens[0].Label)),

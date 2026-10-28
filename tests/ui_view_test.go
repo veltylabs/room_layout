@@ -8,6 +8,7 @@ import (
 	"github.com/veltylabs/room_layout/ui"
 	"webtyp.com/model"
 	"webtyp.com/router"
+	"webtyp.com/view"
 )
 
 type mockCaller struct{}
@@ -23,7 +24,7 @@ func (c *mockCaller) Dispatch(route string, args model.Encodable) {}
 var _ router.Caller = (*mockCaller)(nil)
 
 func TestUI_Screens(t *testing.T) {
-	fake := &mockCaller{}
+	fake := view.NewRecords().Caller(&mockCaller{})
 	screens := ui.Screens(fake)
 	if len(screens) != 1 {
 		t.Fatalf("len(screens) = %d, want 1", len(screens))
