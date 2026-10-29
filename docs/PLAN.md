@@ -2,6 +2,8 @@
 PLAN: "refactor: list screens save and delete through view.MountSave/MountDelete; errors through rpc.WriteError; resources from the tables; English keys translated"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 5492341499030472707
 ---
 
 > Read AGENTS.md at the repo root before any change.
