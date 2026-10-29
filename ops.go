@@ -42,8 +42,6 @@ const (
 	OpListPublicAvailability = "list_public_availability"
 )
 
-
-
 func (m *Module) MountOperations(reg router.OperationRegistry) {
 	// list_floors
 	reg.Operation(OpListFloors, func(ctx router.Context) {

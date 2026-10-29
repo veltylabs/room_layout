@@ -42,14 +42,14 @@ El módulo expone operaciones estándar usando `view.MountSave`/`view.MountDelet
 | Operación | Recurso | Acción |
 |---|---|---|
 | `list_floors` | `floor` | `Read` |
-| `save_floor` | `floor` | `model.Create|model.Update` |
+| `save_floor` | `floor` | `Create\|Update` |
 | `delete_floor` | `floor` | `Delete` |
 | `list_rooms` | `room` | `Read` |
 | `get_room` | `room` | `Read` |
-| `save_room` | `room` | `model.Create|model.Update` |
+| `save_room` | `room` | `Create\|Update` |
 | `deactivate_room` | `room` | `Update` |
 | `list_equipment` | `equipment` | `Read` |
-| `save_equipment` | `equipment` | `model.Create|model.Update` |
+| `save_equipment` | `equipment` | `Create\|Update` |
 | `delete_equipment` | `equipment` | `Delete` |
 | `list_room_equipment` | `room` | `Read` |
 | `set_room_equipment` | `room` | `Update` |
@@ -58,10 +58,10 @@ El módulo expone operaciones estándar usando `view.MountSave`/`view.MountDelet
 | `set_room_categories` | `room` | `Update` |
 | `list_occupants` | `room_shift` | `Read` |
 | `list_room_shifts` | `room_shift` | `Read` |
-| `save_room_shift` | `room_shift` | `model.Create|model.Update` |
+| `save_room_shift` | `room_shift` | `Create\|Update` |
 | `delete_room_shift` | `room_shift` | `Delete` |
 | `cancel_shift_occurrence` | `room_shift` | `Update` |
-| `move_shift_occurrence` | `room_shift` | `model.Create|model.Update` |
+| `move_shift_occurrence` | `room_shift` | `Create\|Update` |
 | `list_room_day` | `room_shift` | `Read` |
 | `list_board` | `room` | `Read` |
 | `find_free_rooms` | `room` | `Read` |

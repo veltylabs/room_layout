@@ -37,21 +37,31 @@ type Module struct {
 	tenantID string
 }
 
+// Nombres de las dependencias que New exige: son dato (código), no texto a traducir;
+// por eso son variables y no constantes (langc traduce las constantes que recibe fmt.Err).
+var (
+	errDepsIDs        = "room_layout: Deps.IDs"
+	errDepsCategories = "room_layout: Deps.Categories"
+	errDepsOccupants  = "room_layout: Deps.Occupants"
+	errDepsTenantID   = "room_layout: Deps.TenantID"
+	errDepsTimezone   = "room_layout: Deps.Timezone"
+)
+
 func New(db *orm.DB, deps Deps) (*Module, error) {
 	if deps.IDs == nil {
-		return nil, fmt.Err("room_layout: Deps.IDs no supplied_1")
+		return nil, fmt.Err(errDepsIDs, "is required")
 	}
 	if deps.Categories == nil {
-		return nil, fmt.Err("room_layout: Deps.Categories req")
+		return nil, fmt.Err(errDepsCategories, "is required")
 	}
 	if deps.Occupants == nil {
-		return nil, fmt.Err("room_layout: Deps.Occupants req")
+		return nil, fmt.Err(errDepsOccupants, "is required")
 	}
 	if deps.TenantID == "" {
-		return nil, fmt.Err("room_layout: Deps.TenantID no supplied_3")
+		return nil, fmt.Err(errDepsTenantID, "is required")
 	}
 	if deps.Timezone == "" {
-		return nil, fmt.Err("room_layout: Deps.Timezone no supplied_4")
+		return nil, fmt.Err(errDepsTimezone, "is required")
 	}
 	if deps.Clock == nil {
 		deps.Clock = time.NowNano

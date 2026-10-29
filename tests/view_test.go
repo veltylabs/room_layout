@@ -32,7 +32,7 @@ func TestPresenterViewsCoverage(t *testing.T) {
 	}
 	vEq.Reload(noopDone)
 
-	}
+}
 
 func TestItemsDeclaredOnFields(t *testing.T) {
 	f := &roomlayout.Floor{Id: "1", Name: "Floor 1"}

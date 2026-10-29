@@ -6,6 +6,7 @@ import (
 	"webtyp.com/dom"
 	"webtyp.com/fmt"
 	"webtyp.com/html"
+	"webtyp.com/lang"
 )
 
 type Stage4Operacion struct {
@@ -407,7 +408,7 @@ func (s *Stage4Operacion) renderRoomDetailPanel(room *RoomData) *dom.Element {
 			dayName := dayOfWeekName(shift.DayOfWeek)
 			row := html.Div().Class("slot", "occ").
 				Child(
-					html.Strong().Text(dayName+": "),
+					html.Strong().Text(lang.Translate(string(dayName)).String()+": "),
 					html.Span().Text(shift.OccupantLabel+" ("+shift.StartHour+" - "+shift.EndHour+")"),
 					html.Button().Class("btn", "btn-sm", "btn-danger").Text("✕").
 						OnClick(func(dom.Event) {
@@ -556,21 +557,22 @@ func (s *Stage4Operacion) getOccupantName(roomID string, day int, startHour stri
 	return ""
 }
 
-func dayOfWeekName(d int) string {
+// dayOfWeekName es la clave en inglés del día; se muestra con lang.Translate.
+func dayOfWeekName(d int) lang.Text {
 	switch d {
 	case 1:
-		return "Lunes"
+		return "Monday"
 	case 2:
-		return "Martes"
+		return "Tuesday"
 	case 3:
-		return "Miércoles"
+		return "Wednesday"
 	case 4:
-		return "Jueves"
+		return "Thursday"
 	case 5:
-		return "Viernes"
+		return "Friday"
 	case 6:
-		return "Sábado"
+		return "Saturday"
 	default:
-		return "Domingo"
+		return "Sunday"
 	}
 }

@@ -4,29 +4,28 @@ import (
 	"testing"
 
 	roomlayout "github.com/veltylabs/room_layout"
-	"webtyp.com/fmt"
 	"webtyp.com/model"
 )
 
 type dummyArrayWriter struct{}
 
-func (d *dummyArrayWriter) String(val string)           {}
-func (d *dummyArrayWriter) Int(val int64)               {}
-func (d *dummyArrayWriter) Float(val float64)           {}
-func (d *dummyArrayWriter) Bool(val bool)               {}
-func (d *dummyArrayWriter) Bytes(val []byte)            {}
+func (d *dummyArrayWriter) String(val string)          {}
+func (d *dummyArrayWriter) Int(val int64)              {}
+func (d *dummyArrayWriter) Float(val float64)          {}
+func (d *dummyArrayWriter) Bool(val bool)              {}
+func (d *dummyArrayWriter) Bytes(val []byte)           {}
 func (d *dummyArrayWriter) Object(val model.Encodable) {}
-func (d *dummyArrayWriter) Close()                      {}
+func (d *dummyArrayWriter) Close()                     {}
 
 type dummyWriter struct{}
 
 func (d *dummyWriter) String(name, val string)                 {}
-func (d *dummyWriter) Int(name string, val int64)               {}
-func (d *dummyWriter) Float(name string, val float64)           {}
+func (d *dummyWriter) Int(name string, val int64)              {}
+func (d *dummyWriter) Float(name string, val float64)          {}
 func (d *dummyWriter) Bool(name string, val bool)              {}
 func (d *dummyWriter) Bytes(name string, val []byte)           {}
 func (d *dummyWriter) Null(name string)                        {}
-func (d *dummyWriter) Raw(name, val string)                   {}
+func (d *dummyWriter) Raw(name, val string)                    {}
 func (d *dummyWriter) Object(name string, val model.Encodable) {}
 func (d *dummyWriter) Array(name string, n int) model.ArrayWriter {
 	return &dummyArrayWriter{}
@@ -55,15 +54,6 @@ type validator interface {
 func TestORMGeneratedMethodsCoverage(t *testing.T) {
 	w := &dummyWriter{}
 	r := &populatedReader{}
-
-	// Test ValidationError methods
-	veNil := &roomlayout.ValidationError{}
-	_ = veNil.Error()
-	_ = veNil.Unwrap()
-
-	veErr := &roomlayout.ValidationError{Err: fmt.Err("custom error")}
-	_ = veErr.Error()
-	_ = veErr.Unwrap()
 
 	models := []model.Model{
 		&roomlayout.Floor{Id: "1", TenantId: "t", Name: "N", Position: 1, UpdatedAt: 100},

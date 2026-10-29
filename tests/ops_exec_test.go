@@ -28,22 +28,22 @@ type testOpContext struct {
 	decodeErr error
 }
 
-func (c *testOpContext) Method() string                     { return "POST" }
-func (c *testOpContext) Path() string                       { return "" }
-func (c *testOpContext) Body() []byte                       { return nil }
-func (c *testOpContext) GetHeader(k string) string          { return "" }
-func (c *testOpContext) SetHeader(k, v string)              {}
-func (c *testOpContext) WriteStatus(code int)               { c.status = code }
-func (c *testOpContext) Write(b []byte) (int, error)       { return len(b), nil }
-func (c *testOpContext) SetValue(k, v string)               {}
-func (c *testOpContext) Value(k string) string             { return "" }
-func (c *testOpContext) Param(k string) string             { return "" }
-func (c *testOpContext) SetCookie(ck router.Cookie)        {}
+func (c *testOpContext) Method() string                        { return "POST" }
+func (c *testOpContext) Path() string                          { return "" }
+func (c *testOpContext) Body() []byte                          { return nil }
+func (c *testOpContext) GetHeader(k string) string             { return "" }
+func (c *testOpContext) SetHeader(k, v string)                 {}
+func (c *testOpContext) WriteStatus(code int)                  { c.status = code }
+func (c *testOpContext) Write(b []byte) (int, error)           { return len(b), nil }
+func (c *testOpContext) SetValue(k, v string)                  {}
+func (c *testOpContext) Value(k string) string                 { return "" }
+func (c *testOpContext) Param(k string) string                 { return "" }
+func (c *testOpContext) SetCookie(ck router.Cookie)            {}
 func (c *testOpContext) Cookie(k string) (router.Cookie, bool) { return router.Cookie{}, false }
-func (c *testOpContext) SetUserID(id string)                {}
-func (c *testOpContext) UserID() string                     { return "user1" }
-func (c *testOpContext) Assurance() model.Assurance          { return model.AssuranceMultiFactor }
-func (c *testOpContext) SetAssurance(a model.Assurance)      {}
+func (c *testOpContext) SetUserID(id string)                   {}
+func (c *testOpContext) UserID() string                        { return "user1" }
+func (c *testOpContext) Assurance() model.Assurance            { return model.AssuranceMultiFactor }
+func (c *testOpContext) SetAssurance(a model.Assurance)        {}
 
 func (c *testOpContext) Decode(into model.Decodable) error {
 	if c.decodeErr != nil {
@@ -54,7 +54,6 @@ func (c *testOpContext) Decode(into model.Decodable) error {
 		if src, ok := c.args.(*roomlayout.ListFloorsArgs); ok {
 			*dst = *src
 		}
-
 
 	case *roomlayout.ListRoomsArgs:
 		if src, ok := c.args.(*roomlayout.ListRoomsArgs); ok {
@@ -73,7 +72,6 @@ func (c *testOpContext) Decode(into model.Decodable) error {
 		if src, ok := c.args.(*roomlayout.ListEquipmentArgs); ok {
 			*dst = *src
 		}
-
 
 	case *roomlayout.ListRoomEquipmentArgs:
 		if src, ok := c.args.(*roomlayout.ListRoomEquipmentArgs); ok {
@@ -153,7 +151,6 @@ func TestAllOperationsExecution(t *testing.T) {
 		t.Fatalf("save_floor op failed to encode response")
 	}
 
-
 	// 2. List floors via op
 	ctx = &testOpContext{args: &roomlayout.ListFloorsArgs{TenantId: "tenantA"}}
 	reg.handlers[roomlayout.OpListFloors](ctx)
@@ -165,9 +162,6 @@ func TestAllOperationsExecution(t *testing.T) {
 	rResVal2, _ := env.mod.SaveRoom(roomlayout.Room{TenantId: "tenantA", FloorId: fResVal.Id, Code: "ROp2", Name: "Room Op 2", IsActive: true})
 	env.mod.SetRoomCategories("tenantA", rResVal2.Id, []string{"cat1"})
 
-
-
-
 	// 4. Get room via op
 	ctx = &testOpContext{args: &roomlayout.GetRoomArgs{TenantId: "tenantA", Id: rResVal.Id}}
 	reg.handlers[roomlayout.OpGetRoom](ctx)
@@ -175,8 +169,6 @@ func TestAllOperationsExecution(t *testing.T) {
 	// 5. List rooms via op
 	ctx = &testOpContext{args: &roomlayout.ListRoomsArgs{TenantId: "tenantA"}}
 	reg.handlers[roomlayout.OpListRooms](ctx)
-
-
 
 	// 7. List equipment via op
 	ctx = &testOpContext{args: &roomlayout.ListEquipmentArgs{TenantId: "tenantA"}}
@@ -219,8 +211,6 @@ func TestAllOperationsExecution(t *testing.T) {
 	ctx = &testOpContext{args: &roomlayout.CancelShiftOccurrenceArgs{TenantId: "tenantA", ShiftId: sRes.Id, Date: "2026-03-16"}}
 	reg.handlers[roomlayout.OpCancelShiftOccurrence](ctx)
 
-
-
 	// 18. Move shift occurrence via op
 	ctx = &testOpContext{args: &roomlayout.MoveShiftOccurrenceArgs{TenantId: "tenantA", ShiftId: sRes.Id, Date: "2026-03-16", TargetRoomId: rResVal2.Id}}
 	reg.handlers[roomlayout.OpMoveShiftOccurrence](ctx)
@@ -249,18 +239,14 @@ func TestAllOperationsExecution(t *testing.T) {
 	ctx = &testOpContext{args: &roomlayout.DeactivateRoomArgs{TenantId: "tenantA", Id: rResVal.Id}}
 	reg.handlers[roomlayout.OpDeactivateRoom](ctx)
 
-
-
-
-
 	// Error branch tests for Op handlers
 	decErrCtx := &testOpContext{decodeErr: fmt.Err("decode error")}
 	reg.handlers[roomlayout.OpListFloors](decErrCtx)
-			reg.handlers[roomlayout.OpListRooms](decErrCtx)
+	reg.handlers[roomlayout.OpListRooms](decErrCtx)
 	reg.handlers[roomlayout.OpGetRoom](decErrCtx)
-		reg.handlers[roomlayout.OpDeactivateRoom](decErrCtx)
+	reg.handlers[roomlayout.OpDeactivateRoom](decErrCtx)
 	reg.handlers[roomlayout.OpListEquipment](decErrCtx)
-			reg.handlers[roomlayout.OpListRoomEquipment](decErrCtx)
+	reg.handlers[roomlayout.OpListRoomEquipment](decErrCtx)
 	reg.handlers[roomlayout.OpSetRoomEquipment](decErrCtx)
 	reg.handlers[roomlayout.OpListCategories](decErrCtx)
 	reg.handlers[roomlayout.OpListRoomCategories](decErrCtx)
