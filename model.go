@@ -1,7 +1,6 @@
 package roomlayout
 
 import (
-	devicemanager "github.com/veltylabs/device_manager"
 	"webtyp.com/fmt"
 	"webtyp.com/input"
 	"webtyp.com/model"
@@ -134,10 +133,10 @@ var EquipmentModel = model.Definition{
 		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true},
 		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "name", Type: input.Text(), Item: model.ItemLabel, NotNull: true, Permitted: model.Permitted{Minimum: 1, Maximum: 80}},
-		// Referencia blanda (sin Ref): un equipo sin red (un gastroscopio) deja device_id vacío,
-		// y eso no debe ser una violación de clave foránea. La pantalla llena sus opciones con los
-		// equipos de device_manager.
-		{Name: "device_id", Type: input.Select(), Label: "Device", OmitEmpty: true, Options: &devicemanager.DeviceModel},
+		// Id suelto del equipo de red (device_manager) al que corresponde este equipamiento; vacío si
+		// no tiene red (un gastroscopio). Este módulo no importa device_manager: la app le entrega los
+		// equipos por una interfaz, y el id se asigna en el mapa, no en el formulario de la lista.
+		{Name: "device_id", Type: model.Text(), OmitEmpty: true},
 		{Name: "updated_at", Type: model.UnixTime(), OmitEmpty: true},
 	},
 }

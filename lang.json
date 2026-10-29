@@ -24,6 +24,7 @@
     "current until": ["actual hasta", "当前截止", "वर्तमान तक", "الحالي حتى", "atual até", "actuel jusqu'à", "aktuell bis", "текущий до"],
     "date": ["fecha", "日期", "तारीख", "التاريخ", "data", "date (jour)", "Datum", "дата"],
     "day of week": ["día de la semana", "星期几", "सप्ताह का दिन", "يوم الأسبوع", "dia da semana", "jour de la semaine", "Wochentag", "день недели"],
+    "device id": ["id de equipo", "设备 ID", "डिवाइस आईडी", "معرّف الجهاز", "ID do dispositivo", "ID de l'appareil", "Geräte-ID", "ID устройства"],
     "end": ["fin", "结束", "अंत", "النهاية", "fim", "fin", "Ende", "конец"],
     "end min": ["minuto de fin", "结束分钟", "अंत मिनट", "دقيقة النهاية", "minuto de término", "minute de fin", "Endminute", "минута окончания"],
     "equipment id": ["id de equipamiento", "设备 ID", "उपकरण आईडी", "معرّف المعدات", "ID do equipamento", "ID de l'équipement", "Ausstattungs-ID", "ID оборудования"],

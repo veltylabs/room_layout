@@ -72,8 +72,10 @@ El módulo expone operaciones estándar usando `view.MountSave`/`view.MountDelet
 `RoomOfOccupant(tenantID, occupantID, at)`: el box donde un profesional tiene turno en ese instante (segundos Unix). Detalle en
 `docs/ARCHITECTURE.md` §5b.
 
-Un equipamiento puede apuntar a un equipo registrado en `device_manager`
-(`device_id`, opcional): un aparato se registra una vez. El que no tiene red deja el campo vacío.
+Un equipamiento puede llevar el id de un equipo de red (`device_id`, opcional): un aparato se
+registra una vez. El que no tiene red deja el campo vacío. Este módulo no importa ningún otro
+módulo: lo que necesita de otro lo pide por una interfaz que él mismo declara (`CategoryReader`,
+`OccupantReader`) y la app la conecta.
 
 ## Archivos Clave
 

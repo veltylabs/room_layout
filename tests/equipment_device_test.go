@@ -3,7 +3,6 @@ package tests
 import (
 	"testing"
 
-	devicemanager "github.com/veltylabs/device_manager"
 	roomlayout "github.com/veltylabs/room_layout"
 )
 
@@ -75,15 +74,5 @@ func TestEquipment_DeviceIdKept(t *testing.T) {
 	}
 	if !found {
 		t.Errorf("saved equipment not found in list")
-	}
-}
-
-func TestEquipment_DeviceOptionsFromDeviceManager(t *testing.T) {
-	field, ok := roomlayout.EquipmentModel.Field("device_id")
-	if !ok {
-		t.Fatalf("expected field device_id in EquipmentModel")
-	}
-	if field.Options != &devicemanager.DeviceModel {
-		t.Errorf("expected device_id field Options to be &devicemanager.DeviceModel, got %v", field.Options)
 	}
 }

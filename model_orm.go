@@ -1718,3 +1718,4 @@ func (s *PublicSlotList) DecodeFields(_ model.FieldReader) {}
 func (m *PublicSlot) Validate(action byte) error {
 	return model.ValidateFields(action, m)
 }
+
