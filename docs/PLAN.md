@@ -2,6 +2,8 @@
 PLAN: "feat: a room's equipment may point to a registered device (device_id → device_manager), optional"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 9564745239310761274
 ---
 
 > Read AGENTS.md at the repo root before any change.
