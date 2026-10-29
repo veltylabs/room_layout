@@ -42,10 +42,10 @@ func New(db *orm.DB, deps Deps) (*Module, error) {
 		return nil, fmt.Err("room_layout: Deps.IDs no supplied_1")
 	}
 	if deps.Categories == nil {
-		return nil, fmt.Err("room_layout: Deps.Categories no provided_2")
+		return nil, fmt.Err("room_layout: Deps.Categories req")
 	}
 	if deps.Occupants == nil {
-		return nil, fmt.Err("room_layout: Deps.Occupants no supplied_2")
+		return nil, fmt.Err("room_layout: Deps.Occupants req")
 	}
 	if deps.TenantID == "" {
 		return nil, fmt.Err("room_layout: Deps.TenantID no supplied_3")

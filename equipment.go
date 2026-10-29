@@ -17,7 +17,7 @@ func (m *Module) SaveEquipment(e Equipment) (Equipment, error) {
 	}
 
 	if err := model.ValidateFields(byte(model.Create), &e); err != nil {
-		return Equipment{}, &ValidationError{Err: err}
+		return Equipment{}, err
 	}
 
 	e.UpdatedAt = m.now().Unix()
@@ -151,7 +151,7 @@ func (m *Module) SaveRoomArtifact(a RoomArtifact) (RoomArtifact, error) {
 	}
 
 	if err := model.ValidateFields(byte(model.Create), &a); err != nil {
-		return RoomArtifact{}, &ValidationError{Err: err}
+		return RoomArtifact{}, err
 	}
 
 	if isNew {

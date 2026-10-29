@@ -23,7 +23,7 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 
 	stepper := &stepindicator.StepIndicator{
 		Steps: []stepindicator.Step{
-			{Label: "Planta"},
+			{Label: "Floor"},
 			{Label: "Espacios"},
 			{Label: "Artefactos"},
 			{Label: "Operación"},
@@ -46,7 +46,7 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 				Child(
 					&themetoggle.ThemeToggle{},
 					html.Button().Class("btn").
-						Child(html.Span().Text("Guardar")).
+						Child(html.Span().Text("Save")).
 						OnClick(func(dom.Event) {
 							root.SaveAll()
 						}),
@@ -57,9 +57,9 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 		Child(
 			html.Div().Class("rm-title-box").
 				Child(
-					html.Span().Class("rm-step-tag").Text("Paso 3 de 4"),
-					html.H1().Text("Equipa cada espacio"),
-					html.P().Text("Agrega artefactos dentro de los espacios. Haz clic en un artefacto para seleccionarlo, cambiar su estado de alerta o quitarlo."),
+					html.Span().Class("rm-step-tag").Text("Step 3 of 4"),
+					html.H1().Text("Equip each space"),
+					html.P().Text("Add artifacts to spaces. Click on an artifact to select it, change its alert status or remove it."),
 				),
 		)
 
@@ -73,9 +73,9 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 		banner := html.Div().Class("rm-banner-draft").
 			Child(
 				html.Span().Class("rm-draft-title").
-					Text("📍 Colocando «"+kindName+"» · Haz clic en una celda libre dentro de un box para ubicarlo"),
+					Text("📍 Colocando «"+kindName+"» · Click on a free cell inside a box to place it"),
 				html.Button().Class("btn", "btn-sm").
-					Text("✕ Cancelar").
+					Text("✕ Cancel").
 					OnClick(func(dom.Event) {
 						s.IsPlacing = false
 						root.Refresh()
@@ -115,7 +115,7 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 			Child(
 				html.Div().Class("rm-sel-header").
 					Child(
-						html.Span().Class("rm-panel-title").Text("Artefacto seleccionado"),
+						html.Span().Class("rm-panel-title").Text("Selected artifact"),
 						html.Button().Class("btn", "btn-sm").Text("✕").
 							OnClick(func(dom.Event) {
 								s.SelectedArtifactID = ""
@@ -130,10 +130,10 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 						html.Div().Class("rm-sel-details").
 							Child(
 								html.Strong().Text(selectedArt.Code+" · "+artifactKindLabel(selectedArt.Kind)),
-								html.Span().Class("field").Text("Ubicación: "+roomName+" ("+selectedArt.Cell+")"),
+								html.Span().Class("field").Text("Location: "+roomName+" ("+selectedArt.Cell+")"),
 							),
 					),
-				html.Label().Class("field").Text("Estado operacional").
+				html.Label().Class("field").Text("Operational status").
 					Child(
 						html.Div().Class("seg").
 							Child(
@@ -148,7 +148,7 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 									})
 								}(),
 								func() *dom.Element {
-									btn := html.Button().Class("btn-seg").Text("Aviso")
+									btn := html.Button().Class("btn-seg").Text("Warning")
 									if selectedArt.Status == StatusWarn {
 										btn.Class("on")
 									}
@@ -161,7 +161,7 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 									})
 								}(),
 								func() *dom.Element {
-									btn := html.Button().Class("btn-seg").Text("Crítico")
+									btn := html.Button().Class("btn-seg").Text("Critical")
 									if selectedArt.Status == StatusCrit {
 										btn.Class("on")
 									}
@@ -178,7 +178,7 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 			)
 
 		if selectedArt.Status != StatusOk {
-			reasonInput := html.Label().Class("field").Text("Motivo de alerta").
+			reasonInput := html.Label().Class("field").Text("Alert reason").
 				Child(
 					html.Input("text").Class("input").
 						Attr("value", selectedArt.Reason).
@@ -190,7 +190,7 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 		}
 
 		deleteBtn := html.Button().Class("btn", "btn-danger").
-			Text("Quitar del mapa").
+			Text("Remove from map").
 			OnClick(func(dom.Event) {
 				var updated []ArtifactData
 				for _, a := range root.Artifacts {
@@ -210,8 +210,8 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 	// Catalog Panel
 	catalogPanel := html.Div().Class("panel").
 		Child(
-			html.Span().Class("rm-panel-title").Text("Catálogo de artefactos"),
-			html.P().Class("field").Text("Haz clic en un ítem para colocarlo sobre el mapa:"),
+			html.Span().Class("rm-panel-title").Text("Artifact catalog"),
+			html.P().Class("field").Text("Click on an item to place it on the map:"),
 			html.Div().Class("cat").
 				Child(
 					catalogItem(ArtifactAgenda, "Agenda médica", "AG", s, root),
@@ -231,7 +231,7 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 	// Footer
 	footer := html.Footer().Class("rm-footer").
 		Child(
-			html.Button().Class("btn").Text("← Espacios").
+			html.Button().Class("btn").Text("← Spaces").
 				OnClick(func(dom.Event) {
 					root.GoToStage(1)
 				}),
@@ -247,7 +247,7 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 					return fmt.Sprint(len(root.Artifacts)) + " artefactos en " + fmt.Sprint(len(root.Rooms)) + " espacios · " + fmt.Sprint(alertCount) + " alertas de mantención"
 				}),
 			html.Button().Class("btn", "btn-primary").
-				Child(html.Span().Text("Finalizar configuración →")).
+				Child(html.Span().Text("Finish setup →")).
 				OnClick(func(dom.Event) {
 					root.GoToStage(3)
 				}),

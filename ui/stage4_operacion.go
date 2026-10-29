@@ -57,7 +57,7 @@ func (s *Stage4Operacion) Render() *dom.Element {
 	configBtn := html.Button().Class("btn").
 		Child(
 			html.Span().Class("icon-gear").Text("⚙"),
-			html.Span().Text("Configurar mapa"),
+			html.Span().Text("Configure map"),
 		).
 		OnClick(func(dom.Event) {
 			root.GoToStage(0)
@@ -107,8 +107,8 @@ func (s *Stage4Operacion) Render() *dom.Element {
 
 		stats := html.Div().Class("stats").
 			Child(
-				html.Span().Child(html.Span().Text("Ocupación: "), html.Strong().Text(fmt.Sprint(occPct)+"%")),
-				html.Span().Child(html.Strong().Text(fmt.Sprint(freeBlocks)), html.Span().Text(" bloques libres")),
+				html.Span().Child(html.Span().Text("Occupancy: "), html.Strong().Text(fmt.Sprint(occPct)+"%")),
+				html.Span().Child(html.Strong().Text(fmt.Sprint(freeBlocks)), html.Span().Text(" free blocks")),
 			)
 
 		toolbar.Child(periodSeg, stats)
@@ -194,14 +194,14 @@ func (s *Stage4Operacion) Render() *dom.Element {
 	// Footer
 	footer := html.Footer().Class("rm-footer").
 		Child(
-			html.Button().Class("btn").Text("← Artefactos").
+			html.Button().Class("btn").Text("← Artifacts").
 				OnClick(func(dom.Event) {
 					root.GoToStage(2)
 				}),
 			html.Span().Class("rm-footer-summary").
-				Text("Dashboard de Operación · Clínica Central"),
+				Text("Operation Dashboard · Central Clinic"),
 			html.Button().Class("btn", "btn-primary").
-				Child(html.Span().Text("Guardar cambios")).
+				Child(html.Span().Text("Save changes")).
 				OnClick(func(dom.Event) {
 					root.SaveAll()
 				}),
@@ -367,7 +367,7 @@ func (s *Stage4Operacion) renderRoomOverlay(room *RoomData, floorID string) *dom
 				)
 			ov.Child(docBox)
 		} else {
-			ov.Child(html.Span().Class("freep").Text("Libre"))
+			ov.Child(html.Span().Class("freep").Text("Free"))
 		}
 	}
 
@@ -396,7 +396,7 @@ func (s *Stage4Operacion) renderRoomDetailPanel(room *RoomData) *dom.Element {
 							root.Refresh()
 						}),
 				),
-			html.Span().Class("field").Text("Horario semanal de este box:"),
+			html.Span().Class("field").Text("Weekly schedule for this box:"),
 		)
 
 	// List weekly shifts
@@ -433,7 +433,7 @@ func (s *Stage4Operacion) renderRoomDetailPanel(room *RoomData) *dom.Element {
 	}
 	assignForm := html.Div().Class("rm-assign-box").
 		Child(
-			html.Span().Class("field").Text("Asignar turno a profesional:"),
+			html.Span().Class("field").Text("Assign shift to professional:"),
 			dom.NewElement("select").Class("input").
 				Child(func() []dom.Component {
 					var opts []dom.Component
@@ -443,7 +443,7 @@ func (s *Stage4Operacion) renderRoomDetailPanel(room *RoomData) *dom.Element {
 					return opts
 				}()...),
 			html.Button().Class("btn", "btn-primary", "btn-sm").
-				Text("+ Asignar lunes mañana").
+				Text("+ Assign monday morning").
 				OnClick(func(dom.Event) {
 					docName := "Dr. Juan Pérez"
 					for _, d := range root.Doctors {
@@ -474,7 +474,7 @@ func (s *Stage4Operacion) renderProfessionalsPanel() *dom.Element {
 	root := s.Root
 	panel := html.Div().Class("panel").
 		Child(
-			html.Span().Class("rm-panel-title").Text("Profesionales"),
+			html.Span().Class("rm-panel-title").Text("Professionals"),
 			html.Input("search").Class("input").Attr("placeholder", "Buscar profesional...").
 				OnChange(func(e dom.Event) {
 					// Search filter
@@ -507,7 +507,7 @@ func (s *Stage4Operacion) renderProfessionalsPanel() *dom.Element {
 func (s *Stage4Operacion) renderAlertsPanel() *dom.Element {
 	root := s.Root
 	panel := html.Div().Class("panel").
-		Child(html.Span().Class("rm-panel-title").Text("Alertas operacionales"))
+		Child(html.Span().Class("rm-panel-title").Text("Operational alerts"))
 
 	hasAlerts := false
 	for _, art := range root.Artifacts {
@@ -532,7 +532,7 @@ func (s *Stage4Operacion) renderAlertsPanel() *dom.Element {
 	}
 
 	if !hasAlerts {
-		panel.Child(html.Span().Class("field").Text("No hay alertas activas."))
+		panel.Child(html.Span().Class("field").Text("No active alerts."))
 	}
 
 	return panel

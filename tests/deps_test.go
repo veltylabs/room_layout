@@ -34,7 +34,7 @@ func TestDependencyValidation(t *testing.T) {
 	d = base
 	d.Categories = nil
 	_, err = roomlayout.New(db, d)
-	if err == nil || err.Error() != "room_layout: Deps.Categories no provided_2" {
+	if err == nil || err.Error() != "room_layout: Deps.Categories req" {
 		t.Fatalf("expected Deps.Categories error, got %v", err)
 	}
 
@@ -42,7 +42,7 @@ func TestDependencyValidation(t *testing.T) {
 	d = base
 	d.Occupants = nil
 	_, err = roomlayout.New(db, d)
-	if err == nil || err.Error() != "room_layout: Deps.Occupants no supplied_2" {
+	if err == nil || err.Error() != "room_layout: Deps.Occupants req" {
 		t.Fatalf("expected Deps.Occupants error, got %v", err)
 	}
 

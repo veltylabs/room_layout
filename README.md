@@ -37,18 +37,19 @@ webtyp
 ejecutado desde la raíz del repositorio.
 
 ## Operaciones Registradas (`MountOperations`)
+El módulo expone operaciones estándar usando `view.MountSave`/`view.MountDelete`. Los errores de decodificación y de negocio son propagados mediante `rpc.WriteError`. Los permisos utilizan asignación por tabla con `model.ResourceOf`.
 
 | Operación | Recurso | Acción |
 |---|---|---|
 | `list_floors` | `floor` | `Read` |
-| `save_floor` | `floor` | `Create\|Update` |
+| `save_floor` | `floor` | `model.Create|model.Update` |
 | `delete_floor` | `floor` | `Delete` |
 | `list_rooms` | `room` | `Read` |
 | `get_room` | `room` | `Read` |
-| `save_room` | `room` | `Create\|Update` |
+| `save_room` | `room` | `model.Create|model.Update` |
 | `deactivate_room` | `room` | `Update` |
 | `list_equipment` | `equipment` | `Read` |
-| `save_equipment` | `equipment` | `Create\|Update` |
+| `save_equipment` | `equipment` | `model.Create|model.Update` |
 | `delete_equipment` | `equipment` | `Delete` |
 | `list_room_equipment` | `room` | `Read` |
 | `set_room_equipment` | `room` | `Update` |
@@ -57,10 +58,10 @@ ejecutado desde la raíz del repositorio.
 | `set_room_categories` | `room` | `Update` |
 | `list_occupants` | `room_shift` | `Read` |
 | `list_room_shifts` | `room_shift` | `Read` |
-| `save_room_shift` | `room_shift` | `Create\|Update` |
+| `save_room_shift` | `room_shift` | `model.Create|model.Update` |
 | `delete_room_shift` | `room_shift` | `Delete` |
 | `cancel_shift_occurrence` | `room_shift` | `Update` |
-| `move_shift_occurrence` | `room_shift` | `Create\|Update` |
+| `move_shift_occurrence` | `room_shift` | `model.Create|model.Update` |
 | `list_room_day` | `room_shift` | `Read` |
 | `list_board` | `room` | `Read` |
 | `find_free_rooms` | `room` | `Read` |

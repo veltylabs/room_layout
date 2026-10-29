@@ -17,7 +17,7 @@ func (m *Module) SaveFloor(f Floor) (Floor, error) {
 	}
 
 	if err := model.ValidateFields(byte(model.Create), &f); err != nil {
-		return Floor{}, &ValidationError{Err: err}
+		return Floor{}, err
 	}
 	f.UpdatedAt = m.now().Unix()
 

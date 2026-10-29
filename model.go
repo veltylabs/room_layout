@@ -62,7 +62,7 @@ func (e domainError) Error() string { return string(e) }
 
 // Errores de dominio.
 const (
-	ErrNotFound           domainError = "room_layout: not found"
+	ErrNotFound           model.NotFound = "room_layout: not found"
 	ErrTenantRequired     domainError = "room_layout: tenant_id is required"
 	ErrCodeAlreadyExists  domainError = "room_layout: room code already exists in this tenant"
 	ErrFloorInUse         domainError = "room_layout: floor still has rooms"
@@ -77,7 +77,8 @@ const (
 	ErrRoomOverlap        domainError = "room_layout: room already has a shift in that time range"
 	ErrOccupantOverlap    domainError = "room_layout: occupant already has a shift in that time range"
 	ErrOutsideBounds      domainError = "room_layout: shift is outside the establishment's opening hours for that date"
-	ErrNotWeekly          domainError = "room_layout: only a weekly shift can have one occurrence cancelled"
+	ErrNotWeekly          model.Invalid = "room_layout: only a weekly shift can have one occurrence cancelled"
+	ErrCannotRead         model.Invalid = "room_layout: cannot read the request"
 )
 
 type ValidationError struct {
@@ -239,14 +240,6 @@ var ListFloorsArgsModel = model.Definition{
 	},
 }
 
-var DeleteFloorArgsModel = model.Definition{
-	Name: "delete_floor_args",
-	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
-		{Name: "id", Type: model.Text(), NotNull: true},
-	},
-}
-
 var ListRoomsArgsModel = model.Definition{
 	Name: "list_rooms_args",
 	Fields: model.Fields{
@@ -275,14 +268,6 @@ var ListEquipmentArgsModel = model.Definition{
 	Name: "list_equipment_args",
 	Fields: model.Fields{
 		{Name: "tenant_id", Type: model.Text(), NotNull: true},
-	},
-}
-
-var DeleteEquipmentArgsModel = model.Definition{
-	Name: "delete_equipment_args",
-	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
-		{Name: "id", Type: model.Text(), NotNull: true},
 	},
 }
 

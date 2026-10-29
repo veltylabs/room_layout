@@ -38,7 +38,7 @@ func (s *Stage2Espacios) Render() *dom.Element {
 
 	stepper := &stepindicator.StepIndicator{
 		Steps: []stepindicator.Step{
-			{Label: "Planta"},
+			{Label: "Floor"},
 			{Label: "Espacios"},
 			{Label: "Artefactos"},
 			{Label: "Operación"},
@@ -61,7 +61,7 @@ func (s *Stage2Espacios) Render() *dom.Element {
 				Child(
 					&themetoggle.ThemeToggle{},
 					html.Button().Class("btn").
-						Child(html.Span().Text("Guardar")).
+						Child(html.Span().Text("Save")).
 						OnClick(func(dom.Event) {
 							root.SaveAll()
 						}),
@@ -72,22 +72,22 @@ func (s *Stage2Espacios) Render() *dom.Element {
 	legend := html.Div().Class("rm-legend").
 		Child(
 			html.Span().Class("rm-legend-item").
-				Child(html.Span().Class("sw", "sw-box").Attr("style", "display:inline-block;width:14px;height:14px;border-radius:3px;background:var(--color-primary);margin-right:6px;"), html.Span().Text("Atención")),
+				Child(html.Span().Class("sw", "sw-box").Attr("style", "display:inline-block;width:14px;height:14px;border-radius:3px;background:var(--color-primary);margin-right:6px;"), html.Span().Text("Clinical")),
 			html.Span().Class("rm-legend-item").
-				Child(html.Span().Class("sw", "sw-shared").Attr("style", "display:inline-block;width:14px;height:14px;border-radius:3px;background:var(--color-muted);margin-right:6px;"), html.Span().Text("Compartido")),
+				Child(html.Span().Class("sw", "sw-shared").Attr("style", "display:inline-block;width:14px;height:14px;border-radius:3px;background:var(--color-muted);margin-right:6px;"), html.Span().Text("Shared")),
 			html.Span().Class("rm-legend-item").
-				Child(html.Span().Class("sw", "sw-store").Attr("style", "display:inline-block;width:14px;height:14px;border-radius:3px;background:var(--color-accent, #e8a33d);margin-right:6px;"), html.Span().Text("Soporte")),
+				Child(html.Span().Class("sw", "sw-store").Attr("style", "display:inline-block;width:14px;height:14px;border-radius:3px;background:var(--color-accent, #e8a33d);margin-right:6px;"), html.Span().Text("Support")),
 			html.Span().Class("rm-legend-item").
-				Child(html.Span().Class("sw", "sw-free").Attr("style", "display:inline-block;width:14px;height:14px;border-radius:3px;border:1px dashed var(--color-outline);background:var(--color-surface);margin-right:6px;"), html.Span().Text("Libre")),
+				Child(html.Span().Class("sw", "sw-free").Attr("style", "display:inline-block;width:14px;height:14px;border-radius:3px;border:1px dashed var(--color-outline);background:var(--color-surface);margin-right:6px;"), html.Span().Text("Free")),
 		)
 
 	topBar := html.Section().Class("rm-section-title").
 		Child(
 			html.Div().Class("rm-title-box").
 				Child(
-					html.Span().Class("rm-step-tag").Text("Paso 2 de 4"),
-					html.H1().Text("Ubica los boxes y espacios compartidos"),
-					html.P().Text("Elige la planta, ponle nombre al espacio y márcalo sobre las celdas habitables. Las celdas ya ocupadas por otro espacio no se pueden marcar."),
+					html.Span().Class("rm-step-tag").Text("Step 2 of 4"),
+					html.H1().Text("Place boxes and shared spaces"),
+					html.P().Text("Choose the floor, name the space and mark it on habitable cells. Cells already occupied by another space cannot be marked."),
 				),
 			legend,
 		)
@@ -109,7 +109,7 @@ func (s *Stage2Espacios) Render() *dom.Element {
 				html.Div().Class("rm-draft-actions").
 					Child(
 						html.Button().Class("btn", "btn-primary", "btn-sm").
-							Text("✓ Guardar espacio").
+							Text("✓ Save space").
 							OnClick(func(dom.Event) {
 								if len(s.DraftCells) > 0 {
 									newRoom := RoomData{
@@ -128,7 +128,7 @@ func (s *Stage2Espacios) Render() *dom.Element {
 								}
 							}),
 						html.Button().Class("btn", "btn-sm").
-							Text("✕ Cancelar").
+							Text("✕ Cancel").
 							OnClick(func(dom.Event) {
 								s.IsDrafting = false
 								s.DraftCells = nil
@@ -150,8 +150,8 @@ func (s *Stage2Espacios) Render() *dom.Element {
 	// Panel 1: Nuevo Espacio
 	newPanel := html.Div().Class("panel").
 		Child(
-			html.Span().Class("rm-panel-title").Text("Nuevo espacio"),
-			html.Label().Class("field").Text("Planta").
+			html.Span().Class("rm-panel-title").Text("New space"),
+			html.Label().Class("field").Text("Floor").
 				Child(
 					dom.NewElement("select").Class("input").
 						Child(func() []dom.Component {
@@ -169,7 +169,7 @@ func (s *Stage2Espacios) Render() *dom.Element {
 							// Update target floor
 						}),
 				),
-			html.Label().Class("field").Text("Nombre del espacio").
+			html.Label().Class("field").Text("Space name").
 				Child(
 					html.Input("text").Class("input").
 						Attr("value", s.DraftName).
@@ -177,12 +177,12 @@ func (s *Stage2Espacios) Render() *dom.Element {
 							// Update name
 						}),
 				),
-			html.Label().Class("field").Text("Tipo de espacio").
+			html.Label().Class("field").Text("Space type").
 				Child(
 					html.Div().Class("seg").
 						Child(
 							func() *dom.Element {
-								btn := html.Button().Class("btn-seg").Text("Atención")
+								btn := html.Button().Class("btn-seg").Text("Clinical")
 								if s.DraftType == RoomTypeBox {
 									btn.Class("on")
 								}
@@ -192,7 +192,7 @@ func (s *Stage2Espacios) Render() *dom.Element {
 								})
 							}(),
 							func() *dom.Element {
-								btn := html.Button().Class("btn-seg").Text("Compartido")
+								btn := html.Button().Class("btn-seg").Text("Shared")
 								if s.DraftType == RoomTypeShared {
 									btn.Class("on")
 								}
@@ -202,7 +202,7 @@ func (s *Stage2Espacios) Render() *dom.Element {
 								})
 							}(),
 							func() *dom.Element {
-								btn := html.Button().Class("btn-seg").Text("Soporte")
+								btn := html.Button().Class("btn-seg").Text("Support")
 								if s.DraftType == RoomTypeStore {
 									btn.Class("on")
 								}
@@ -296,7 +296,7 @@ func (s *Stage2Espacios) Render() *dom.Element {
 	// Footer
 	footer := html.Footer().Class("rm-footer").
 		Child(
-			html.Button().Class("btn").Text("← Planta").
+			html.Button().Class("btn").Text("← Floor").
 				OnClick(func(dom.Event) {
 					root.GoToStage(0)
 				}),
@@ -310,7 +310,7 @@ func (s *Stage2Espacios) Render() *dom.Element {
 					return fmt.Sprint(len(root.Rooms)) + " espacios definidos · " + fmt.Sprint(totalOccupied) + " celdas ocupadas"
 				}),
 			html.Button().Class("btn", "btn-primary").
-				Child(html.Span().Text("Siguiente: Artefactos →")).
+				Child(html.Span().Text("Next: Artifacts →")).
 				OnClick(func(dom.Event) {
 					root.GoToStage(2)
 				}),
