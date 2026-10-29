@@ -2,6 +2,7 @@
   "languages": ["es", "zh", "hi", "ar", "pt", "fr", "de", "ru"],
   "keys": {
     "Current occupant": ["Ocupante actual", "当前使用者", "वर्तमान उपयोगकर्ता", "الشاغل الحالي", "Ocupante atual", "Occupant actuel", "Aktueller Belegender", "Текущий занимающий"],
+    "Device": ["Equipo", "设备", "डिवाइस", "جهاز", "Dispositivo", "Appareil", "Gerät", "Устройство"],
     "Friday": ["Viernes", "星期五", "शुक्रवार", "الجمعة", "Sexta-feira", "Vendredi", "Freitag", "Пятница"],
     "Monday": ["Lunes", "星期一", "सोमवार", "الإثنين", "Segunda-feira", "Lundi", "Montag", "Понедельник"],
     "Next occupant": ["Próximo ocupante", "下一位使用者", "अगला उपयोगकर्ता", "الشاغل التالي", "Próximo ocupante", "Prochain occupant", "Nächster Belegender", "Следующий занимающий"],

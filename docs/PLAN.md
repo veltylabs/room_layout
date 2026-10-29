@@ -2,8 +2,10 @@
 PLAN: "feat: a room's equipment may point to a registered device (device_id → device_manager), optional"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 9564745239310761274
+PR: https://github.com/veltylabs/room_layout/pull/10
+REVIEWED_COMMIT: 37e63f702250e3f132d5a6327ebc28aad81ec6e8
 ---
 
 > Read AGENTS.md at the repo root before any change.
