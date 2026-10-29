@@ -206,16 +206,13 @@ var IdRefModel = model.Definition{
 
 // Definiciones de argumentos.
 var ListFloorsArgsModel = model.Definition{
-	Name: "list_floors_args",
-	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
-	},
+	Name:   "list_floors_args",
+	Fields: model.Fields{},
 }
 
 var ListRoomsArgsModel = model.Definition{
 	Name: "list_rooms_args",
 	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "active_only", Type: model.Bool()},
 	},
 }
@@ -223,7 +220,6 @@ var ListRoomsArgsModel = model.Definition{
 var GetRoomArgsModel = model.Definition{
 	Name: "get_room_args",
 	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "id", Type: model.Text(), NotNull: true},
 	},
 }
@@ -231,22 +227,18 @@ var GetRoomArgsModel = model.Definition{
 var DeactivateRoomArgsModel = model.Definition{
 	Name: "deactivate_room_args",
 	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "id", Type: model.Text(), NotNull: true},
 	},
 }
 
 var ListEquipmentArgsModel = model.Definition{
-	Name: "list_equipment_args",
-	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
-	},
+	Name:   "list_equipment_args",
+	Fields: model.Fields{},
 }
 
 var ListRoomEquipmentArgsModel = model.Definition{
 	Name: "list_room_equipment_args",
 	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "room_id", Type: model.Text(), NotNull: true},
 	},
 }
@@ -254,7 +246,6 @@ var ListRoomEquipmentArgsModel = model.Definition{
 var SetRoomEquipmentArgsModel = model.Definition{
 	Name: "set_room_equipment_args",
 	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "room_id", Type: model.Text(), NotNull: true},
 		{Name: "equipment_ids", Type: model.StructSlice(&IdRefModel)},
 	},
@@ -263,7 +254,6 @@ var SetRoomEquipmentArgsModel = model.Definition{
 var ListRoomCategoriesArgsModel = model.Definition{
 	Name: "list_room_categories_args",
 	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "room_id", Type: model.Text(), NotNull: true},
 	},
 }
@@ -271,23 +261,19 @@ var ListRoomCategoriesArgsModel = model.Definition{
 var SetRoomCategoriesArgsModel = model.Definition{
 	Name: "set_room_categories_args",
 	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "room_id", Type: model.Text(), NotNull: true},
 		{Name: "category_ids", Type: model.StructSlice(&IdRefModel)},
 	},
 }
 
 var ListOptionsArgsModel = model.Definition{
-	Name: "list_options_args",
-	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
-	},
+	Name:   "list_options_args",
+	Fields: model.Fields{},
 }
 
 var ListRoomShiftsArgsModel = model.Definition{
 	Name: "list_room_shifts_args",
 	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "room_id", Type: model.Text(), NotNull: true},
 	},
 }
@@ -295,7 +281,6 @@ var ListRoomShiftsArgsModel = model.Definition{
 var DeleteRoomShiftArgsModel = model.Definition{
 	Name: "delete_room_shift_args",
 	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "id", Type: model.Text(), NotNull: true},
 	},
 }
@@ -303,7 +288,6 @@ var DeleteRoomShiftArgsModel = model.Definition{
 var CancelShiftOccurrenceArgsModel = model.Definition{
 	Name: "cancel_shift_occurrence_args",
 	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "shift_id", Type: model.Text(), NotNull: true},
 		{Name: "date", Type: model.Text(), NotNull: true},
 	},
@@ -312,7 +296,6 @@ var CancelShiftOccurrenceArgsModel = model.Definition{
 var MoveShiftOccurrenceArgsModel = model.Definition{
 	Name: "move_shift_occurrence_args",
 	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "shift_id", Type: model.Text(), NotNull: true},
 		{Name: "date", Type: model.Text(), NotNull: true},
 		{Name: "target_room_id", Type: model.Text(), Label: "Target room", NotNull: true},
@@ -322,7 +305,6 @@ var MoveShiftOccurrenceArgsModel = model.Definition{
 var ListRoomDayArgsModel = model.Definition{
 	Name: "list_room_day_args",
 	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "room_id", Type: model.Text()},
 		{Name: "date", Type: model.Text()},
 	},
@@ -331,7 +313,6 @@ var ListRoomDayArgsModel = model.Definition{
 var ListBoardArgsModel = model.Definition{
 	Name: "list_board_args",
 	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "category_id", Type: model.Text()},
 		{Name: "equipment_id", Type: model.Text()},
 	},
@@ -340,7 +321,6 @@ var ListBoardArgsModel = model.Definition{
 var FindFreeRoomsArgsModel = model.Definition{
 	Name: "find_free_rooms_args",
 	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "date", Type: model.Text(), NotNull: true},
 		{Name: "start", Type: model.Text(), NotNull: true},
 		{Name: "end", Type: model.Text(), NotNull: true},

@@ -50,10 +50,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
-		tenantID := args.TenantId
-		if tenantID == "" {
-			tenantID = m.tenantID
-		}
+		tenantID := m.tenantID
 		floors, err := m.ListFloors(tenantID)
 		if err != nil {
 			rpc.WriteError(ctx, err)
@@ -68,9 +65,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 
 	// save_floor
 	view.MountSave(reg, OpSaveFloor, func(x *Floor) error {
-		if x.TenantId == "" {
-			x.TenantId = m.tenantID
-		}
+		x.TenantId = m.tenantID // el tenant lo pone el servidor, nunca la petición (D32)
 		out, err := m.SaveFloor(*x)
 		*x = out
 		return err
@@ -93,10 +88,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
-		tenantID := args.TenantId
-		if tenantID == "" {
-			tenantID = m.tenantID
-		}
+		tenantID := m.tenantID
 		rooms, err := m.ListRooms(tenantID, args.ActiveOnly)
 		if err != nil {
 			rpc.WriteError(ctx, err)
@@ -116,10 +108,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
-		tenantID := args.TenantId
-		if tenantID == "" {
-			tenantID = m.tenantID
-		}
+		tenantID := m.tenantID
 		res, err := m.GetRoom(tenantID, args.Id)
 		if err != nil {
 			rpc.WriteError(ctx, err)
@@ -130,9 +119,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 
 	// save_room
 	view.MountSave(reg, OpSaveRoom, func(x *Room) error {
-		if x.TenantId == "" {
-			x.TenantId = m.tenantID
-		}
+		x.TenantId = m.tenantID // el tenant lo pone el servidor, nunca la petición (D32)
 		out, err := m.SaveRoom(*x)
 		*x = out
 		return err
@@ -145,10 +132,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
-		tenantID := args.TenantId
-		if tenantID == "" {
-			tenantID = m.tenantID
-		}
+		tenantID := m.tenantID
 		if err := m.DeactivateRoom(tenantID, args.Id); err != nil {
 			rpc.WriteError(ctx, err)
 			return
@@ -163,10 +147,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
-		tenantID := args.TenantId
-		if tenantID == "" {
-			tenantID = m.tenantID
-		}
+		tenantID := m.tenantID
 		eqs, err := m.ListEquipment(tenantID)
 		if err != nil {
 			rpc.WriteError(ctx, err)
@@ -181,9 +162,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 
 	// save_equipment
 	view.MountSave(reg, OpSaveEquipment, func(x *Equipment) error {
-		if x.TenantId == "" {
-			x.TenantId = m.tenantID
-		}
+		x.TenantId = m.tenantID // el tenant lo pone el servidor, nunca la petición (D32)
 		out, err := m.SaveEquipment(*x)
 		*x = out
 		return err
@@ -206,10 +185,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
-		tenantID := args.TenantId
-		if tenantID == "" {
-			tenantID = m.tenantID
-		}
+		tenantID := m.tenantID
 		eqs, err := m.ListRoomEquipment(tenantID, args.RoomId)
 		if err != nil {
 			rpc.WriteError(ctx, err)
@@ -229,10 +205,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
-		tenantID := args.TenantId
-		if tenantID == "" {
-			tenantID = m.tenantID
-		}
+		tenantID := m.tenantID
 		var ids []string
 		for _, ref := range args.EquipmentIds {
 			ids = append(ids, ref.Id)
@@ -251,10 +224,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
-		tenantID := args.TenantId
-		if tenantID == "" {
-			tenantID = m.tenantID
-		}
+		tenantID := m.tenantID
 		opts, err := m.deps.Categories.CategoryOptions(tenantID)
 		if err != nil {
 			rpc.WriteError(ctx, err)
@@ -274,10 +244,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
-		tenantID := args.TenantId
-		if tenantID == "" {
-			tenantID = m.tenantID
-		}
+		tenantID := m.tenantID
 		opts, err := m.ListRoomCategories(tenantID, args.RoomId)
 		if err != nil {
 			rpc.WriteError(ctx, err)
@@ -297,10 +264,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
-		tenantID := args.TenantId
-		if tenantID == "" {
-			tenantID = m.tenantID
-		}
+		tenantID := m.tenantID
 		var ids []string
 		for _, ref := range args.CategoryIds {
 			ids = append(ids, ref.Id)
@@ -319,10 +283,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
-		tenantID := args.TenantId
-		if tenantID == "" {
-			tenantID = m.tenantID
-		}
+		tenantID := m.tenantID
 		opts, err := m.deps.Occupants.OccupantOptions(tenantID)
 		if err != nil {
 			rpc.WriteError(ctx, err)
@@ -342,10 +303,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
-		tenantID := args.TenantId
-		if tenantID == "" {
-			tenantID = m.tenantID
-		}
+		tenantID := m.tenantID
 		shifts, err := m.ListRoomShifts(tenantID, args.RoomId)
 		if err != nil {
 			rpc.WriteError(ctx, err)
@@ -383,10 +341,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
-		tenantID := args.TenantId
-		if tenantID == "" {
-			tenantID = m.tenantID
-		}
+		tenantID := m.tenantID
 		if err := m.DeleteShift(tenantID, args.Id); err != nil {
 			rpc.WriteError(ctx, err)
 			return
@@ -401,10 +356,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
-		tenantID := args.TenantId
-		if tenantID == "" {
-			tenantID = m.tenantID
-		}
+		tenantID := m.tenantID
 		dateSec, err := parseDate(args.Date)
 		if err != nil {
 			rpc.WriteError(ctx, err)
@@ -424,10 +376,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
-		tenantID := args.TenantId
-		if tenantID == "" {
-			tenantID = m.tenantID
-		}
+		tenantID := m.tenantID
 		dateSec, err := parseDate(args.Date)
 		if err != nil {
 			rpc.WriteError(ctx, err)
@@ -449,10 +398,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
-		tenantID := args.TenantId
-		if tenantID == "" {
-			tenantID = m.tenantID
-		}
+		tenantID := m.tenantID
 		var dateSec time.Unix
 		if args.Date != "" {
 			d, err := parseDate(args.Date)
@@ -481,10 +427,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
-		tenantID := args.TenantId
-		if tenantID == "" {
-			tenantID = m.tenantID
-		}
+		tenantID := m.tenantID
 		board, err := m.ListBoard(tenantID, args.CategoryId, args.EquipmentId)
 		if err != nil {
 			rpc.WriteError(ctx, err)
@@ -504,10 +447,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
-		tenantID := args.TenantId
-		if tenantID == "" {
-			tenantID = m.tenantID
-		}
+		tenantID := m.tenantID
 		dateSec, errDate := parseDate(args.Date)
 		startMin, errStart := parseHour(args.Start)
 		endMin, errEnd := parseHour(args.End)

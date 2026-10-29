@@ -89,3 +89,27 @@ func TestScreenSaveAndDelete(t *testing.T) {
 		t.Fatalf("deleting a floor with rooms: want a conflict, got %v", lastErr)
 	}
 }
+
+// El tenant lo pone el servidor (D32): un registro que llega con otro tenant se
+// guarda en el de esta instalación, y una lista nunca devuelve otro tenant.
+func TestScreenSaveIgnoresTenantFromRequest(t *testing.T) {
+	env := newTestEnv("tenantA")
+	caller := view.NewRecords().Caller(loopback.WithTenant("tenantA", env.mod))
+	vFloor := roomlayout.NewFloorView(caller)
+
+	var lastErr error
+	f := &roomlayout.Floor{TenantId: "other-tenant", Name: "Planta B"}
+	vFloor.(view.Saver).Save([]model.Model{f}, func(e error) { lastErr = e })
+	if lastErr != nil {
+		t.Fatalf("save floor: %v", lastErr)
+	}
+
+	mine, err := env.mod.ListFloors("tenantA")
+	if err != nil || len(mine) != 1 {
+		t.Fatalf("server's tenant: got %d floors (err %v), want 1", len(mine), err)
+	}
+	other, err := env.mod.ListFloors("other-tenant")
+	if err != nil || len(other) != 0 {
+		t.Fatalf("tenant sent by the request: got %d floors (err %v), want 0", len(other), err)
+	}
+}

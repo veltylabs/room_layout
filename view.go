@@ -55,13 +55,12 @@ func NewEquipmentView(caller router.Caller, opts ...view.Option) view.Presenter 
 }
 
 type roomShiftLister struct {
-	caller   router.Caller
-	tenantID string
-	roomID   string
+	caller router.Caller
+	roomID string
 }
 
 func (l *roomShiftLister) List(done func(rows []view.Record, err error)) {
-	args := ListRoomShiftsArgs{TenantId: l.tenantID, RoomId: l.roomID}
+	args := ListRoomShiftsArgs{RoomId: l.roomID}
 	var res RoomShiftFormList
 	l.caller.Call(ModelName+"."+OpListRoomShifts, &args, &res, func(err error) {
 		if err != nil {
@@ -98,7 +97,7 @@ func (l *roomShiftLister) Delete(ids []string, done func(err error)) {
 		done(nil)
 		return
 	}
-	args := DeleteRoomShiftArgs{TenantId: l.tenantID, Id: ids[0]}
+	args := DeleteRoomShiftArgs{Id: ids[0]}
 	l.caller.Call(ModelName+"."+OpDeleteRoomShift, &args, nil, done)
 }
 
@@ -110,7 +109,7 @@ func (m *RoomShiftForm) Item() model.Item {
 	return model.Item{ID: m.Id, Label: m.OccupantLabel, Description: model.JoinItem(m.DayOfWeek, m.Date, m.Start, m.End)}
 }
 
-func NewShiftView(caller router.Caller, tenantID, roomID string) view.Presenter {
-	lister := &roomShiftLister{caller: caller, tenantID: tenantID, roomID: roomID}
+func NewShiftView(caller router.Caller, roomID string) view.Presenter {
+	lister := &roomShiftLister{caller: caller, roomID: roomID}
 	return view.New(lister, &RoomShiftForm{})
 }

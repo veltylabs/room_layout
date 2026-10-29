@@ -152,7 +152,7 @@ func TestAllOperationsExecution(t *testing.T) {
 	}
 
 	// 2. List floors via op
-	ctx = &testOpContext{args: &roomlayout.ListFloorsArgs{TenantId: "tenantA"}}
+	ctx = &testOpContext{args: &roomlayout.ListFloorsArgs{}}
 	reg.handlers[roomlayout.OpListFloors](ctx)
 
 	// Setup data directly
@@ -163,39 +163,39 @@ func TestAllOperationsExecution(t *testing.T) {
 	env.mod.SetRoomCategories("tenantA", rResVal2.Id, []string{"cat1"})
 
 	// 4. Get room via op
-	ctx = &testOpContext{args: &roomlayout.GetRoomArgs{TenantId: "tenantA", Id: rResVal.Id}}
+	ctx = &testOpContext{args: &roomlayout.GetRoomArgs{Id: rResVal.Id}}
 	reg.handlers[roomlayout.OpGetRoom](ctx)
 
 	// 5. List rooms via op
-	ctx = &testOpContext{args: &roomlayout.ListRoomsArgs{TenantId: "tenantA"}}
+	ctx = &testOpContext{args: &roomlayout.ListRoomsArgs{}}
 	reg.handlers[roomlayout.OpListRooms](ctx)
 
 	// 7. List equipment via op
-	ctx = &testOpContext{args: &roomlayout.ListEquipmentArgs{TenantId: "tenantA"}}
+	ctx = &testOpContext{args: &roomlayout.ListEquipmentArgs{}}
 	reg.handlers[roomlayout.OpListEquipment](ctx)
 
 	// 8. Set room equipment via op
-	ctx = &testOpContext{args: &roomlayout.SetRoomEquipmentArgs{TenantId: "tenantA", RoomId: rResVal.Id, EquipmentIds: []roomlayout.IdRef{{Id: eqResVal.Id}}}}
+	ctx = &testOpContext{args: &roomlayout.SetRoomEquipmentArgs{RoomId: rResVal.Id, EquipmentIds: []roomlayout.IdRef{{Id: eqResVal.Id}}}}
 	reg.handlers[roomlayout.OpSetRoomEquipment](ctx)
 
 	// 9. List room equipment via op
-	ctx = &testOpContext{args: &roomlayout.ListRoomEquipmentArgs{TenantId: "tenantA", RoomId: rResVal.Id}}
+	ctx = &testOpContext{args: &roomlayout.ListRoomEquipmentArgs{RoomId: rResVal.Id}}
 	reg.handlers[roomlayout.OpListRoomEquipment](ctx)
 
 	// 10. List categories via op
-	ctx = &testOpContext{args: &roomlayout.ListOptionsArgs{TenantId: "tenantA"}}
+	ctx = &testOpContext{args: &roomlayout.ListOptionsArgs{}}
 	reg.handlers[roomlayout.OpListCategories](ctx)
 
 	// 11. Set room categories via op
-	ctx = &testOpContext{args: &roomlayout.SetRoomCategoriesArgs{TenantId: "tenantA", RoomId: rResVal.Id, CategoryIds: []roomlayout.IdRef{{Id: "cat1"}}}}
+	ctx = &testOpContext{args: &roomlayout.SetRoomCategoriesArgs{RoomId: rResVal.Id, CategoryIds: []roomlayout.IdRef{{Id: "cat1"}}}}
 	reg.handlers[roomlayout.OpSetRoomCategories](ctx)
 
 	// 12. List room categories via op
-	ctx = &testOpContext{args: &roomlayout.ListRoomCategoriesArgs{TenantId: "tenantA", RoomId: rResVal.Id}}
+	ctx = &testOpContext{args: &roomlayout.ListRoomCategoriesArgs{RoomId: rResVal.Id}}
 	reg.handlers[roomlayout.OpListRoomCategories](ctx)
 
 	// 13. List occupants via op
-	ctx = &testOpContext{args: &roomlayout.ListOptionsArgs{TenantId: "tenantA"}}
+	ctx = &testOpContext{args: &roomlayout.ListOptionsArgs{}}
 	reg.handlers[roomlayout.OpListOccupants](ctx)
 
 	// 14. Save room shift via op
@@ -204,27 +204,27 @@ func TestAllOperationsExecution(t *testing.T) {
 	sRes := ctx.resp.(*roomlayout.RoomShiftForm)
 
 	// 15. List room shifts via op
-	ctx = &testOpContext{args: &roomlayout.ListRoomShiftsArgs{TenantId: "tenantA", RoomId: rResVal.Id}}
+	ctx = &testOpContext{args: &roomlayout.ListRoomShiftsArgs{RoomId: rResVal.Id}}
 	reg.handlers[roomlayout.OpListRoomShifts](ctx)
 
 	// 16. Cancel shift occurrence via op
-	ctx = &testOpContext{args: &roomlayout.CancelShiftOccurrenceArgs{TenantId: "tenantA", ShiftId: sRes.Id, Date: "2026-03-16"}}
+	ctx = &testOpContext{args: &roomlayout.CancelShiftOccurrenceArgs{ShiftId: sRes.Id, Date: "2026-03-16"}}
 	reg.handlers[roomlayout.OpCancelShiftOccurrence](ctx)
 
 	// 18. Move shift occurrence via op
-	ctx = &testOpContext{args: &roomlayout.MoveShiftOccurrenceArgs{TenantId: "tenantA", ShiftId: sRes.Id, Date: "2026-03-16", TargetRoomId: rResVal2.Id}}
+	ctx = &testOpContext{args: &roomlayout.MoveShiftOccurrenceArgs{ShiftId: sRes.Id, Date: "2026-03-16", TargetRoomId: rResVal2.Id}}
 	reg.handlers[roomlayout.OpMoveShiftOccurrence](ctx)
 
 	// 19. List room day via op
-	ctx = &testOpContext{args: &roomlayout.ListRoomDayArgs{TenantId: "tenantA", RoomId: rResVal2.Id, Date: "2026-03-16"}}
+	ctx = &testOpContext{args: &roomlayout.ListRoomDayArgs{RoomId: rResVal2.Id, Date: "2026-03-16"}}
 	reg.handlers[roomlayout.OpListRoomDay](ctx)
 
 	// 20. List board via op
-	ctx = &testOpContext{args: &roomlayout.ListBoardArgs{TenantId: "tenantA"}}
+	ctx = &testOpContext{args: &roomlayout.ListBoardArgs{}}
 	reg.handlers[roomlayout.OpListBoard](ctx)
 
 	// 21. Find free rooms via op
-	ctx = &testOpContext{args: &roomlayout.FindFreeRoomsArgs{TenantId: "tenantA", Date: "2026-03-16", Start: "14:00", End: "16:00"}}
+	ctx = &testOpContext{args: &roomlayout.FindFreeRoomsArgs{Date: "2026-03-16", Start: "14:00", End: "16:00"}}
 	reg.handlers[roomlayout.OpFindFreeRooms](ctx)
 
 	// 22. List public availability via op
@@ -232,11 +232,11 @@ func TestAllOperationsExecution(t *testing.T) {
 	reg.handlers[roomlayout.OpListPublicAvailability](ctx)
 
 	// 23. Delete room shift via op
-	ctx = &testOpContext{args: &roomlayout.DeleteRoomShiftArgs{TenantId: "tenantA", Id: sRes.Id}}
+	ctx = &testOpContext{args: &roomlayout.DeleteRoomShiftArgs{Id: sRes.Id}}
 	reg.handlers[roomlayout.OpDeleteRoomShift](ctx)
 
 	// 24. Deactivate room via op
-	ctx = &testOpContext{args: &roomlayout.DeactivateRoomArgs{TenantId: "tenantA", Id: rResVal.Id}}
+	ctx = &testOpContext{args: &roomlayout.DeactivateRoomArgs{Id: rResVal.Id}}
 	reg.handlers[roomlayout.OpDeactivateRoom](ctx)
 
 	// Error branch tests for Op handlers
@@ -263,14 +263,14 @@ func TestAllOperationsExecution(t *testing.T) {
 	reg.handlers[roomlayout.OpListPublicAvailability](decErrCtx)
 
 	// NotFound error branch
-	notFoundCtx := &testOpContext{args: &roomlayout.GetRoomArgs{TenantId: "tenantA", Id: "non-existent-id"}}
+	notFoundCtx := &testOpContext{args: &roomlayout.GetRoomArgs{Id: "non-existent-id"}}
 	reg.handlers[roomlayout.OpGetRoom](notFoundCtx)
 	if notFoundCtx.status == 200 {
 		t.Fatalf("expected error status for not found room, got %d", notFoundCtx.status)
 	}
 
 	// Invalid date error branch
-	invDateCtx := &testOpContext{args: &roomlayout.CancelShiftOccurrenceArgs{TenantId: "tenantA", ShiftId: "s1", Date: "invalid-date"}}
+	invDateCtx := &testOpContext{args: &roomlayout.CancelShiftOccurrenceArgs{ShiftId: "s1", Date: "invalid-date"}}
 	reg.handlers[roomlayout.OpCancelShiftOccurrence](invDateCtx)
 	if invDateCtx.status == 200 {
 		t.Fatalf("expected error status for invalid date, got %d", invDateCtx.status)
