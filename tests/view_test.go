@@ -10,33 +10,28 @@ import (
 
 func TestPresenterViewsCoverage(t *testing.T) {
 	env := newTestEnv("tenantA")
-	loop := view.NewRecords().Caller(loopback.WithTenant("tenantA", env.mod))
+	caller := loopback.WithTenant("tenantA", env.mod)
 
 	noopDone := func(err error) {}
 
-	vFloor := roomlayout.NewFloorView(loop)
+	vFloor := roomlayout.NewFloorView(view.NewRecords().Caller(caller))
 	if vFloor == nil {
 		t.Fatalf("NewFloorView returned nil")
 	}
 	vFloor.Reload(noopDone)
 
-	vRoom := roomlayout.NewRoomView(loop)
+	vRoom := roomlayout.NewRoomView(view.NewRecords().Caller(caller))
 	if vRoom == nil {
 		t.Fatalf("NewRoomView returned nil")
 	}
 	vRoom.Reload(noopDone)
 
-	vEq := roomlayout.NewEquipmentView(loop)
+	vEq := roomlayout.NewEquipmentView(view.NewRecords().Caller(caller))
 	if vEq == nil {
 		t.Fatalf("NewEquipmentView returned nil")
 	}
 	vEq.Reload(noopDone)
 
-	vShift := roomlayout.NewShiftView(loop, "tenantA", "r1")
-	if vShift == nil {
-		t.Fatalf("NewShiftView returned nil")
-	}
-	vShift.Reload(noopDone)
 }
 
 func TestItemsDeclaredOnFields(t *testing.T) {

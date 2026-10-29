@@ -3,6 +3,7 @@ package ui
 import (
 	roomlayout "github.com/veltylabs/room_layout"
 	"webtyp.com/lang"
+	"webtyp.com/model"
 	"webtyp.com/router"
 	"webtyp.com/view"
 )
@@ -31,21 +32,21 @@ func Screens(caller router.Caller) []view.Screen {
 					ID:         ID + ".rooms",
 					Label:      labelRooms,
 					Icon:       ID + "_room",
-					Permission: roomlayout.ResourceRoom,
+					Permission: model.ResourceOf(&roomlayout.RoomModel),
 					Presenter:  roomlayout.NewRoomView(caller, view.WithDescription(descRooms)),
 				},
 				{
 					ID:         ID + ".floors",
 					Label:      labelFloors,
 					Icon:       ID + "_floor",
-					Permission: roomlayout.ResourceFloor,
+					Permission: model.ResourceOf(&roomlayout.FloorModel),
 					Presenter:  roomlayout.NewFloorView(caller, view.WithDescription(descFloors)),
 				},
 				{
 					ID:         ID + ".equipment",
 					Label:      labelEquipment,
 					Icon:       ID + "_equipment",
-					Permission: roomlayout.ResourceEquipment,
+					Permission: model.ResourceOf(&roomlayout.EquipmentModel),
 					Presenter:  roomlayout.NewEquipmentView(caller, view.WithDescription(descEquipment)),
 				},
 			},

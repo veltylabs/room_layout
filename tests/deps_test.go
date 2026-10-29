@@ -26,7 +26,7 @@ func TestDependencyValidation(t *testing.T) {
 	d := base
 	d.IDs = nil
 	_, err := roomlayout.New(db, d)
-	if err == nil || err.Error() != "room_layout: Deps.IDs no supplied_1" {
+	if err == nil || err.Error() != "room_layout: Deps.IDs is required" {
 		t.Fatalf("expected Deps.IDs error, got %v", err)
 	}
 
@@ -34,7 +34,7 @@ func TestDependencyValidation(t *testing.T) {
 	d = base
 	d.Categories = nil
 	_, err = roomlayout.New(db, d)
-	if err == nil || err.Error() != "room_layout: Deps.Categories no provided_2" {
+	if err == nil || err.Error() != "room_layout: Deps.Categories is required" {
 		t.Fatalf("expected Deps.Categories error, got %v", err)
 	}
 
@@ -42,7 +42,7 @@ func TestDependencyValidation(t *testing.T) {
 	d = base
 	d.Occupants = nil
 	_, err = roomlayout.New(db, d)
-	if err == nil || err.Error() != "room_layout: Deps.Occupants no supplied_2" {
+	if err == nil || err.Error() != "room_layout: Deps.Occupants is required" {
 		t.Fatalf("expected Deps.Occupants error, got %v", err)
 	}
 
@@ -50,7 +50,7 @@ func TestDependencyValidation(t *testing.T) {
 	d = base
 	d.TenantID = ""
 	_, err = roomlayout.New(db, d)
-	if err == nil || err.Error() != "room_layout: Deps.TenantID no supplied_3" {
+	if err == nil || err.Error() != "room_layout: Deps.TenantID is required" {
 		t.Fatalf("expected Deps.TenantID error, got %v", err)
 	}
 
@@ -58,7 +58,7 @@ func TestDependencyValidation(t *testing.T) {
 	d = base
 	d.Timezone = ""
 	_, err = roomlayout.New(db, d)
-	if err == nil || err.Error() != "room_layout: Deps.Timezone no supplied_4" {
+	if err == nil || err.Error() != "room_layout: Deps.Timezone is required" {
 		t.Fatalf("expected Deps.Timezone error, got %v", err)
 	}
 }

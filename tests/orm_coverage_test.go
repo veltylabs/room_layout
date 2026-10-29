@@ -4,29 +4,28 @@ import (
 	"testing"
 
 	roomlayout "github.com/veltylabs/room_layout"
-	"webtyp.com/fmt"
 	"webtyp.com/model"
 )
 
 type dummyArrayWriter struct{}
 
-func (d *dummyArrayWriter) String(val string)           {}
-func (d *dummyArrayWriter) Int(val int64)               {}
-func (d *dummyArrayWriter) Float(val float64)           {}
-func (d *dummyArrayWriter) Bool(val bool)               {}
-func (d *dummyArrayWriter) Bytes(val []byte)            {}
+func (d *dummyArrayWriter) String(val string)          {}
+func (d *dummyArrayWriter) Int(val int64)              {}
+func (d *dummyArrayWriter) Float(val float64)          {}
+func (d *dummyArrayWriter) Bool(val bool)              {}
+func (d *dummyArrayWriter) Bytes(val []byte)           {}
 func (d *dummyArrayWriter) Object(val model.Encodable) {}
-func (d *dummyArrayWriter) Close()                      {}
+func (d *dummyArrayWriter) Close()                     {}
 
 type dummyWriter struct{}
 
 func (d *dummyWriter) String(name, val string)                 {}
-func (d *dummyWriter) Int(name string, val int64)               {}
-func (d *dummyWriter) Float(name string, val float64)           {}
+func (d *dummyWriter) Int(name string, val int64)              {}
+func (d *dummyWriter) Float(name string, val float64)          {}
 func (d *dummyWriter) Bool(name string, val bool)              {}
 func (d *dummyWriter) Bytes(name string, val []byte)           {}
 func (d *dummyWriter) Null(name string)                        {}
-func (d *dummyWriter) Raw(name, val string)                   {}
+func (d *dummyWriter) Raw(name, val string)                    {}
 func (d *dummyWriter) Object(name string, val model.Encodable) {}
 func (d *dummyWriter) Array(name string, n int) model.ArrayWriter {
 	return &dummyArrayWriter{}
@@ -56,15 +55,6 @@ func TestORMGeneratedMethodsCoverage(t *testing.T) {
 	w := &dummyWriter{}
 	r := &populatedReader{}
 
-	// Test ValidationError methods
-	veNil := &roomlayout.ValidationError{}
-	_ = veNil.Error()
-	_ = veNil.Unwrap()
-
-	veErr := &roomlayout.ValidationError{Err: fmt.Err("custom error")}
-	_ = veErr.Error()
-	_ = veErr.Unwrap()
-
 	models := []model.Model{
 		&roomlayout.Floor{Id: "1", TenantId: "t", Name: "N", Position: 1, UpdatedAt: 100},
 		&roomlayout.Room{Id: "1", TenantId: "t", FloorId: "f", Code: "C", Name: "N", Notes: "notes", IsActive: true, UpdatedAt: 100},
@@ -76,12 +66,10 @@ func TestORMGeneratedMethodsCoverage(t *testing.T) {
 		&roomlayout.RoomShiftForm{Id: "1", RoomId: "r", CategoryId: "c", OccupantId: "o", OccupantLabel: "L", DayOfWeek: "1", Date: "2026-03-16", Start: "09:00", End: "13:00"},
 		&roomlayout.IdRef{Id: "1"},
 		&roomlayout.ListFloorsArgs{TenantId: "t"},
-		&roomlayout.DeleteFloorArgs{TenantId: "t", Id: "1"},
 		&roomlayout.ListRoomsArgs{TenantId: "t", ActiveOnly: true},
 		&roomlayout.GetRoomArgs{TenantId: "t", Id: "1"},
 		&roomlayout.DeactivateRoomArgs{TenantId: "t", Id: "1"},
 		&roomlayout.ListEquipmentArgs{TenantId: "t"},
-		&roomlayout.DeleteEquipmentArgs{TenantId: "t", Id: "1"},
 		&roomlayout.ListRoomEquipmentArgs{TenantId: "t", RoomId: "r"},
 		&roomlayout.SetRoomEquipmentArgs{TenantId: "t", RoomId: "r", EquipmentIds: []roomlayout.IdRef{{Id: "1"}}},
 		&roomlayout.ListRoomCategoriesArgs{TenantId: "t", RoomId: "r"},
@@ -133,12 +121,10 @@ func TestORMGeneratedMethodsCoverage(t *testing.T) {
 		&roomlayout.RoomShiftFormList{&roomlayout.RoomShiftForm{Id: "1"}},
 		&roomlayout.IdRefList{&roomlayout.IdRef{Id: "1"}},
 		&roomlayout.ListFloorsArgsList{&roomlayout.ListFloorsArgs{TenantId: "t"}},
-		&roomlayout.DeleteFloorArgsList{&roomlayout.DeleteFloorArgs{Id: "1"}},
 		&roomlayout.ListRoomsArgsList{&roomlayout.ListRoomsArgs{TenantId: "t"}},
 		&roomlayout.GetRoomArgsList{&roomlayout.GetRoomArgs{Id: "1"}},
 		&roomlayout.DeactivateRoomArgsList{&roomlayout.DeactivateRoomArgs{Id: "1"}},
 		&roomlayout.ListEquipmentArgsList{&roomlayout.ListEquipmentArgs{TenantId: "t"}},
-		&roomlayout.DeleteEquipmentArgsList{&roomlayout.DeleteEquipmentArgs{Id: "1"}},
 		&roomlayout.ListRoomEquipmentArgsList{&roomlayout.ListRoomEquipmentArgs{RoomId: "r"}},
 		&roomlayout.SetRoomEquipmentArgsList{&roomlayout.SetRoomEquipmentArgs{RoomId: "r"}},
 		&roomlayout.ListRoomCategoriesArgsList{&roomlayout.ListRoomCategoriesArgs{RoomId: "r"}},

@@ -37,6 +37,7 @@ webtyp
 ejecutado desde la raíz del repositorio.
 
 ## Operaciones Registradas (`MountOperations`)
+El módulo expone operaciones estándar usando `view.MountSave`/`view.MountDelete`. Los errores de decodificación y de negocio son propagados mediante `rpc.WriteError`. Los permisos utilizan asignación por tabla con `model.ResourceOf`.
 
 | Operación | Recurso | Acción |
 |---|---|---|

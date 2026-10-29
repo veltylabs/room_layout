@@ -3,7 +3,9 @@ package roomlayout
 import (
 	"webtyp.com/model"
 	"webtyp.com/router"
+	"webtyp.com/rpc"
 	"webtyp.com/time"
+	"webtyp.com/view"
 )
 
 var _ router.OperationModule = (*Module)(nil)
@@ -40,43 +42,12 @@ const (
 	OpListPublicAvailability = "list_public_availability"
 )
 
-func mapErrorStatus(err error) int {
-	if err == nil {
-		return 200
-	}
-	if _, ok := err.(*ValidationError); ok {
-		return 400
-	}
-	// Una aserción, y luego un switch sobre el valor concreto: == entre valores de error
-	// incluiría reflection en el binario wasm bajo TinyGo.
-	e, ok := err.(domainError)
-	if !ok {
-		return 500
-	}
-	switch e {
-	case ErrNotFound:
-		return 404
-	case ErrCodeAlreadyExists, ErrFloorInUse, ErrCategoryInUse, ErrRoomOverlap, ErrOccupantOverlap:
-		return 409
-	case ErrTenantRequired, ErrInvalidRange, ErrInvalidDate, ErrInvalidWeekday, ErrUnknownCategory,
-		ErrUnknownOccupant, ErrOccupantRequired, ErrCategoryNotAllowed, ErrOutsideBounds, ErrNotWeekly:
-		return 400
-	}
-	return 500
-}
-
-func (m *Module) writeError(ctx router.Context, err error) {
-	code := mapErrorStatus(err)
-	ctx.WriteStatus(code)
-	ctx.Write([]byte(err.Error()))
-}
-
 func (m *Module) MountOperations(reg router.OperationRegistry) {
 	// list_floors
 	reg.Operation(OpListFloors, func(ctx router.Context) {
 		var args ListFloorsArgs
 		if err := ctx.Decode(&args); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
 		tenantID := args.TenantId
@@ -85,7 +56,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 		}
 		floors, err := m.ListFloors(tenantID)
 		if err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, err)
 			return
 		}
 		list := FloorList{}
@@ -93,49 +64,33 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			list = append(list, &floors[i])
 		}
 		ctx.Encode(&list)
-	}).Requires(ResourceFloor, model.Read).Accepts(&ListFloorsArgs{})
+	}).Requires(model.ResourceOf(&FloorModel), model.Read).Accepts(&ListFloorsArgs{})
 
 	// save_floor
-	reg.Operation(OpSaveFloor, func(ctx router.Context) {
-		var floor Floor
-		if err := ctx.Decode(&floor); err != nil {
-			m.writeError(ctx, err)
-			return
+	view.MountSave(reg, OpSaveFloor, func(x *Floor) error {
+		if x.TenantId == "" {
+			x.TenantId = m.tenantID
 		}
-		if floor.TenantId == "" {
-			floor.TenantId = m.tenantID
-		}
-		res, err := m.SaveFloor(floor)
-		if err != nil {
-			m.writeError(ctx, err)
-			return
-		}
-		ctx.Encode(&res)
-	}).Requires(ResourceFloor, model.Create|model.Update).Accepts(&Floor{})
+		out, err := m.SaveFloor(*x)
+		*x = out
+		return err
+	}).Requires(model.ResourceOf(&FloorModel), model.Create|model.Update)
 
 	// delete_floor
-	reg.Operation(OpDeleteFloor, func(ctx router.Context) {
-		var args DeleteFloorArgs
-		if err := ctx.Decode(&args); err != nil {
-			m.writeError(ctx, err)
-			return
+	view.MountDelete(reg, OpDeleteFloor, func(ids []string) error {
+		for _, id := range ids {
+			if err := m.DeleteFloor(m.tenantID, id); err != nil {
+				return err
+			}
 		}
-		tenantID := args.TenantId
-		if tenantID == "" {
-			tenantID = m.tenantID
-		}
-		if err := m.DeleteFloor(tenantID, args.Id); err != nil {
-			m.writeError(ctx, err)
-			return
-		}
-		ctx.WriteStatus(200)
-	}).Requires(ResourceFloor, model.Delete).Accepts(&DeleteFloorArgs{})
+		return nil
+	}).Requires(model.ResourceOf(&FloorModel), model.Delete)
 
 	// list_rooms
 	reg.Operation(OpListRooms, func(ctx router.Context) {
 		var args ListRoomsArgs
 		if err := ctx.Decode(&args); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
 		tenantID := args.TenantId
@@ -144,7 +99,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 		}
 		rooms, err := m.ListRooms(tenantID, args.ActiveOnly)
 		if err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, err)
 			return
 		}
 		list := RoomList{}
@@ -152,13 +107,13 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			list = append(list, &rooms[i])
 		}
 		ctx.Encode(&list)
-	}).Requires(ResourceRoom, model.Read).Accepts(&ListRoomsArgs{})
+	}).Requires(model.ResourceOf(&RoomModel), model.Read).Accepts(&ListRoomsArgs{})
 
 	// get_room
 	reg.Operation(OpGetRoom, func(ctx router.Context) {
 		var args GetRoomArgs
 		if err := ctx.Decode(&args); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
 		tenantID := args.TenantId
@@ -167,35 +122,27 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 		}
 		res, err := m.GetRoom(tenantID, args.Id)
 		if err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, err)
 			return
 		}
 		ctx.Encode(&res)
-	}).Requires(ResourceRoom, model.Read).Accepts(&GetRoomArgs{})
+	}).Requires(model.ResourceOf(&RoomModel), model.Read).Accepts(&GetRoomArgs{})
 
 	// save_room
-	reg.Operation(OpSaveRoom, func(ctx router.Context) {
-		var room Room
-		if err := ctx.Decode(&room); err != nil {
-			m.writeError(ctx, err)
-			return
+	view.MountSave(reg, OpSaveRoom, func(x *Room) error {
+		if x.TenantId == "" {
+			x.TenantId = m.tenantID
 		}
-		if room.TenantId == "" {
-			room.TenantId = m.tenantID
-		}
-		res, err := m.SaveRoom(room)
-		if err != nil {
-			m.writeError(ctx, err)
-			return
-		}
-		ctx.Encode(&res)
-	}).Requires(ResourceRoom, model.Create|model.Update).Accepts(&Room{})
+		out, err := m.SaveRoom(*x)
+		*x = out
+		return err
+	}).Requires(model.ResourceOf(&RoomModel), model.Create|model.Update)
 
 	// deactivate_room
 	reg.Operation(OpDeactivateRoom, func(ctx router.Context) {
 		var args DeactivateRoomArgs
 		if err := ctx.Decode(&args); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
 		tenantID := args.TenantId
@@ -203,17 +150,17 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			tenantID = m.tenantID
 		}
 		if err := m.DeactivateRoom(tenantID, args.Id); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, err)
 			return
 		}
 		ctx.WriteStatus(200)
-	}).Requires(ResourceRoom, model.Update).Accepts(&DeactivateRoomArgs{})
+	}).Requires(model.ResourceOf(&RoomModel), model.Update).Accepts(&DeactivateRoomArgs{})
 
 	// list_equipment
 	reg.Operation(OpListEquipment, func(ctx router.Context) {
 		var args ListEquipmentArgs
 		if err := ctx.Decode(&args); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
 		tenantID := args.TenantId
@@ -222,7 +169,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 		}
 		eqs, err := m.ListEquipment(tenantID)
 		if err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, err)
 			return
 		}
 		list := EquipmentList{}
@@ -230,49 +177,33 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			list = append(list, &eqs[i])
 		}
 		ctx.Encode(&list)
-	}).Requires(ResourceEquipment, model.Read).Accepts(&ListEquipmentArgs{})
+	}).Requires(model.ResourceOf(&EquipmentModel), model.Read).Accepts(&ListEquipmentArgs{})
 
 	// save_equipment
-	reg.Operation(OpSaveEquipment, func(ctx router.Context) {
-		var eq Equipment
-		if err := ctx.Decode(&eq); err != nil {
-			m.writeError(ctx, err)
-			return
+	view.MountSave(reg, OpSaveEquipment, func(x *Equipment) error {
+		if x.TenantId == "" {
+			x.TenantId = m.tenantID
 		}
-		if eq.TenantId == "" {
-			eq.TenantId = m.tenantID
-		}
-		res, err := m.SaveEquipment(eq)
-		if err != nil {
-			m.writeError(ctx, err)
-			return
-		}
-		ctx.Encode(&res)
-	}).Requires(ResourceEquipment, model.Create|model.Update).Accepts(&Equipment{})
+		out, err := m.SaveEquipment(*x)
+		*x = out
+		return err
+	}).Requires(model.ResourceOf(&EquipmentModel), model.Create|model.Update)
 
 	// delete_equipment
-	reg.Operation(OpDeleteEquipment, func(ctx router.Context) {
-		var args DeleteEquipmentArgs
-		if err := ctx.Decode(&args); err != nil {
-			m.writeError(ctx, err)
-			return
+	view.MountDelete(reg, OpDeleteEquipment, func(ids []string) error {
+		for _, id := range ids {
+			if err := m.DeleteEquipment(m.tenantID, id); err != nil {
+				return err
+			}
 		}
-		tenantID := args.TenantId
-		if tenantID == "" {
-			tenantID = m.tenantID
-		}
-		if err := m.DeleteEquipment(tenantID, args.Id); err != nil {
-			m.writeError(ctx, err)
-			return
-		}
-		ctx.WriteStatus(200)
-	}).Requires(ResourceEquipment, model.Delete).Accepts(&DeleteEquipmentArgs{})
+		return nil
+	}).Requires(model.ResourceOf(&EquipmentModel), model.Delete)
 
 	// list_room_equipment
 	reg.Operation(OpListRoomEquipment, func(ctx router.Context) {
 		var args ListRoomEquipmentArgs
 		if err := ctx.Decode(&args); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
 		tenantID := args.TenantId
@@ -281,7 +212,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 		}
 		eqs, err := m.ListRoomEquipment(tenantID, args.RoomId)
 		if err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, err)
 			return
 		}
 		list := EquipmentList{}
@@ -289,13 +220,13 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			list = append(list, &eqs[i])
 		}
 		ctx.Encode(&list)
-	}).Requires(ResourceRoom, model.Read).Accepts(&ListRoomEquipmentArgs{})
+	}).Requires(model.ResourceOf(&RoomModel), model.Read).Accepts(&ListRoomEquipmentArgs{})
 
 	// set_room_equipment
 	reg.Operation(OpSetRoomEquipment, func(ctx router.Context) {
 		var args SetRoomEquipmentArgs
 		if err := ctx.Decode(&args); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
 		tenantID := args.TenantId
@@ -307,17 +238,17 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			ids = append(ids, ref.Id)
 		}
 		if err := m.SetRoomEquipment(tenantID, args.RoomId, ids); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, err)
 			return
 		}
 		ctx.WriteStatus(200)
-	}).Requires(ResourceRoom, model.Update).Accepts(&SetRoomEquipmentArgs{})
+	}).Requires(model.ResourceOf(&RoomModel), model.Update).Accepts(&SetRoomEquipmentArgs{})
 
 	// list_categories
 	reg.Operation(OpListCategories, func(ctx router.Context) {
 		var args ListOptionsArgs
 		if err := ctx.Decode(&args); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
 		tenantID := args.TenantId
@@ -326,7 +257,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 		}
 		opts, err := m.deps.Categories.CategoryOptions(tenantID)
 		if err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, err)
 			return
 		}
 		list := OptionList{}
@@ -334,13 +265,13 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			list = append(list, &Option{Id: kv.Key, Label: kv.Value})
 		}
 		ctx.Encode(&list)
-	}).Requires(ResourceRoom, model.Read).Accepts(&ListOptionsArgs{})
+	}).Requires(model.ResourceOf(&RoomModel), model.Read).Accepts(&ListOptionsArgs{})
 
 	// list_room_categories
 	reg.Operation(OpListRoomCategories, func(ctx router.Context) {
 		var args ListRoomCategoriesArgs
 		if err := ctx.Decode(&args); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
 		tenantID := args.TenantId
@@ -349,7 +280,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 		}
 		opts, err := m.ListRoomCategories(tenantID, args.RoomId)
 		if err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, err)
 			return
 		}
 		list := OptionList{}
@@ -357,13 +288,13 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			list = append(list, &Option{Id: kv.Key, Label: kv.Value})
 		}
 		ctx.Encode(&list)
-	}).Requires(ResourceRoom, model.Read).Accepts(&ListRoomCategoriesArgs{})
+	}).Requires(model.ResourceOf(&RoomModel), model.Read).Accepts(&ListRoomCategoriesArgs{})
 
 	// set_room_categories
 	reg.Operation(OpSetRoomCategories, func(ctx router.Context) {
 		var args SetRoomCategoriesArgs
 		if err := ctx.Decode(&args); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
 		tenantID := args.TenantId
@@ -375,17 +306,17 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			ids = append(ids, ref.Id)
 		}
 		if err := m.SetRoomCategories(tenantID, args.RoomId, ids); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, err)
 			return
 		}
 		ctx.WriteStatus(200)
-	}).Requires(ResourceRoom, model.Update).Accepts(&SetRoomCategoriesArgs{})
+	}).Requires(model.ResourceOf(&RoomModel), model.Update).Accepts(&SetRoomCategoriesArgs{})
 
 	// list_occupants
 	reg.Operation(OpListOccupants, func(ctx router.Context) {
 		var args ListOptionsArgs
 		if err := ctx.Decode(&args); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
 		tenantID := args.TenantId
@@ -394,7 +325,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 		}
 		opts, err := m.deps.Occupants.OccupantOptions(tenantID)
 		if err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, err)
 			return
 		}
 		list := OptionList{}
@@ -402,13 +333,13 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			list = append(list, &Option{Id: kv.Key, Label: kv.Value})
 		}
 		ctx.Encode(&list)
-	}).Requires(ResourceShift, model.Read).Accepts(&ListOptionsArgs{})
+	}).Requires(model.ResourceOf(&RoomShiftModel), model.Read).Accepts(&ListOptionsArgs{})
 
 	// list_room_shifts
 	reg.Operation(OpListRoomShifts, func(ctx router.Context) {
 		var args ListRoomShiftsArgs
 		if err := ctx.Decode(&args); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
 		tenantID := args.TenantId
@@ -417,7 +348,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 		}
 		shifts, err := m.ListRoomShifts(tenantID, args.RoomId)
 		if err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, err)
 			return
 		}
 		list := RoomShiftFormList{}
@@ -426,30 +357,30 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			list = append(list, &form)
 		}
 		ctx.Encode(&list)
-	}).Requires(ResourceShift, model.Read).Accepts(&ListRoomShiftsArgs{})
+	}).Requires(model.ResourceOf(&RoomShiftModel), model.Read).Accepts(&ListRoomShiftsArgs{})
 
 	// save_room_shift
 	reg.Operation(OpSaveRoomShift, func(ctx router.Context) {
 		var form RoomShiftForm
 		if err := ctx.Decode(&form); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
 		tenantID := m.tenantID
 		shift, err := m.SaveShift(tenantID, form)
 		if err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, err)
 			return
 		}
 		resForm := shiftToForm(shift)
 		ctx.Encode(&resForm)
-	}).Requires(ResourceShift, model.Create|model.Update).Accepts(&RoomShiftForm{})
+	}).Requires(model.ResourceOf(&RoomShiftModel), model.Create|model.Update).Accepts(&RoomShiftForm{})
 
 	// delete_room_shift
 	reg.Operation(OpDeleteRoomShift, func(ctx router.Context) {
 		var args DeleteRoomShiftArgs
 		if err := ctx.Decode(&args); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
 		tenantID := args.TenantId
@@ -457,17 +388,17 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			tenantID = m.tenantID
 		}
 		if err := m.DeleteShift(tenantID, args.Id); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, err)
 			return
 		}
 		ctx.WriteStatus(200)
-	}).Requires(ResourceShift, model.Delete).Accepts(&DeleteRoomShiftArgs{})
+	}).Requires(model.ResourceOf(&RoomShiftModel), model.Delete).Accepts(&DeleteRoomShiftArgs{})
 
 	// cancel_shift_occurrence
 	reg.Operation(OpCancelShiftOccurrence, func(ctx router.Context) {
 		var args CancelShiftOccurrenceArgs
 		if err := ctx.Decode(&args); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
 		tenantID := args.TenantId
@@ -476,21 +407,21 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 		}
 		dateSec, err := parseDate(args.Date)
 		if err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, err)
 			return
 		}
 		if err := m.CancelShiftOccurrence(tenantID, args.ShiftId, dateSec); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, err)
 			return
 		}
 		ctx.WriteStatus(200)
-	}).Requires(ResourceShift, model.Update).Accepts(&CancelShiftOccurrenceArgs{})
+	}).Requires(model.ResourceOf(&RoomShiftModel), model.Update).Accepts(&CancelShiftOccurrenceArgs{})
 
 	// move_shift_occurrence
 	reg.Operation(OpMoveShiftOccurrence, func(ctx router.Context) {
 		var args MoveShiftOccurrenceArgs
 		if err := ctx.Decode(&args); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
 		tenantID := args.TenantId
@@ -499,23 +430,23 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 		}
 		dateSec, err := parseDate(args.Date)
 		if err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, err)
 			return
 		}
 		shift, err := m.MoveShiftOccurrence(tenantID, args.ShiftId, dateSec, args.TargetRoomId)
 		if err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, err)
 			return
 		}
 		resForm := shiftToForm(shift)
 		ctx.Encode(&resForm)
-	}).Requires(ResourceShift, model.Create|model.Update).Accepts(&MoveShiftOccurrenceArgs{})
+	}).Requires(model.ResourceOf(&RoomShiftModel), model.Create|model.Update).Accepts(&MoveShiftOccurrenceArgs{})
 
 	// list_room_day
 	reg.Operation(OpListRoomDay, func(ctx router.Context) {
 		var args ListRoomDayArgs
 		if err := ctx.Decode(&args); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
 		tenantID := args.TenantId
@@ -526,14 +457,14 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 		if args.Date != "" {
 			d, err := parseDate(args.Date)
 			if err != nil {
-				m.writeError(ctx, err)
+				rpc.WriteError(ctx, err)
 				return
 			}
 			dateSec = d
 		}
 		shifts, err := m.ListRoomDay(tenantID, args.RoomId, dateSec)
 		if err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, err)
 			return
 		}
 		list := DayShiftList{}
@@ -541,13 +472,13 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			list = append(list, &shifts[i])
 		}
 		ctx.Encode(&list)
-	}).Requires(ResourceShift, model.Read).Accepts(&ListRoomDayArgs{})
+	}).Requires(model.ResourceOf(&RoomShiftModel), model.Read).Accepts(&ListRoomDayArgs{})
 
 	// list_board
 	reg.Operation(OpListBoard, func(ctx router.Context) {
 		var args ListBoardArgs
 		if err := ctx.Decode(&args); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
 		tenantID := args.TenantId
@@ -556,7 +487,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 		}
 		board, err := m.ListBoard(tenantID, args.CategoryId, args.EquipmentId)
 		if err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, err)
 			return
 		}
 		list := BoardRoomList{}
@@ -564,13 +495,13 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			list = append(list, &board[i])
 		}
 		ctx.Encode(&list)
-	}).Requires(ResourceRoom, model.Read).Accepts(&ListBoardArgs{})
+	}).Requires(model.ResourceOf(&RoomModel), model.Read).Accepts(&ListBoardArgs{})
 
 	// find_free_rooms
 	reg.Operation(OpFindFreeRooms, func(ctx router.Context) {
 		var args FindFreeRoomsArgs
 		if err := ctx.Decode(&args); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
 		tenantID := args.TenantId
@@ -581,12 +512,12 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 		startMin, errStart := parseHour(args.Start)
 		endMin, errEnd := parseHour(args.End)
 		if errDate != nil || errStart != nil || errEnd != nil {
-			m.writeError(ctx, ErrInvalidRange)
+			rpc.WriteError(ctx, ErrInvalidRange)
 			return
 		}
 		freeRooms, err := m.FindFreeRooms(tenantID, dateSec, startMin, endMin, args.CategoryId)
 		if err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, err)
 			return
 		}
 		list := FreeRoomList{}
@@ -594,23 +525,23 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			list = append(list, &freeRooms[i])
 		}
 		ctx.Encode(&list)
-	}).Requires(ResourceRoom, model.Read).Accepts(&FindFreeRoomsArgs{})
+	}).Requires(model.ResourceOf(&RoomModel), model.Read).Accepts(&FindFreeRoomsArgs{})
 
 	// list_public_availability (Public)
 	reg.Operation(OpListPublicAvailability, func(ctx router.Context) {
 		var args ListPublicAvailabilityArgs
 		if err := ctx.Decode(&args); err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
 		dateSec, errDate := parseDate(args.Date)
 		if errDate != nil {
-			m.writeError(ctx, errDate)
+			rpc.WriteError(ctx, errDate)
 			return
 		}
 		slots, err := m.ListPublicAvailability(dateSec, args.CategoryId)
 		if err != nil {
-			m.writeError(ctx, err)
+			rpc.WriteError(ctx, err)
 			return
 		}
 		list := PublicSlotList{}

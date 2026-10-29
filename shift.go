@@ -15,7 +15,7 @@ func (m *Module) SaveShift(tenantID string, f RoomShiftForm) (RoomShift, error) 
 
 	// 1. Validation of form fields
 	if err := model.ValidateFields(byte(model.Create), &f); err != nil {
-		return RoomShift{}, &ValidationError{Err: err}
+		return RoomShift{}, err
 	}
 
 	// 2. Room check

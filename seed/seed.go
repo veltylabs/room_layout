@@ -17,9 +17,12 @@ type Data struct {
 	Shifts    []roomlayout.RoomShift
 }
 
+// errSeedTenantID es dato (código), no texto a traducir: por eso es variable.
+var errSeedTenantID = "seed: tenantID"
+
 func Load(m *roomlayout.Module, tenantID string, opts ...LoadOptions) (Data, error) {
 	if tenantID == "" {
-		return Data{}, fmt.Err("seed: tenantID no supplied_5")
+		return Data{}, fmt.Err(errSeedTenantID, "is required")
 	}
 
 	var catIDs []string

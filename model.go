@@ -9,14 +9,6 @@ import (
 // ModelName es la identidad del módulo: prefijo de cada op en el cable.
 const ModelName = "room_layout"
 
-// Recursos RBAC.
-const (
-	ResourceFloor     = "floor"
-	ResourceRoom      = "room"
-	ResourceEquipment = "equipment"
-	ResourceShift     = "room_shift"
-)
-
 // Constantes de estado del tablero.
 const (
 	BoardStatusFree   = "free"
@@ -52,58 +44,39 @@ const (
 	TopicShiftOccurrenceMoved     = "room_layout.shift.occurrence_moved"
 )
 
-// domainError es el tipo concreto de los errores centinela de este paquete. El código
-// los compara afirmando este tipo y comparando el valor: == entre dos
-// valores de error compila, bajo TinyGo, a runtime.interfaceEqual, lo cual incluye
-// internal/reflectlite en el binario wasm.
-type domainError string
-
-func (e domainError) Error() string { return string(e) }
-
-// Errores de dominio.
+// Errores de dominio: cada uno lleva su tipo (model.NotFound, model.Conflict o
+// model.Invalid), y rpc.WriteError responde con el estado que corresponde.
+//
+// Ejemplo: if model.KindOf(err) == model.ErrorConflict { ... }
 const (
-	ErrNotFound           domainError = "room_layout: not found"
-	ErrTenantRequired     domainError = "room_layout: tenant_id is required"
-	ErrCodeAlreadyExists  domainError = "room_layout: room code already exists in this tenant"
-	ErrFloorInUse         domainError = "room_layout: floor still has rooms"
-	ErrInvalidRange       domainError = "room_layout: start must be before end, both within 00:00 and 24:00"
-	ErrInvalidDate        domainError = "room_layout: invalid date, expected YYYY-MM-DD"
-	ErrInvalidWeekday     domainError = "room_layout: day_of_week must be 0..6"
-	ErrUnknownCategory    domainError = "room_layout: unknown category"
-	ErrUnknownOccupant    domainError = "room_layout: unknown occupant"
-	ErrOccupantRequired   domainError = "room_layout: occupant_id or occupant_label is required"
-	ErrCategoryNotAllowed domainError = "room_layout: room is not enabled for this category"
-	ErrCategoryInUse      domainError = "room_layout: category still has active shifts in this room"
-	ErrRoomOverlap        domainError = "room_layout: room already has a shift in that time range"
-	ErrOccupantOverlap    domainError = "room_layout: occupant already has a shift in that time range"
-	ErrOutsideBounds      domainError = "room_layout: shift is outside the establishment's opening hours for that date"
-	ErrNotWeekly          domainError = "room_layout: only a weekly shift can have one occurrence cancelled"
+	ErrNotFound           model.NotFound = "room_layout: not found"
+	ErrTenantRequired     model.Invalid  = "room_layout: tenant_id is required"
+	ErrCodeAlreadyExists  model.Conflict = "room_layout: room code already exists in this tenant"
+	ErrFloorInUse         model.Conflict = "room_layout: floor still has rooms"
+	ErrInvalidRange       model.Invalid  = "room_layout: start must be before end, both within 00:00 and 24:00"
+	ErrInvalidDate        model.Invalid  = "room_layout: invalid date, expected YYYY-MM-DD"
+	ErrInvalidWeekday     model.Invalid  = "room_layout: day_of_week must be 0..6"
+	ErrUnknownCategory    model.Invalid  = "room_layout: unknown category"
+	ErrUnknownOccupant    model.Invalid  = "room_layout: unknown occupant"
+	ErrOccupantRequired   model.Invalid  = "room_layout: occupant_id or occupant_label is required"
+	ErrCategoryNotAllowed model.Invalid  = "room_layout: room is not enabled for this category"
+	ErrCategoryInUse      model.Conflict = "room_layout: category still has active shifts in this room"
+	ErrRoomOverlap        model.Conflict = "room_layout: room already has a shift in that time range"
+	ErrOccupantOverlap    model.Conflict = "room_layout: occupant already has a shift in that time range"
+	ErrOutsideBounds      model.Invalid  = "room_layout: shift is outside the establishment's opening hours for that date"
+	ErrNotWeekly          model.Invalid  = "room_layout: only a weekly shift can have one occurrence cancelled"
+	ErrCannotRead         model.Invalid  = "room_layout: cannot read the request"
 )
-
-type ValidationError struct {
-	Err error
-}
-
-func (e *ValidationError) Error() string {
-	if e == nil || e.Err == nil {
-		return "room_layout: validation error"
-	}
-	return e.Err.Error()
-}
-
-func (e *ValidationError) Unwrap() error {
-	return e.Err
-}
 
 func weekdayInput() input.Input {
 	return input.Select(
-		fmt.KeyValue{Key: WeekdaySunday, Value: "Domingo"},
-		fmt.KeyValue{Key: WeekdayMonday, Value: "Lunes"},
-		fmt.KeyValue{Key: WeekdayTuesday, Value: "Martes"},
-		fmt.KeyValue{Key: WeekdayWednesday, Value: "Miércoles"},
-		fmt.KeyValue{Key: WeekdayThursday, Value: "Jueves"},
-		fmt.KeyValue{Key: WeekdayFriday, Value: "Viernes"},
-		fmt.KeyValue{Key: WeekdaySaturday, Value: "Sábado"},
+		fmt.KeyValue{Key: WeekdaySunday, Value: "Sunday"},
+		fmt.KeyValue{Key: WeekdayMonday, Value: "Monday"},
+		fmt.KeyValue{Key: WeekdayTuesday, Value: "Tuesday"},
+		fmt.KeyValue{Key: WeekdayWednesday, Value: "Wednesday"},
+		fmt.KeyValue{Key: WeekdayThursday, Value: "Thursday"},
+		fmt.KeyValue{Key: WeekdayFriday, Value: "Friday"},
+		fmt.KeyValue{Key: WeekdaySaturday, Value: "Saturday"},
 	)
 }
 
@@ -239,14 +212,6 @@ var ListFloorsArgsModel = model.Definition{
 	},
 }
 
-var DeleteFloorArgsModel = model.Definition{
-	Name: "delete_floor_args",
-	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
-		{Name: "id", Type: model.Text(), NotNull: true},
-	},
-}
-
 var ListRoomsArgsModel = model.Definition{
 	Name: "list_rooms_args",
 	Fields: model.Fields{
@@ -275,14 +240,6 @@ var ListEquipmentArgsModel = model.Definition{
 	Name: "list_equipment_args",
 	Fields: model.Fields{
 		{Name: "tenant_id", Type: model.Text(), NotNull: true},
-	},
-}
-
-var DeleteEquipmentArgsModel = model.Definition{
-	Name: "delete_equipment_args",
-	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
-		{Name: "id", Type: model.Text(), NotNull: true},
 	},
 }
 

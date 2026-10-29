@@ -7,6 +7,9 @@ import (
 	"webtyp.com/view"
 )
 
+// errNotShiftForm es un error de programación (se pasó otro modelo): dato, no texto a traducir.
+var errNotShiftForm = "room_layout: expected *RoomShiftForm"
+
 func NewFloorView(caller router.Caller, opts ...view.Option) view.Presenter {
 	lister := view.NewCallerLister(
 		caller,
@@ -80,7 +83,7 @@ func (l *roomShiftLister) Save(recs []view.Record, done func(err error)) {
 	}
 	form, ok := recs[0].(*RoomShiftForm)
 	if !ok {
-		done(fmt.Err("room_layout: expected *RoomShiftForm"))
+		done(fmt.Err(errNotShiftForm))
 		return
 	}
 	form.RoomId = l.roomID

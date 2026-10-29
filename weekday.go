@@ -6,13 +6,13 @@ import "webtyp.com/fmt"
 // means "dated shift" (the date field is used instead).
 func WeekdayOptions() []fmt.KeyValue {
 	return []fmt.KeyValue{
-		{Key: "", Value: "— fecha específica —"},
-		{Key: WeekdayMonday, Value: "Lunes"},
-		{Key: WeekdayTuesday, Value: "Martes"},
-		{Key: WeekdayWednesday, Value: "Miércoles"},
-		{Key: WeekdayThursday, Value: "Jueves"},
-		{Key: WeekdayFriday, Value: "Viernes"},
-		{Key: WeekdaySaturday, Value: "Sábado"},
-		{Key: WeekdaySunday, Value: "Domingo"},
+		{Key: "", Value: "— specific date —"},
+		{Key: WeekdayMonday, Value: "Monday"},
+		{Key: WeekdayTuesday, Value: "Tuesday"},
+		{Key: WeekdayWednesday, Value: "Wednesday"},
+		{Key: WeekdayThursday, Value: "Thursday"},
+		{Key: WeekdayFriday, Value: "Friday"},
+		{Key: WeekdaySaturday, Value: "Saturday"},
+		{Key: WeekdaySunday, Value: "Sunday"},
 	}
 }

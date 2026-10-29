@@ -26,7 +26,7 @@ func (s *Stage1Planta) Render() *dom.Element {
 
 	stepper := &stepindicator.StepIndicator{
 		Steps: []stepindicator.Step{
-			{Label: "Planta"},
+			{Label: "Floor"},
 			{Label: "Espacios"},
 			{Label: "Artefactos"},
 			{Label: "Operación"},
@@ -50,7 +50,7 @@ func (s *Stage1Planta) Render() *dom.Element {
 				Child(
 					&themetoggle.ThemeToggle{},
 					html.Button().Class("btn").
-						Child(html.Span().Text("Guardar")).
+						Child(html.Span().Text("Save")).
 						OnClick(func(dom.Event) {
 							root.SaveAll()
 						}),
@@ -151,10 +151,10 @@ func (s *Stage1Planta) Render() *dom.Element {
 
 	gridCtrl := html.Div().Class("rm-grid-control").
 		Child(
-			html.Span().Class("rm-grid-lbl").Text("Cuadrícula del edificio:"),
+			html.Span().Class("rm-grid-lbl").Text("Building grid:"),
 			html.Span().Class("rm-grid-field").Text("Col ").Child(decColBtn, colInput, incColBtn),
 			html.Span().Text(" × "),
-			html.Span().Class("rm-grid-field").Text("Filas ").Child(decRowBtn, rowInput, incRowBtn),
+			html.Span().Class("rm-grid-field").Text("Rows ").Child(decRowBtn, rowInput, incRowBtn),
 		)
 
 	dotsNav := html.Div().Class("rm-nav-dots")
@@ -192,9 +192,9 @@ func (s *Stage1Planta) Render() *dom.Element {
 		Child(
 			html.Div().Class("rm-title-box").
 				Child(
-					html.Span().Class("rm-step-tag").Text("Paso 1 de 4"),
-					html.H1().Text("Dibuja el espacio habitable de cada planta"),
-					html.P().Text("Haz clic sobre la cuadrícula para habilitar o deshabilitar celdas habitables."),
+					html.Span().Class("rm-step-tag").Text("Step 1 of 4"),
+					html.H1().Text("Draw the habitable space for each floor"),
+					html.P().Text("Click on the grid to enable or disable habitable cells."),
 				),
 			html.Div().Class("rm-title-actions").Child(gridCtrl, dotsNav),
 		)
@@ -216,7 +216,7 @@ func (s *Stage1Planta) Render() *dom.Element {
 					return fmt.Sprint(len(root.Floors)) + " plantas configuradas · " + fmt.Sprint(totalHabitable) + " celdas habitables en total"
 				}),
 			html.Button().Class("btn", "btn-primary").
-				Child(html.Span().Text("Siguiente: Espacios →")).
+				Child(html.Span().Text("Next: Spaces →")).
 				OnClick(func(dom.Event) {
 					root.GoToStage(1)
 				}),
@@ -351,7 +351,7 @@ func (s *Stage1Planta) buildFloorCards() []*dom.Element {
 		cardFooter := html.Div().Class("rm-floor-footer").
 			Child(
 				html.Span().Class("rm-floor-stat").BindText(floorStatSig),
-				html.Button().Class("btn", "btn-sm").Text("Limpiar").
+				html.Button().Class("btn", "btn-sm").Text("Clear").
 					OnClick(func(dom.Event) {
 						f.HabitableCells = nil
 						s.RebuildFloors()
@@ -381,7 +381,7 @@ func (s *Stage1Planta) buildFloorCards() []*dom.Element {
 		Key("floor-add-btn").
 		Child(
 			html.Span().Class("icon-add").Text("+"),
-			html.Span().Text("Agregar planta"),
+			html.Span().Text("Add floor"),
 		).
 		OnClick(func(dom.Event) {
 			root.AddFloor("Piso " + fmt.Sprint(len(root.Floors)+1))

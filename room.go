@@ -18,7 +18,7 @@ func (m *Module) SaveRoom(r Room) (Room, error) {
 	}
 
 	if err := model.ValidateFields(byte(model.Create), &r); err != nil {
-		return Room{}, &ValidationError{Err: err}
+		return Room{}, err
 	}
 
 	var codeExists bool
