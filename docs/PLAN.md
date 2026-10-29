@@ -2,8 +2,10 @@
 PLAN: "refactor: list screens save and delete through view.MountSave/MountDelete; errors through rpc.WriteError; resources from the tables; English keys translated"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 5492341499030472707
+PR: https://github.com/veltylabs/room_layout/pull/9
+REVIEWED_COMMIT: 463ad11df7593973b6dfafedb56101d81c186aaa
 ---
 
 > Read AGENTS.md at the repo root before any change.
