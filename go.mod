@@ -3,8 +3,9 @@ module github.com/veltylabs/room_layout
 go 1.26.8
 
 require (
+	github.com/veltylabs/device_manager v0.2.86
 	webtyp.com/components v0.8.57
-	webtyp.com/ddl v0.0.20
+	webtyp.com/ddl v0.0.32
 	webtyp.com/dom v0.13.29
 	webtyp.com/events v0.1.0
 	webtyp.com/form v0.4.52
@@ -25,6 +26,7 @@ require (
 	webtyp.com/escape v0.1.0 // indirect
 	webtyp.com/fetch v0.1.29 // indirect
 	webtyp.com/filepath v0.1.0 // indirect
+	webtyp.com/network v0.1.1 // indirect
 )
 
 require (
