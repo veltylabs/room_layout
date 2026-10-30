@@ -8,16 +8,18 @@ require (
 	webtyp.com/dom v0.13.29
 	webtyp.com/events v0.1.0
 	webtyp.com/form v0.4.52
-	webtyp.com/input v0.0.20
+	webtyp.com/input v0.0.28
 	webtyp.com/lang v0.1.10
+	webtyp.com/layout v0.3.94
 	webtyp.com/model v0.2.12
+	webtyp.com/msgtype v0.1.0
 	webtyp.com/orm v0.12.20
 	webtyp.com/router v0.4.16
 	webtyp.com/rpc v0.2.13
 	webtyp.com/storage v0.1.8
 	webtyp.com/svg v0.3.30
 	webtyp.com/time v0.6.2
-	webtyp.com/widget v0.6.45
+	webtyp.com/widget v0.6.46
 )
 
 require (
@@ -29,7 +31,7 @@ require (
 
 require (
 	webtyp.com/color v0.1.2 // indirect
-	webtyp.com/css v0.4.30
+	webtyp.com/css v0.4.31
 	webtyp.com/fmt v1.0.0
 	webtyp.com/font v0.0.5 // indirect
 	webtyp.com/html v0.0.30
