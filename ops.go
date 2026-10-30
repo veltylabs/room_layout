@@ -40,6 +40,9 @@ const (
 	OpListBoard              = "list_board"
 	OpFindFreeRooms          = "find_free_rooms"
 	OpListPublicAvailability = "list_public_availability"
+	OpListRoomArtifacts      = "list_room_artifacts"
+	OpSaveRoomArtifact       = "save_room_artifact"
+	OpDeleteRoomArtifact     = "delete_room_artifact"
 )
 
 func (m *Module) MountOperations(reg router.OperationRegistry) {
@@ -139,6 +142,38 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 		}
 		ctx.WriteStatus(200)
 	}).Requires(model.ResourceOf(&RoomModel), model.Update).Accepts(&DeactivateRoomArgs{})
+
+	// list_room_artifacts: los artefactos dibujados en el mapa (equipos, sillones, insumos), de todos los boxes.
+	reg.Operation(OpListRoomArtifacts, func(ctx router.Context) {
+		arts, err := m.ListRoomArtifacts(m.tenantID, "")
+		if err != nil {
+			rpc.WriteError(ctx, err)
+			return
+		}
+		list := RoomArtifactList{}
+		for i := range arts {
+			list = append(list, &arts[i])
+		}
+		ctx.Encode(&list)
+	}).Requires(model.ResourceOf(&RoomArtifactModel), model.Read).Accepts(nil)
+
+	// save_room_artifact
+	view.MountSave(reg, OpSaveRoomArtifact, func(x *RoomArtifact) error {
+		x.TenantId = m.tenantID // el tenant lo pone el servidor, nunca la petición (D32)
+		out, err := m.SaveRoomArtifact(*x)
+		*x = out
+		return err
+	}).Requires(model.ResourceOf(&RoomArtifactModel), model.Create|model.Update)
+
+	// delete_room_artifact
+	view.MountDelete(reg, OpDeleteRoomArtifact, func(ids []string) error {
+		for _, id := range ids {
+			if err := m.DeleteRoomArtifact(m.tenantID, id); err != nil {
+				return err
+			}
+		}
+		return nil
+	}).Requires(model.ResourceOf(&RoomArtifactModel), model.Delete)
 
 	// list_equipment
 	reg.Operation(OpListEquipment, func(ctx router.Context) {

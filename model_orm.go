@@ -279,6 +279,10 @@ func (m *RoomArtifact) Validate(action byte) error {
 	return model.ValidateFields(action, m)
 }
 
+func (m *RoomArtifact) Item() model.Item {
+	return model.Item{ID: m.Id, Label: m.Code, Description: m.Kind}
+}
+
 var RoomArtifact_ = struct {
 	Id string
 	TenantId string

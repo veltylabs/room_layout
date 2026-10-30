@@ -51,6 +51,9 @@ El módulo expone operaciones estándar usando `view.MountSave`/`view.MountDelet
 | `list_equipment` | `equipment` | `Read` |
 | `save_equipment` | `equipment` | `Create\|Update` |
 | `delete_equipment` | `equipment` | `Delete` |
+| `list_room_artifacts` | `room_artifact` | `Read` |
+| `save_room_artifact` | `room_artifact` | `Create\|Update` |
+| `delete_room_artifact` | `room_artifact` | `Delete` |
 | `list_room_equipment` | `room` | `Read` |
 | `set_room_equipment` | `room` | `Update` |
 | `list_categories` | `room` | `Read` |
