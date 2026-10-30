@@ -2,6 +2,8 @@
 PLAN: "feat(ui): the floor-plan map reads and saves the real data — every change is saved at once through the module's operations"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 16279155710288337393
 ---
 
 > Read AGENTS.md at the repo root before any change.
