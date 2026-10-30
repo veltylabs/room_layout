@@ -1,11 +1,10 @@
 package ui
 
 import (
-	"webtyp.com/components/stepindicator"
-	"webtyp.com/components/themetoggle"
 	"webtyp.com/dom"
 	"webtyp.com/fmt"
 	"webtyp.com/html"
+	"webtyp.com/lang"
 )
 
 type Stage1Planta struct {
@@ -24,201 +23,120 @@ func (s *Stage1Planta) Render() *dom.Element {
 		activeFloor = 0
 	}
 
-	stepper := &stepindicator.StepIndicator{
-		Steps: []stepindicator.Step{
-			{Label: "Floor"},
-			{Label: "Espacios"},
-			{Label: "Artefactos"},
-			{Label: "Operación"},
-		},
-		Active: 0,
-		OnChange: func(idx int) {
-			root.GoToStage(idx)
-		},
-	}
+	header := root.header(0)
 
-	// 1. Top Header with ThemeToggle
-	header := html.Header().Class("rm-header").
-		Child(
-			html.Div().Class("rm-brand").
-				Child(
-					html.Div().Class("rm-brand-title").Text("Room Map"),
-					html.Span().Class("rm-brand-sub").Text("Clínica Central"),
-				),
-			stepper,
-			html.Div().Class("rm-header-actions").
-				Child(
-					&themetoggle.ThemeToggle{},
-				),
-		)
-
-	decColBtn := html.Button().Class("icon-btn").
+	decColBtn := html.Button().Class(clsButton).
 		Attr("type", "button").
-		Attr("title", "Quitar columna").
+		Attr("title", lang.Translate("Remove column").String()).
 		Attr("style", "padding: 2px 7px; font-weight: 700; cursor: pointer; border-radius: 4px; border: 1px solid var(--color-outline); background: var(--color-surface);").
 		Text("−").
 		OnClick(func(dom.Event) {
 			if root.Cols > 6 {
-				root.Cols--
-				root.gridChanged()
+				root.ResizeGrid(root.Cols-1, root.Rows)
 			}
 		})
 
-	incColBtn := html.Button().Class("icon-btn").
+	incColBtn := html.Button().Class(clsButton).
 		Attr("type", "button").
-		Attr("title", "Añadir columna").
+		Attr("title", lang.Translate("Add column").String()).
 		Attr("style", "padding: 2px 7px; font-weight: 700; cursor: pointer; border-radius: 4px; border: 1px solid var(--color-outline); background: var(--color-surface);").
 		Text("+").
 		OnClick(func(dom.Event) {
 			if root.Cols < 40 {
-				root.Cols++
-				root.gridChanged()
+				root.ResizeGrid(root.Cols+1, root.Rows)
 			}
 		})
 
-	decRowBtn := html.Button().Class("icon-btn").
+	decRowBtn := html.Button().Class(clsButton).
 		Attr("type", "button").
-		Attr("title", "Quitar fila").
+		Attr("title", lang.Translate("Remove row").String()).
 		Attr("style", "padding: 2px 7px; font-weight: 700; cursor: pointer; border-radius: 4px; border: 1px solid var(--color-outline); background: var(--color-surface);").
 		Text("−").
 		OnClick(func(dom.Event) {
 			if root.Rows > 4 {
-				root.Rows--
-				root.gridChanged()
+				root.ResizeGrid(root.Cols, root.Rows-1)
 			}
 		})
 
-	incRowBtn := html.Button().Class("icon-btn").
+	incRowBtn := html.Button().Class(clsButton).
 		Attr("type", "button").
-		Attr("title", "Añadir fila").
+		Attr("title", lang.Translate("Add row").String()).
 		Attr("style", "padding: 2px 7px; font-weight: 700; cursor: pointer; border-radius: 4px; border: 1px solid var(--color-outline); background: var(--color-surface);").
 		Text("+").
 		OnClick(func(dom.Event) {
 			if root.Rows < 40 {
-				root.Rows++
-				root.gridChanged()
+				root.ResizeGrid(root.Cols, root.Rows+1)
 			}
 		})
 
-	colInput := html.Input("number").Class("num-input").
+	colInput := html.Input("number").Class(clsInput).
 		Attr("min", "6").Attr("max", "40").
-		Attr("style", "width: 44px; text-align: center; border-radius: 4px; border: 1.5px solid var(--color-primary); background: var(--color-surface); font-weight: 700;").
+		Attr("style", "width: 64px; text-align: center; border-radius: 4px; border: 1.5px solid var(--color-primary); background: var(--color-surface); font-weight: 700;").
 		BindAttrFunc("value", func() string {
 			_ = root.VerSig.Get()
 			return fmt.Sprint(root.Cols)
 		}).
-		OnInput(func(e dom.Event) {
-			v := ParsePositiveInt(e.TargetValue())
-			if v >= 6 && v <= 40 && v != root.Cols {
-				root.Cols = v
-				root.gridChanged()
-			}
-		}).
 		OnChange(func(e dom.Event) {
 			v := ParsePositiveInt(e.TargetValue())
 			if v >= 6 && v <= 40 && v != root.Cols {
-				root.Cols = v
-				root.gridChanged()
+				root.ResizeGrid(v, root.Rows)
 			}
 		})
 
-	rowInput := html.Input("number").Class("num-input").
+	rowInput := html.Input("number").Class(clsInput).
 		Attr("min", "4").Attr("max", "40").
-		Attr("style", "width: 44px; text-align: center; border-radius: 4px; border: 1.5px solid var(--color-primary); background: var(--color-surface); font-weight: 700;").
+		Attr("style", "width: 64px; text-align: center; border-radius: 4px; border: 1.5px solid var(--color-primary); background: var(--color-surface); font-weight: 700;").
 		BindAttrFunc("value", func() string {
 			_ = root.VerSig.Get()
 			return fmt.Sprint(root.Rows)
 		}).
-		OnInput(func(e dom.Event) {
-			v := ParsePositiveInt(e.TargetValue())
-			if v >= 4 && v <= 40 && v != root.Rows {
-				root.Rows = v
-				root.gridChanged()
-			}
-		}).
 		OnChange(func(e dom.Event) {
 			v := ParsePositiveInt(e.TargetValue())
 			if v >= 4 && v <= 40 && v != root.Rows {
-				root.Rows = v
-				root.gridChanged()
+				root.ResizeGrid(root.Cols, v)
 			}
 		})
 
-	gridCtrl := html.Div().Class("rm-grid-control").
+	gridCtrl := html.Div().Class(clsActions).
 		Child(
-			html.Span().Class("rm-grid-lbl").Text("Building grid:"),
-			html.Span().Class("rm-grid-field").Text("Col ").Child(decColBtn, colInput, incColBtn),
+			html.Span().Text(lang.Translate("Building grid").String()+":"),
+			html.Span().Class(clsGridField).Text(lang.Translate("Columns").String()+" ").Child(decColBtn, colInput, incColBtn),
 			html.Span().Text(" × "),
-			html.Span().Class("rm-grid-field").Text("Rows ").Child(decRowBtn, rowInput, incRowBtn),
+			html.Span().Class(clsGridField).Text(lang.Translate("Rows").String()+" ").Child(decRowBtn, rowInput, incRowBtn),
 		)
 
-	dotsNav := html.Div().Class("rm-nav-dots")
-	prevBtn := html.Button().Class("icon-btn").Text("◀").
-		OnClick(func(dom.Event) {
-			if root.ActiveFloor > 0 {
-				root.ActiveFloor--
-				root.Refresh()
-			}
-		})
-	nextBtn := html.Button().Class("icon-btn").Text("▶").
-		OnClick(func(dom.Event) {
-			if root.ActiveFloor < len(root.Floors)-1 {
-				root.ActiveFloor++
-				root.Refresh()
-			}
-		})
-	dotsNav.Child(prevBtn)
-	for i := range root.Floors {
-		idx := i
-		dot := html.Button().Class("dot").
-			BindClassFunc("active", func() bool {
-				_ = root.VerSig.Get()
-				return root.ActiveFloor == idx
-			}).
-			OnClick(func(dom.Event) {
-				root.ActiveFloor = idx
-				root.Refresh()
-			})
-		dotsNav.Child(dot)
-	}
-	dotsNav.Child(nextBtn)
-
-	topBar := html.Section().Class("rm-section-title").
+	topBar := html.Section().Class(clsTitleBar).
 		Child(
-			html.Div().Class("rm-title-box").
+			html.Div().Class(clsTitle).
 				Child(
-					html.Span().Class("rm-step-tag").Text("Step 1 of 4"),
-					html.H1().Text("Draw the habitable space for each floor"),
-					html.P().Text("Click on the grid to enable or disable habitable cells."),
+					html.Span().Class(clsStepTag).Text(lang.Translate("Step", 1, "of", 4).String()),
+					html.H2().Class(clsHeading).Text(lang.Translate("Draw the usable area of each floor").String()),
+					html.P().Text(lang.Translate("Touch or drag over the grid to mark or clear usable cells.").String()),
 				),
-			html.Div().Class("rm-title-actions").Child(gridCtrl, dotsNav),
+			html.Div().Class(clsActions).Child(gridCtrl),
 		)
 
 	// Floor Slider
 	s.sliderNodes = dom.NewNodes(s.buildFloorCards()...)
-	slider := html.Div().Class("rm-slider").BindChildren(s.sliderNodes)
+	slider := html.Div().Class(clsSlider).BindChildren(s.sliderNodes)
 
 	// Total count summary & Footer
-	footer := html.Footer().Class("rm-footer").
+	footer := html.Footer().Class(clsFooter).
 		Child(
-			html.Span().Class("rm-footer-summary").
+			html.Span().Class(clsSummary).
 				BindTextFunc(func() string {
 					_ = root.VerSig.Get()
-					totalHabitable := 0
-					for _, fl := range root.Floors {
-						totalHabitable += len(fl.HabitableCells)
-					}
-					return fmt.Sprint(len(root.Floors)) + " plantas configuradas · " + fmt.Sprint(totalHabitable) + " celdas habitables en total"
+					return lang.Translate(len(root.Floors), "floors").String()
 				}),
-			html.Button().Class("btn", "btn-primary").
-				Child(html.Span().Text("Next: Spaces →")).
+			html.Button().Class(clsPrimary).
+				Child(html.Span().Text(lang.Translate("Next").String()+": "+lang.Translate("Spaces").String()+" →")).
 				OnClick(func(dom.Event) {
 					root.GoToStage(1)
 				}),
 		)
 
-	layout := html.Div().Class("rm-stage")
-	layout.Child(header, topBar, slider, footer)
+	layout := html.Div().Class(clsStage)
+	layout.Child(header, footer, topBar, slider)
 
 	return layout
 }
@@ -233,42 +151,24 @@ func (s *Stage1Planta) buildFloorCards() []*dom.Element {
 	root := s.Root
 	var cards []*dom.Element
 
-	for i := range root.Floors {
+	for _, i := range root.shownFloors() {
 		fIdx := i
 		f := &root.Floors[fIdx]
 
-		floorCountSig := dom.NewString(fmt.Sprint(len(f.HabitableCells)) + " celdas hab.")
-		total := root.Cols * root.Rows
-		pct := 0
-		if total > 0 {
-			pct = (len(f.HabitableCells) * 100) / total
-		}
-		floorStatSig := dom.NewString("Habitable: " + fmt.Sprint(pct) + "% de la planta")
-
-		updateStats := func() {
-			t := root.Cols * root.Rows
-			p := 0
-			if t > 0 {
-				p = (len(f.HabitableCells) * 100) / t
-			}
-			floorCountSig.Set(fmt.Sprint(len(f.HabitableCells)) + " celdas hab.")
-			floorStatSig.Set("Habitable: " + fmt.Sprint(p) + "% de la planta")
-		}
-
-		cardHeader := html.Div().Class("rm-floor-header").
+		cardHeader := html.Div().Class(clsFloorHeader).
 			Child(
-				html.Span().Class("rm-floor-badge").Text(fmt.Sprint(f.Position)),
-				html.Input("text").Class("name-input").Attr("value", f.Name).
+				html.Span().Class(clsFloorBadge).Text(fmt.Sprint(f.Position)),
+				html.Input("text").Class(clsFloorName).Attr("value", f.Name).
 					OnChange(func(e dom.Event) {
 						f.Name = e.TargetValue()
 						root.saveFloor(*f)
 					}),
-				html.Span().Class("rm-floor-count").BindText(floorCountSig),
+				root.floorNav(),
 			)
 
 		// Grid element with letter headers and row numbers
 		gridEl := html.Div().Class("grid").
-			Attr("style", fmt.Sprintf("display: grid; grid-template-columns: 24px repeat(%d, minmax(22px, 1fr)); gap: 2px; padding: 10px; background: var(--color-background); border: 1px solid var(--color-outline); border-radius: 12px; overflow-x: auto; touch-action: none; user-select: none; -webkit-user-select: none;", root.Cols)).
+			Attr("style", fmt.Sprintf("display: grid; grid-template-columns: 24px repeat(%d, 28px); gap: 2px; padding: 10px; background: var(--color-background); border: 1px solid var(--color-outline); border-radius: 12px; overflow-x: auto; touch-action: none; user-select: none; -webkit-user-select: none;", root.Cols)).
 			OnPointerUp(func(dom.Event) {
 				s.isDragging = false
 			}).
@@ -281,7 +181,7 @@ func (s *Stage1Planta) buildFloorCards() []*dom.Element {
 		for c := 0; c < root.Cols; c++ {
 			gridEl.Child(html.Span().Class("lbl-col").
 				Attr("style", "font-size: 11px; font-weight: 700; color: var(--color-muted); text-align: center; height: 20px; display: flex; align-items: center; justify-content: center;").
-				Text(ColName(c)))
+				Text(fmt.Sprint(c + 1)))
 		}
 
 		for r := 0; r < root.Rows; r++ {
@@ -319,7 +219,6 @@ func (s *Stage1Planta) buildFloorCards() []*dom.Element {
 					} else {
 						f.HabitableCells = RemoveCell(f.HabitableCells, coord)
 					}
-					updateStats()
 				})
 
 				cellBtn.OnPointerEnter(func(e dom.Event) {
@@ -331,7 +230,6 @@ func (s *Stage1Planta) buildFloorCards() []*dom.Element {
 							} else {
 								f.HabitableCells = RemoveCell(f.HabitableCells, coord)
 							}
-							updateStats()
 						}
 					}
 				})
@@ -345,17 +243,16 @@ func (s *Stage1Planta) buildFloorCards() []*dom.Element {
 			}
 		}
 
-		cardFooter := html.Div().Class("rm-floor-footer").
+		cardFooter := html.Div().Class(clsFooter).
 			Child(
-				html.Span().Class("rm-floor-stat").BindText(floorStatSig),
-				html.Button().Class("btn", "btn-sm").Text("Clear").
+				html.Button().Class(clsButton).Text(lang.Translate("Clear").String()).
 					OnClick(func(dom.Event) {
 						f.HabitableCells = nil
 						root.saveFloor(*f)
 					}),
 			)
 
-		floorCard := html.Article().Class("floor").
+		floorCard := html.Article().Class(clsFloor).
 			Key(fmt.Sprintf("floor-%s-%dx%d", f.ID, root.Cols, root.Rows)).
 			BindClassFunc("active", func() bool {
 				_ = root.VerSig.Get()
@@ -374,14 +271,14 @@ func (s *Stage1Planta) buildFloorCards() []*dom.Element {
 	}
 
 	// "+ Agregar planta" Card
-	addFloorCard := html.Button().Class("floor-add").
+	addFloorCard := html.Button().Class(clsFloorAdd).
 		Key("floor-add-btn").
 		Child(
 			html.Span().Class("icon-add").Text("+"),
-			html.Span().Text("Add floor"),
+			html.Span().Text(lang.Translate("Add floor").String()),
 		).
 		OnClick(func(dom.Event) {
-			root.AddFloor("Piso " + fmt.Sprint(len(root.Floors)+1))
+			root.AddFloor(lang.Translate("Floor", len(root.Floors)+1).String())
 		})
 	cards = append(cards, addFloorCard)
 

@@ -1,0 +1,106 @@
+package ui
+
+import "webtyp.com/widget"
+
+// Partes del mapa: cada una es una clase "room-map__<parte>" con su estilo en css.go, así el
+// marcado y la hoja de estilos no pueden desalinearse.
+const (
+	PartStage        = widget.Part("stage")
+	PartHeader       = widget.Part("header")
+	PartActions      = widget.Part("actions")
+	PartFooter       = widget.Part("footer")
+	PartSummary      = widget.Part("summary")
+	PartTitleBar     = widget.Part("title-bar")
+	PartTitle        = widget.Part("title")
+	PartStepTag      = widget.Part("step-tag")
+	PartHeading      = widget.Part("heading")
+	PartButton       = widget.Part("button")
+	PartPrimary      = widget.Part("primary")
+	PartDanger       = widget.Part("danger")
+	PartDelete       = widget.Part("delete")
+	PartNav          = widget.Part("nav")
+	PartFloor        = widget.Part("floor")
+	PartFloorHeader  = widget.Part("floor-header")
+	PartFloorBadge   = widget.Part("floor-badge")
+	PartFloorName    = widget.Part("floor-name")
+	PartFloorCount   = widget.Part("floor-count")
+	PartFloorAdd     = widget.Part("floor-add")
+	PartPanel        = widget.Part("panel")
+	PartPanelTitle   = widget.Part("panel-title")
+	PartField        = widget.Part("field")
+	PartInput        = widget.Part("input")
+	PartSeg          = widget.Part("seg")
+	PartSegItem      = widget.Part("seg-item")
+	PartColumns      = widget.Part("columns")
+	PartContent      = widget.Part("content")
+	PartAside        = widget.Part("aside")
+	PartSlider       = widget.Part("slider")
+	PartLegend       = widget.Part("legend")
+	PartLegendItem   = widget.Part("legend-item")
+	PartSwatchBox    = widget.Part("swatch-box")
+	PartSwatchShared = widget.Part("swatch-shared")
+	PartSwatchStore  = widget.Part("swatch-store")
+	PartSwatchFree   = widget.Part("swatch-free")
+	PartList         = widget.Part("list")
+	PartItem         = widget.Part("item")
+	PartItemInfo     = widget.Part("item-info")
+	PartItemName     = widget.Part("item-name")
+	PartItemMeta     = widget.Part("item-meta")
+	PartGridField    = widget.Part("grid-field")
+)
+
+var (
+	clsStage        = NameRoomMap.Class(PartStage).String()
+	clsHeader       = NameRoomMap.Class(PartHeader).String()
+	clsActions      = NameRoomMap.Class(PartActions).String()
+	clsFooter       = NameRoomMap.Class(PartFooter).String()
+	clsSummary      = NameRoomMap.Class(PartSummary).String()
+	clsTitleBar     = NameRoomMap.Class(PartTitleBar).String()
+	clsTitle        = NameRoomMap.Class(PartTitle).String()
+	clsStepTag      = NameRoomMap.Class(PartStepTag).String()
+	clsHeading      = NameRoomMap.Class(PartHeading).String()
+	clsButton       = NameRoomMap.Class(PartButton).String()
+	clsPrimary      = NameRoomMap.Class(PartPrimary).String()
+	clsDanger       = NameRoomMap.Class(PartDanger).String()
+	clsDelete       = NameRoomMap.Class(PartDelete).String()
+	clsNav          = NameRoomMap.Class(PartNav).String()
+	clsFloor        = NameRoomMap.Class(PartFloor).String()
+	clsFloorHeader  = NameRoomMap.Class(PartFloorHeader).String()
+	clsFloorBadge   = NameRoomMap.Class(PartFloorBadge).String()
+	clsFloorName    = NameRoomMap.Class(PartFloorName).String()
+	clsFloorCount   = NameRoomMap.Class(PartFloorCount).String()
+	clsFloorAdd     = NameRoomMap.Class(PartFloorAdd).String()
+	clsPanel        = NameRoomMap.Class(PartPanel).String()
+	clsPanelTitle   = NameRoomMap.Class(PartPanelTitle).String()
+	clsField        = NameRoomMap.Class(PartField).String()
+	clsInput        = NameRoomMap.Class(PartInput).String()
+	clsSeg          = NameRoomMap.Class(PartSeg).String()
+	clsSegItem      = NameRoomMap.Class(PartSegItem).String()
+	clsColumns      = NameRoomMap.Class(PartColumns).String()
+	clsContent      = NameRoomMap.Class(PartContent).String()
+	clsAside        = NameRoomMap.Class(PartAside).String()
+	clsSlider       = NameRoomMap.Class(PartSlider).String()
+	clsLegend       = NameRoomMap.Class(PartLegend).String()
+	clsLegendItem   = NameRoomMap.Class(PartLegendItem).String()
+	clsSwatchBox    = NameRoomMap.Class(PartSwatchBox).String()
+	clsSwatchShared = NameRoomMap.Class(PartSwatchShared).String()
+	clsSwatchStore  = NameRoomMap.Class(PartSwatchStore).String()
+	clsSwatchFree   = NameRoomMap.Class(PartSwatchFree).String()
+	clsList         = NameRoomMap.Class(PartList).String()
+	clsItem         = NameRoomMap.Class(PartItem).String()
+	clsItemInfo     = NameRoomMap.Class(PartItemInfo).String()
+	clsItemName     = NameRoomMap.Class(PartItemName).String()
+	clsItemMeta     = NameRoomMap.Class(PartItemMeta).String()
+	clsGridField    = NameRoomMap.Class(PartGridField).String()
+)
+
+// swatchClass es la muestra de color de cada tipo de espacio, la misma en la leyenda y en la lista.
+func swatchClass(roomType string) string {
+	switch roomType {
+	case RoomTypeShared:
+		return clsSwatchShared
+	case RoomTypeStore:
+		return clsSwatchStore
+	}
+	return clsSwatchBox
+}

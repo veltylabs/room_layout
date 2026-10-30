@@ -1,11 +1,11 @@
 package ui
 
 import (
-	"webtyp.com/components/stepindicator"
-	"webtyp.com/components/themetoggle"
 	"webtyp.com/dom"
 	"webtyp.com/fmt"
 	"webtyp.com/html"
+	"webtyp.com/lang"
+	"webtyp.com/widget"
 )
 
 type Stage3Artefactos struct {
@@ -21,56 +21,31 @@ type Stage3Artefactos struct {
 func (s *Stage3Artefactos) Render() *dom.Element {
 	root := s.Root
 
-	stepper := &stepindicator.StepIndicator{
-		Steps: []stepindicator.Step{
-			{Label: "Floor"},
-			{Label: "Espacios"},
-			{Label: "Artefactos"},
-			{Label: "Operación"},
-		},
-		Active: 2,
-		OnChange: func(idx int) {
-			root.GoToStage(idx)
-		},
-	}
+	header := root.header(2)
 
-	header := html.Header().Class("rm-header").
+	topBar := html.Section().Class(clsTitleBar).
 		Child(
-			html.Div().Class("rm-brand").
+			html.Div().Class(clsTitle).
 				Child(
-					html.Div().Class("rm-brand-title").Text("Room Map"),
-					html.Span().Class("rm-brand-sub").Text("Clínica Central"),
-				),
-			stepper,
-			html.Div().Class("rm-header-actions").
-				Child(
-					&themetoggle.ThemeToggle{},
+					html.Span().Class(clsStepTag).Text(lang.Translate("Step", 3, "of", 4).String()),
+					html.H2().Class(clsHeading).Text(lang.Translate("Equip each space").String()),
+					html.P().Text(lang.Translate("Place the equipment in each space. Touch a piece of equipment to select it, change its status or remove it.").String()),
 				),
 		)
 
-	topBar := html.Section().Class("rm-section-title").
-		Child(
-			html.Div().Class("rm-title-box").
-				Child(
-					html.Span().Class("rm-step-tag").Text("Step 3 of 4"),
-					html.H1().Text("Equip each space"),
-					html.P().Text("Add artifacts to spaces. Click on an artifact to select it, change its alert status or remove it."),
-				),
-		)
-
-	columns := html.Div().Class("rm-columns")
+	columns := html.Div().Class(clsColumns)
 
 	// Left: Content (Floor Slider)
-	content := html.Div().Class("rm-content")
+	content := html.Div().Class(clsContent)
 
 	if s.IsPlacing {
 		kindName := artifactKindLabel(s.PlacingKind)
 		banner := html.Div().Class("rm-banner-draft").
 			Child(
 				html.Span().Class("rm-draft-title").
-					Text("📍 Colocando «"+kindName+"» · Click on a free cell inside a box to place it"),
-				html.Button().Class("btn", "btn-sm").
-					Text("✕ Cancel").
+					Text("📍 "+kindName+" · "+lang.Translate("Touch a free cell inside a room to place it").String()),
+				html.Button().Class(clsButton).
+					Text("✕ "+lang.Translate("Cancel").String()).
 					OnClick(func(dom.Event) {
 						s.IsPlacing = false
 						root.Refresh()
@@ -80,12 +55,12 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 	}
 
 	s.sliderNodes = dom.NewNodes(s.buildFloorCards()...)
-	slider := html.Div().Class("rm-slider").BindChildren(s.sliderNodes)
+	slider := html.Div().Class(clsSlider).BindChildren(s.sliderNodes)
 
 	content.Child(slider)
 
 	// Right: Aside (Selected Inspector & Catalog)
-	aside := html.Aside().Class("rm-aside")
+	aside := html.Aside().Class(clsAside)
 
 	var selectedArt *ArtifactData
 	if s.SelectedArtifactID != "" {
@@ -106,12 +81,12 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 			}
 		}
 
-		inspectorPanel := html.Div().Class("panel").
+		inspectorPanel := html.Div().Class(clsPanel).
 			Child(
 				html.Div().Class("rm-sel-header").
 					Child(
-						html.Span().Class("rm-panel-title").Text("Selected artifact"),
-						html.Button().Class("btn", "btn-sm").Text("✕").
+						html.Span().Class(clsPanelTitle).Text(lang.Translate("Selected equipment").String()),
+						html.Button().Class(clsButton).Text("✕").
 							OnClick(func(dom.Event) {
 								s.SelectedArtifactID = ""
 								root.Refresh()
@@ -125,38 +100,38 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 						html.Div().Class("rm-sel-details").
 							Child(
 								html.Strong().Text(selectedArt.Code+" · "+artifactKindLabel(selectedArt.Kind)),
-								html.Span().Class("field").Text("Location: "+roomName+" ("+selectedArt.Cell+")"),
+								html.Span().Class(clsField).Text(lang.Translate("Location").String()+": "+roomName+" ("+selectedArt.Cell+")"),
 							),
 					),
-				html.Label().Class("field").Text("Operational status").
+				html.Label().Class(clsField).Text(lang.Translate("Status").String()).
 					Child(
-						html.Div().Class("seg").
+						html.Div().Class(clsSeg).
 							Child(
 								func() *dom.Element {
-									btn := html.Button().Class("btn-seg").Text("Normal")
+									btn := html.Button().Class(clsSegItem).Text(lang.Translate("Normal").String())
 									if selectedArt.Status == StatusOk {
-										btn.Class("on")
+										btn.SetState(widget.Selected)
 									}
 									return btn.OnClick(func(dom.Event) {
 										setArtifactStatus(root, *selectedArt, StatusOk, "")
 									})
 								}(),
 								func() *dom.Element {
-									btn := html.Button().Class("btn-seg").Text("Warning")
+									btn := html.Button().Class(clsSegItem).Text(lang.Translate("Warning").String())
 									if selectedArt.Status == StatusWarn {
-										btn.Class("on")
+										btn.SetState(widget.Selected)
 									}
 									return btn.OnClick(func(dom.Event) {
-										setArtifactStatus(root, *selectedArt, StatusWarn, "Requiere revisión periódica")
+										setArtifactStatus(root, *selectedArt, StatusWarn, lang.Translate("Needs periodic review").String())
 									})
 								}(),
 								func() *dom.Element {
-									btn := html.Button().Class("btn-seg").Text("Critical")
+									btn := html.Button().Class(clsSegItem).Text(lang.Translate("Critical").String())
 									if selectedArt.Status == StatusCrit {
-										btn.Class("on")
+										btn.SetState(widget.Selected)
 									}
 									return btn.OnClick(func(dom.Event) {
-										setArtifactStatus(root, *selectedArt, StatusCrit, "Equipo fuera de servicio")
+										setArtifactStatus(root, *selectedArt, StatusCrit, lang.Translate("Out of service").String())
 									})
 								}(),
 							),
@@ -164,9 +139,9 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 			)
 
 		if selectedArt.Status != StatusOk {
-			reasonInput := html.Label().Class("field").Text("Alert reason").
+			reasonInput := html.Label().Class(clsField).Text(lang.Translate("Alert reason").String()).
 				Child(
-					html.Input("text").Class("input").
+					html.Input("text").Class(clsInput).
 						Attr("value", selectedArt.Reason).
 						OnChange(func(e dom.Event) {
 							a := *selectedArt
@@ -177,8 +152,8 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 			inspectorPanel.Child(reasonInput)
 		}
 
-		deleteBtn := html.Button().Class("btn", "btn-danger").
-			Text("Remove from map").
+		deleteBtn := html.Button().Class(clsDanger).
+			Text(lang.Translate("Remove from map").String()).
 			OnClick(func(dom.Event) {
 				s.SelectedArtifactID = ""
 				root.deleteArtifact(selectedArt.ID)
@@ -189,20 +164,20 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 	}
 
 	// Catalog Panel
-	catalogPanel := html.Div().Class("panel").
+	catalogPanel := html.Div().Class(clsPanel).
 		Child(
-			html.Span().Class("rm-panel-title").Text("Artifact catalog"),
-			html.P().Class("field").Text("Click on an item to place it on the map:"),
+			html.Span().Class(clsPanelTitle).Text(lang.Translate("Equipment catalog").String()),
+			html.P().Class(clsField).Text(lang.Translate("Touch an item to place it on the map").String()+":"),
 			html.Div().Class("cat").
 				Child(
-					catalogItem(ArtifactAgenda, "Agenda médica", "AG", s, root),
-					catalogItem(ArtifactPC, "Computador", "PC", s, root),
-					catalogItem(ArtifactPrinter, "Impresora", "IMP", s, root),
-					catalogItem(ArtifactGastro, "Gastroscopio", "GAS", s, root),
-					catalogItem(ArtifactChair, "Sillón dental", "SD", s, root),
-					catalogItem(ArtifactECG, "ECG portátil", "ECG", s, root),
-					catalogItem(ArtifactMonitor, "Monitor signos", "MON", s, root),
-					catalogItem(ArtifactSupply, "Insumos clínicos", "INS", s, root),
+					catalogItem(ArtifactAgenda, "AG", s, root),
+					catalogItem(ArtifactPC, "PC", s, root),
+					catalogItem(ArtifactPrinter, "IMP", s, root),
+					catalogItem(ArtifactGastro, "GAS", s, root),
+					catalogItem(ArtifactChair, "SD", s, root),
+					catalogItem(ArtifactECG, "ECG", s, root),
+					catalogItem(ArtifactMonitor, "MON", s, root),
+					catalogItem(ArtifactSupply, "INS", s, root),
 				),
 		)
 
@@ -210,13 +185,13 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 	columns.Child(content, aside)
 
 	// Footer
-	footer := html.Footer().Class("rm-footer").
+	footer := html.Footer().Class(clsFooter).
 		Child(
-			html.Button().Class("btn").Text("← Spaces").
+			html.Button().Class(clsButton).Text("← "+lang.Translate("Spaces").String()).
 				OnClick(func(dom.Event) {
 					root.GoToStage(1)
 				}),
-			html.Span().Class("rm-footer-summary").
+			html.Span().Class(clsSummary).
 				BindTextFunc(func() string {
 					_ = root.VerSig.Get()
 					alertCount := 0
@@ -225,17 +200,17 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 							alertCount++
 						}
 					}
-					return fmt.Sprint(len(root.Artifacts)) + " artefactos en " + fmt.Sprint(len(root.Rooms)) + " espacios · " + fmt.Sprint(alertCount) + " alertas de mantención"
+					return lang.Translate(len(root.Artifacts), "equipment", "·", len(root.Rooms), "spaces", "·", alertCount, "alerts").String()
 				}),
-			html.Button().Class("btn", "btn-primary").
-				Child(html.Span().Text("Finish setup →")).
+			html.Button().Class(clsPrimary).
+				Child(html.Span().Text(lang.Translate("Finish").String()+" →")).
 				OnClick(func(dom.Event) {
 					root.GoToStage(3)
 				}),
 		)
 
-	layout := html.Div().Class("rm-stage").
-		Child(header, topBar, columns, footer)
+	layout := html.Div().Class(clsStage).
+		Child(header, footer, topBar, columns)
 
 	return layout
 }
@@ -250,39 +225,23 @@ func (s *Stage3Artefactos) buildFloorCards() []*dom.Element {
 	root := s.Root
 	var cards []*dom.Element
 
-	for i := range root.Floors {
+	for _, i := range root.shownFloors() {
 		fl := &root.Floors[i]
 		fIdx := i
 
-		floorCard := html.Article().Class("floor")
-		fHeader := html.Div().Class("rm-floor-header").
+		floorCard := html.Article().Class(clsFloor)
+		fHeader := html.Div().Class(clsFloorHeader).
 			Child(
-				html.Span().Class("rm-floor-badge").Text(fmt.Sprint(fl.Position)),
-				html.Span().Class("name-input").Text(fl.Name),
-				html.Span().Class("rm-floor-count").
-					BindTextFunc(func() string {
-						_ = root.VerSig.Get()
-						return fmt.Sprint(len(fl.HabitableCells)) + " hab."
-					}),
+				html.Span().Class(clsFloorBadge).Text(fmt.Sprint(fl.Position)),
+				html.Span().Class(clsFloorName).Text(fl.Name),
+				root.floorNav(),
 			)
 
 		gridEl := html.Div().Class("grid").
-			Attr("style", fmt.Sprintf("display: grid; grid-template-columns: 24px repeat(%d, minmax(22px, 1fr)); gap: 2px; padding: 10px; background: var(--color-background); border: 1px solid var(--color-outline); border-radius: 12px; overflow-x: auto;", root.Cols))
-
-		// Column headers
-		gridEl.Child(html.Span())
-		for c := 0; c < root.Cols; c++ {
-			gridEl.Child(html.Span().Class("lbl-col").
-				Attr("style", "font-size: 11px; font-weight: 700; color: var(--color-muted); text-align: center; height: 20px; display: flex; align-items: center; justify-content: center;").
-				Text(ColName(c)))
-		}
+			Attr("style", fmt.Sprintf(planGrid, root.Cols))
 
 		for r := 0; r < root.Rows; r++ {
 			rowIdx := r
-			gridEl.Child(html.Span().Class("lbl-row").
-				Attr("style", "font-size: 11px; font-weight: 700; color: var(--color-muted); display: flex; align-items: center; justify-content: center;").
-				Text(fmt.Sprint(rowIdx + 1)))
-
 			for c := 0; c < root.Cols; c++ {
 				colIdx := c
 				coord := FormatCell(rowIdx, colIdx)
@@ -291,26 +250,11 @@ func (s *Stage3Artefactos) buildFloorCards() []*dom.Element {
 
 				cellBtn.BindAttrFunc("style", func() string {
 					_ = root.VerSig.Get()
-					if !CellInList(fl.HabitableCells, coord) {
-						return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1px dashed var(--color-outline); opacity: 0.12; pointer-events: none; border-radius: 4px;"
-					}
-
 					room := FindRoomByCell(root.Rooms, fl.ID, coord)
-					if room != nil {
-						if s.IsPlacing && FindArtifactByCell(root.Artifacts, fl.ID, coord) == nil {
-							return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 2px dashed var(--color-primary); background: var(--color-selection); cursor: copy; border-radius: 4px; display: flex; align-items: center; justify-content: center;"
-						}
-						switch room.RoomType {
-						case RoomTypeShared:
-							return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-muted); background: var(--color-muted); opacity: 0.75; border-radius: 4px; display: flex; align-items: center; justify-content: center;"
-						case RoomTypeStore:
-							return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-accent, #e8a33d); background: var(--color-accent, #e8a33d); opacity: 0.85; border-radius: 4px; display: flex; align-items: center; justify-content: center;"
-						default:
-							return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-primary); background: var(--color-primary); opacity: 0.85; border-radius: 4px; display: flex; align-items: center; justify-content: center;"
-						}
+					if room != nil && s.IsPlacing && FindArtifactByCell(root.Artifacts, fl.ID, coord) == nil {
+						return gridPos(rowIdx, colIdx) + "border: 2px dashed var(--color-primary); background: var(--color-selection); cursor: copy;" + planContent
 					}
-
-					return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px dashed var(--color-outline); background: var(--color-surface); border-radius: 4px; display: flex; align-items: center; justify-content: center;"
+					return gridPos(rowIdx, colIdx) + planCell(fl, room, coord) + planContent
 				})
 
 				room := FindRoomByCell(root.Rooms, fl.ID, coord)
@@ -380,6 +324,9 @@ func (s *Stage3Artefactos) buildFloorCards() []*dom.Element {
 				gridEl.Child(cellBtn)
 			}
 		}
+		for _, outline := range root.roomOutlines(fl.ID, "", plain, nameTop) {
+			gridEl.Child(outline)
+		}
 
 		floorCard.Key(fmt.Sprintf("floor-s3-%s-%dx%d", fl.ID, root.Cols, root.Rows)).
 			BindClassFunc("active", func() bool {
@@ -401,14 +348,14 @@ func (s *Stage3Artefactos) buildFloorCards() []*dom.Element {
 	return cards
 }
 
-func catalogItem(kind, label, code string, s *Stage3Artefactos, root *RootView) *dom.Element {
+func catalogItem(kind, code string, s *Stage3Artefactos, root *RootView) *dom.Element {
 	btn := html.Button().Class("btn-cat")
 	if s.IsPlacing && s.PlacingKind == kind {
 		btn.Class("btn-cat", "on")
 	}
 	btn.Child(
 		html.Span().Class("ic").Text(code),
-		html.Span().Text(label),
+		html.Span().Text(artifactKindLabel(kind)),
 	)
 	btn.OnClick(func(dom.Event) {
 		s.IsPlacing = true
@@ -442,26 +389,32 @@ func artifactKindCode(kind string) string {
 	}
 }
 
+// artifactKindLabel es el nombre de un tipo de equipo, traducido. Un solo lugar para cada nombre:
+// lo usan el catálogo, la etiqueta del equipo seleccionado y las alertas.
 func artifactKindLabel(kind string) string {
+	return lang.Translate(string(artifactKindKey(kind))).String()
+}
+
+func artifactKindKey(kind string) lang.Text {
 	switch kind {
 	case ArtifactAgenda:
-		return "Agenda médica"
+		return "Medical agenda"
 	case ArtifactPC:
-		return "Computador"
+		return "Computer"
 	case ArtifactPrinter:
-		return "Impresora"
+		return "Printer"
 	case ArtifactGastro:
-		return "Gastroscopio"
+		return "Gastroscope"
 	case ArtifactChair:
-		return "Sillón dental"
+		return "Dental chair"
 	case ArtifactECG:
-		return "Electrocardiógrafo"
+		return "Electrocardiograph"
 	case ArtifactMonitor:
-		return "Monitor de signos"
+		return "Vital signs monitor"
 	case ArtifactSupply:
-		return "Insumos clínicos"
+		return "Clinical supplies"
 	default:
-		return "Equipo"
+		return "Equipment"
 	}
 }
 

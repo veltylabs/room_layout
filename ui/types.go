@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"webtyp.com/fmt"
+	roomlayout "github.com/veltylabs/room_layout"
 	"webtyp.com/widget"
 )
 
@@ -55,7 +55,7 @@ type FloorData struct {
 	ID             string
 	Name           string
 	Position       int
-	HabitableCells []string // Coordenadas "A1", "B2", etc.
+	HabitableCells []string // Celdas "columna,fila" de FormatCell
 }
 
 // RoomData modela un espacio dentro de una planta.
@@ -102,50 +102,16 @@ type DoctorData struct {
 	WeeklyOccupancy int // 0..100
 }
 
-// ColName convierte un índice de columna 0-based a letra ("A", "B", ...).
-func ColName(c int) string {
-	res := ""
-	for c >= 0 {
-		rem := c % 26
-		res = string(rune('A'+rem)) + res
-		c = c/26 - 1
-	}
-	return res
-}
-
-// FormatCell compone fila (0-based) y col (0-based) en coordenada como "A1", "B2".
+// FormatCell compone fila y columna (0-based, como los índices de la cuadrícula) en la celda
+// guardada: FormatCell(0, 6) → "7,1". Cada piso numera desde 1.
 func FormatCell(r, c int) string {
-	return ColName(c) + fmt.Sprint(r+1)
+	return roomlayout.Cell{Col: c + 1, Row: r + 1}.String()
 }
 
-// ParseCell descompone "B2" en fila=1, col=1.
+// ParseCell descompone "7,1" en fila=0, col=6 (0-based).
 func ParseCell(cell string) (int, int, bool) {
-	if len(cell) < 2 {
-		return 0, 0, false
-	}
-	col := 0
-	idx := 0
-	for idx < len(cell) && cell[idx] >= 'A' && cell[idx] <= 'Z' {
-		col = col*26 + int(cell[idx]-'A') + 1
-		idx++
-	}
-	if idx == 0 || idx >= len(cell) {
-		return 0, 0, false
-	}
-	col-- // 0-based
-
-	row := 0
-	for idx < len(cell) {
-		if cell[idx] < '0' || cell[idx] > '9' {
-			return 0, 0, false
-		}
-		row = row*10 + int(cell[idx]-'0')
-		idx++
-	}
-	if row < 1 {
-		return 0, 0, false
-	}
-	return row - 1, col, true
+	c, ok := roomlayout.ParseCell(cell)
+	return c.Row - 1, c.Col - 1, ok
 }
 
 // ParsePositiveInt parses a positive integer from string without stdlib strconv.
@@ -197,48 +163,6 @@ func CellsOverlap(a, b []string) bool {
 		}
 	}
 	return false
-}
-
-// BoundingBox calcula el rectángulo que encierra las celdas dadas.
-func BoundingBox(cells []string) (minCol, minRow, maxCol, maxRow int) {
-	if len(cells) == 0 {
-		return 0, 0, 0, 0
-	}
-	minCol, minRow = 9999, 9999
-	maxCol, maxRow = -1, -1
-	for _, c := range cells {
-		r, col, ok := ParseCell(c)
-		if !ok {
-			continue
-		}
-		if col < minCol {
-			minCol = col
-		}
-		if col > maxCol {
-			maxCol = col
-		}
-		if r < minRow {
-			minRow = r
-		}
-		if r > maxRow {
-			maxRow = r
-		}
-	}
-	return
-}
-
-// BoundingBoxLabel devuelve texto descriptivo como "B2:D4 · 6 celdas".
-func BoundingBoxLabel(cells []string) string {
-	if len(cells) == 0 {
-		return "0 celdas"
-	}
-	minCol, minRow, maxCol, maxRow := BoundingBox(cells)
-	start := FormatCell(minRow, minCol)
-	end := FormatCell(maxRow, maxCol)
-	if start == end {
-		return start + " · 1 celda"
-	}
-	return start + ":" + end + " · " + fmt.Sprint(len(cells)) + " celdas"
 }
 
 // FindRoomByCell busca el espacio que contiene una celda en una planta determinada.

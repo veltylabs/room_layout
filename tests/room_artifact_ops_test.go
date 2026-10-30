@@ -20,14 +20,14 @@ func TestRoomArtifactOps_SaveListDelete(t *testing.T) {
 
 	var lastErr error
 	done := func(e error) { lastErr = e }
-	a := &roomlayout.RoomArtifact{TenantId: "other-tenant", RoomId: "rm-1", Kind: "pc", Code: "pc11", Cell: "L4", Status: "ok"}
+	a := &roomlayout.RoomArtifact{TenantId: "other-tenant", RoomId: "rm-1", Kind: "pc", Code: "pc11", Cell: "12,4", Status: "ok"}
 	arts.(view.Saver).Save([]model.Model{a}, done)
 	if lastErr != nil {
 		t.Fatalf("save artifact: %v", lastErr)
 	}
 
 	stored, err := env.mod.ListRoomArtifacts("tenantA", "")
-	if err != nil || len(stored) != 1 || stored[0].Cell != "L4" {
+	if err != nil || len(stored) != 1 || stored[0].Cell != "12,4" {
 		t.Fatalf("stored under the server's tenant: got %+v (err %v)", stored, err)
 	}
 	if other, _ := env.mod.ListRoomArtifacts("other-tenant", ""); len(other) != 0 {

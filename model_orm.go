@@ -9,22 +9,24 @@ import (
 )
 
 type Floor struct {
-	Cols int64
-	Rows int64
-	GridLocked bool
+	Cols           int64
+	Rows           int64
+	GridLocked     bool
 	HabitableCells string
-	Id string
-	TenantId string
-	Name string
-	Position int64
-	UpdatedAt time.Unix
+	Id             string
+	TenantId       string
+	Name           string
+	Position       int64
+	UpdatedAt      time.Unix
 }
 
-func (m *Floor) ModelName() string { return "floor" }
+func (m *Floor) ModelName() string { return "room_floor" }
 
 func (m *Floor) Schema() []model.Field { return FloorModel.Fields }
 
-func (m *Floor) Pointers() []any { return []any{&m.Cols, &m.Rows, &m.GridLocked, &m.HabitableCells, &m.Id, &m.TenantId, &m.Name, &m.Position, (*int64)(&m.UpdatedAt)} }
+func (m *Floor) Pointers() []any {
+	return []any{&m.Cols, &m.Rows, &m.GridLocked, &m.HabitableCells, &m.Id, &m.TenantId, &m.Name, &m.Position, (*int64)(&m.UpdatedAt)}
+}
 
 func (m *Floor) IsNil() bool { return m == nil }
 
@@ -33,31 +35,55 @@ func (m *Floor) EncodeFields(w model.FieldWriter) {
 	w.Int("rows", m.Rows)
 	w.Bool("grid_locked", m.GridLocked)
 	w.String("habitable_cells", m.HabitableCells)
-	if m.Id != "" { w.String("id", m.Id) }
+	if m.Id != "" {
+		w.String("id", m.Id)
+	}
 	w.String("tenant_id", m.TenantId)
 	w.String("name", m.Name)
-	if m.Position != 0 { w.Int("position", m.Position) }
-	if m.UpdatedAt != 0 { w.Int("updated_at", int64(m.UpdatedAt)) }
+	if m.Position != 0 {
+		w.Int("position", m.Position)
+	}
+	if m.UpdatedAt != 0 {
+		w.Int("updated_at", int64(m.UpdatedAt))
+	}
 }
 
 func (m *Floor) DecodeFields(r model.FieldReader) {
-	if v, ok := r.Int("cols"); ok { m.Cols = v }
-	if v, ok := r.Int("rows"); ok { m.Rows = v }
-	if v, ok := r.Bool("grid_locked"); ok { m.GridLocked = v }
-	if v, ok := r.String("habitable_cells"); ok { m.HabitableCells = v }
-	if v, ok := r.String("id"); ok { m.Id = v }
-	if v, ok := r.String("tenant_id"); ok { m.TenantId = v }
-	if v, ok := r.String("name"); ok { m.Name = v }
-	if v, ok := r.Int("position"); ok { m.Position = v }
-	if v, ok := r.Int("updated_at"); ok { m.UpdatedAt = time.Unix(v) }
+	if v, ok := r.Int("cols"); ok {
+		m.Cols = v
+	}
+	if v, ok := r.Int("rows"); ok {
+		m.Rows = v
+	}
+	if v, ok := r.Bool("grid_locked"); ok {
+		m.GridLocked = v
+	}
+	if v, ok := r.String("habitable_cells"); ok {
+		m.HabitableCells = v
+	}
+	if v, ok := r.String("id"); ok {
+		m.Id = v
+	}
+	if v, ok := r.String("tenant_id"); ok {
+		m.TenantId = v
+	}
+	if v, ok := r.String("name"); ok {
+		m.Name = v
+	}
+	if v, ok := r.Int("position"); ok {
+		m.Position = v
+	}
+	if v, ok := r.Int("updated_at"); ok {
+		m.UpdatedAt = time.Unix(v)
+	}
 }
 
 type FloorList []*Floor
 
-func (s *FloorList) Len() int             { return len(*s) }
-func (s *FloorList) At(i int) model.Fielder { return (*s)[i] }
-func (s *FloorList) Append() model.Fielder  { v := &Floor{}; *s = append(*s, v); return v }
-func (s *FloorList) IsNil() bool          { return s == nil }
+func (s *FloorList) Len() int                         { return len(*s) }
+func (s *FloorList) At(i int) model.Fielder           { return (*s)[i] }
+func (s *FloorList) Append() model.Fielder            { v := &Floor{}; *s = append(*s, v); return v }
+func (s *FloorList) IsNil() bool                      { return s == nil }
 func (s *FloorList) EncodeFields(_ model.FieldWriter) {}
 func (s *FloorList) DecodeFields(_ model.FieldReader) {}
 
@@ -70,25 +96,25 @@ func (m *Floor) Item() model.Item {
 }
 
 var Floor_ = struct {
-	Cols string
-	Rows string
-	GridLocked string
+	Cols           string
+	Rows           string
+	GridLocked     string
 	HabitableCells string
-	Id string
-	TenantId string
-	Name string
-	Position string
-	UpdatedAt string
+	Id             string
+	TenantId       string
+	Name           string
+	Position       string
+	UpdatedAt      string
 }{
-	Cols: "cols",
-	Rows: "rows",
-	GridLocked: "grid_locked",
+	Cols:           "cols",
+	Rows:           "rows",
+	GridLocked:     "grid_locked",
 	HabitableCells: "habitable_cells",
-	Id: "id",
-	TenantId: "tenant_id",
-	Name: "name",
-	Position: "position",
-	UpdatedAt: "updated_at",
+	Id:             "id",
+	TenantId:       "tenant_id",
+	Name:           "name",
+	Position:       "position",
+	UpdatedAt:      "updated_at",
 }
 
 func ReadOneFloor(qb *orm.QB, model *Floor) (*Floor, error) {
@@ -109,58 +135,86 @@ func ReadAllFloor(qb *orm.QB) (FloorList, error) {
 }
 
 type Room struct {
-	RoomType string
-	Cells string
-	Id string
-	TenantId string
-	FloorId string
-	Code string
-	Name string
-	Notes string
-	IsActive bool
+	RoomType  string
+	Cells     string
+	Id        string
+	TenantId  string
+	FloorId   string
+	Code      string
+	Name      string
+	Notes     string
+	IsActive  bool
 	UpdatedAt time.Unix
 }
 
-func (m *Room) ModelName() string { return "room" }
+func (m *Room) ModelName() string { return "room_space" }
 
 func (m *Room) Schema() []model.Field { return RoomModel.Fields }
 
-func (m *Room) Pointers() []any { return []any{&m.RoomType, &m.Cells, &m.Id, &m.TenantId, &m.FloorId, &m.Code, &m.Name, &m.Notes, &m.IsActive, (*int64)(&m.UpdatedAt)} }
+func (m *Room) Pointers() []any {
+	return []any{&m.RoomType, &m.Cells, &m.Id, &m.TenantId, &m.FloorId, &m.Code, &m.Name, &m.Notes, &m.IsActive, (*int64)(&m.UpdatedAt)}
+}
 
 func (m *Room) IsNil() bool { return m == nil }
 
 func (m *Room) EncodeFields(w model.FieldWriter) {
 	w.String("room_type", m.RoomType)
 	w.String("cells", m.Cells)
-	if m.Id != "" { w.String("id", m.Id) }
+	if m.Id != "" {
+		w.String("id", m.Id)
+	}
 	w.String("tenant_id", m.TenantId)
 	w.String("floor_id", m.FloorId)
 	w.String("code", m.Code)
 	w.String("name", m.Name)
-	if m.Notes != "" { w.String("notes", m.Notes) }
+	if m.Notes != "" {
+		w.String("notes", m.Notes)
+	}
 	w.Bool("is_active", m.IsActive)
-	if m.UpdatedAt != 0 { w.Int("updated_at", int64(m.UpdatedAt)) }
+	if m.UpdatedAt != 0 {
+		w.Int("updated_at", int64(m.UpdatedAt))
+	}
 }
 
 func (m *Room) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("room_type"); ok { m.RoomType = v }
-	if v, ok := r.String("cells"); ok { m.Cells = v }
-	if v, ok := r.String("id"); ok { m.Id = v }
-	if v, ok := r.String("tenant_id"); ok { m.TenantId = v }
-	if v, ok := r.String("floor_id"); ok { m.FloorId = v }
-	if v, ok := r.String("code"); ok { m.Code = v }
-	if v, ok := r.String("name"); ok { m.Name = v }
-	if v, ok := r.String("notes"); ok { m.Notes = v }
-	if v, ok := r.Bool("is_active"); ok { m.IsActive = v }
-	if v, ok := r.Int("updated_at"); ok { m.UpdatedAt = time.Unix(v) }
+	if v, ok := r.String("room_type"); ok {
+		m.RoomType = v
+	}
+	if v, ok := r.String("cells"); ok {
+		m.Cells = v
+	}
+	if v, ok := r.String("id"); ok {
+		m.Id = v
+	}
+	if v, ok := r.String("tenant_id"); ok {
+		m.TenantId = v
+	}
+	if v, ok := r.String("floor_id"); ok {
+		m.FloorId = v
+	}
+	if v, ok := r.String("code"); ok {
+		m.Code = v
+	}
+	if v, ok := r.String("name"); ok {
+		m.Name = v
+	}
+	if v, ok := r.String("notes"); ok {
+		m.Notes = v
+	}
+	if v, ok := r.Bool("is_active"); ok {
+		m.IsActive = v
+	}
+	if v, ok := r.Int("updated_at"); ok {
+		m.UpdatedAt = time.Unix(v)
+	}
 }
 
 type RoomList []*Room
 
-func (s *RoomList) Len() int             { return len(*s) }
-func (s *RoomList) At(i int) model.Fielder { return (*s)[i] }
-func (s *RoomList) Append() model.Fielder  { v := &Room{}; *s = append(*s, v); return v }
-func (s *RoomList) IsNil() bool          { return s == nil }
+func (s *RoomList) Len() int                         { return len(*s) }
+func (s *RoomList) At(i int) model.Fielder           { return (*s)[i] }
+func (s *RoomList) Append() model.Fielder            { v := &Room{}; *s = append(*s, v); return v }
+func (s *RoomList) IsNil() bool                      { return s == nil }
 func (s *RoomList) EncodeFields(_ model.FieldWriter) {}
 func (s *RoomList) DecodeFields(_ model.FieldReader) {}
 
@@ -173,26 +227,26 @@ func (m *Room) Item() model.Item {
 }
 
 var Room_ = struct {
-	RoomType string
-	Cells string
-	Id string
-	TenantId string
-	FloorId string
-	Code string
-	Name string
-	Notes string
-	IsActive string
+	RoomType  string
+	Cells     string
+	Id        string
+	TenantId  string
+	FloorId   string
+	Code      string
+	Name      string
+	Notes     string
+	IsActive  string
 	UpdatedAt string
 }{
-	RoomType: "room_type",
-	Cells: "cells",
-	Id: "id",
-	TenantId: "tenant_id",
-	FloorId: "floor_id",
-	Code: "code",
-	Name: "name",
-	Notes: "notes",
-	IsActive: "is_active",
+	RoomType:  "room_type",
+	Cells:     "cells",
+	Id:        "id",
+	TenantId:  "tenant_id",
+	FloorId:   "floor_id",
+	Code:      "code",
+	Name:      "name",
+	Notes:     "notes",
+	IsActive:  "is_active",
 	UpdatedAt: "updated_at",
 }
 
@@ -215,33 +269,37 @@ func ReadAllRoom(qb *orm.QB) (RoomList, error) {
 
 func (m *Room) SchemaExt() []model.FieldExt {
 	return []model.FieldExt{
-		{Field: RoomModel.Fields[4], Ref: "floor", RefColumn: "id", OnDelete: ""},
+		{Field: RoomModel.Fields[4], Ref: "room_floor", RefColumn: "id", OnDelete: ""},
 	}
 }
 
 type RoomArtifact struct {
-	Id string
-	TenantId string
-	RoomId string
-	Kind string
-	Code string
-	Cell string
-	Status string
-	Reason string
+	Id              string
+	TenantId        string
+	RoomId          string
+	Kind            string
+	Code            string
+	Cell            string
+	Status          string
+	Reason          string
 	NextMaintenance string
-	Items string
+	Items           string
 }
 
 func (m *RoomArtifact) ModelName() string { return "room_artifact" }
 
 func (m *RoomArtifact) Schema() []model.Field { return RoomArtifactModel.Fields }
 
-func (m *RoomArtifact) Pointers() []any { return []any{&m.Id, &m.TenantId, &m.RoomId, &m.Kind, &m.Code, &m.Cell, &m.Status, &m.Reason, &m.NextMaintenance, &m.Items} }
+func (m *RoomArtifact) Pointers() []any {
+	return []any{&m.Id, &m.TenantId, &m.RoomId, &m.Kind, &m.Code, &m.Cell, &m.Status, &m.Reason, &m.NextMaintenance, &m.Items}
+}
 
 func (m *RoomArtifact) IsNil() bool { return m == nil }
 
 func (m *RoomArtifact) EncodeFields(w model.FieldWriter) {
-	if m.Id != "" { w.String("id", m.Id) }
+	if m.Id != "" {
+		w.String("id", m.Id)
+	}
 	w.String("tenant_id", m.TenantId)
 	w.String("room_id", m.RoomId)
 	w.String("kind", m.Kind)
@@ -254,24 +312,44 @@ func (m *RoomArtifact) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *RoomArtifact) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("id"); ok { m.Id = v }
-	if v, ok := r.String("tenant_id"); ok { m.TenantId = v }
-	if v, ok := r.String("room_id"); ok { m.RoomId = v }
-	if v, ok := r.String("kind"); ok { m.Kind = v }
-	if v, ok := r.String("code"); ok { m.Code = v }
-	if v, ok := r.String("cell"); ok { m.Cell = v }
-	if v, ok := r.String("status"); ok { m.Status = v }
-	if v, ok := r.String("reason"); ok { m.Reason = v }
-	if v, ok := r.String("next_maintenance"); ok { m.NextMaintenance = v }
-	if v, ok := r.String("items"); ok { m.Items = v }
+	if v, ok := r.String("id"); ok {
+		m.Id = v
+	}
+	if v, ok := r.String("tenant_id"); ok {
+		m.TenantId = v
+	}
+	if v, ok := r.String("room_id"); ok {
+		m.RoomId = v
+	}
+	if v, ok := r.String("kind"); ok {
+		m.Kind = v
+	}
+	if v, ok := r.String("code"); ok {
+		m.Code = v
+	}
+	if v, ok := r.String("cell"); ok {
+		m.Cell = v
+	}
+	if v, ok := r.String("status"); ok {
+		m.Status = v
+	}
+	if v, ok := r.String("reason"); ok {
+		m.Reason = v
+	}
+	if v, ok := r.String("next_maintenance"); ok {
+		m.NextMaintenance = v
+	}
+	if v, ok := r.String("items"); ok {
+		m.Items = v
+	}
 }
 
 type RoomArtifactList []*RoomArtifact
 
-func (s *RoomArtifactList) Len() int             { return len(*s) }
-func (s *RoomArtifactList) At(i int) model.Fielder { return (*s)[i] }
-func (s *RoomArtifactList) Append() model.Fielder  { v := &RoomArtifact{}; *s = append(*s, v); return v }
-func (s *RoomArtifactList) IsNil() bool          { return s == nil }
+func (s *RoomArtifactList) Len() int                         { return len(*s) }
+func (s *RoomArtifactList) At(i int) model.Fielder           { return (*s)[i] }
+func (s *RoomArtifactList) Append() model.Fielder            { v := &RoomArtifact{}; *s = append(*s, v); return v }
+func (s *RoomArtifactList) IsNil() bool                      { return s == nil }
 func (s *RoomArtifactList) EncodeFields(_ model.FieldWriter) {}
 func (s *RoomArtifactList) DecodeFields(_ model.FieldReader) {}
 
@@ -284,27 +362,27 @@ func (m *RoomArtifact) Item() model.Item {
 }
 
 var RoomArtifact_ = struct {
-	Id string
-	TenantId string
-	RoomId string
-	Kind string
-	Code string
-	Cell string
-	Status string
-	Reason string
+	Id              string
+	TenantId        string
+	RoomId          string
+	Kind            string
+	Code            string
+	Cell            string
+	Status          string
+	Reason          string
 	NextMaintenance string
-	Items string
+	Items           string
 }{
-	Id: "id",
-	TenantId: "tenant_id",
-	RoomId: "room_id",
-	Kind: "kind",
-	Code: "code",
-	Cell: "cell",
-	Status: "status",
-	Reason: "reason",
+	Id:              "id",
+	TenantId:        "tenant_id",
+	RoomId:          "room_id",
+	Kind:            "kind",
+	Code:            "code",
+	Cell:            "cell",
+	Status:          "status",
+	Reason:          "reason",
 	NextMaintenance: "next_maintenance",
-	Items: "items",
+	Items:           "items",
 }
 
 func ReadOneRoomArtifact(qb *orm.QB, model *RoomArtifact) (*RoomArtifact, error) {
@@ -325,43 +403,61 @@ func ReadAllRoomArtifact(qb *orm.QB) (RoomArtifactList, error) {
 }
 
 type Equipment struct {
-	Id string
-	TenantId string
-	Name string
-	DeviceId string
+	Id        string
+	TenantId  string
+	Name      string
+	DeviceId  string
 	UpdatedAt time.Unix
 }
 
-func (m *Equipment) ModelName() string { return "equipment" }
+func (m *Equipment) ModelName() string { return "room_equipment" }
 
 func (m *Equipment) Schema() []model.Field { return EquipmentModel.Fields }
 
-func (m *Equipment) Pointers() []any { return []any{&m.Id, &m.TenantId, &m.Name, &m.DeviceId, (*int64)(&m.UpdatedAt)} }
+func (m *Equipment) Pointers() []any {
+	return []any{&m.Id, &m.TenantId, &m.Name, &m.DeviceId, (*int64)(&m.UpdatedAt)}
+}
 
 func (m *Equipment) IsNil() bool { return m == nil }
 
 func (m *Equipment) EncodeFields(w model.FieldWriter) {
-	if m.Id != "" { w.String("id", m.Id) }
+	if m.Id != "" {
+		w.String("id", m.Id)
+	}
 	w.String("tenant_id", m.TenantId)
 	w.String("name", m.Name)
-	if m.DeviceId != "" { w.String("device_id", m.DeviceId) }
-	if m.UpdatedAt != 0 { w.Int("updated_at", int64(m.UpdatedAt)) }
+	if m.DeviceId != "" {
+		w.String("device_id", m.DeviceId)
+	}
+	if m.UpdatedAt != 0 {
+		w.Int("updated_at", int64(m.UpdatedAt))
+	}
 }
 
 func (m *Equipment) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("id"); ok { m.Id = v }
-	if v, ok := r.String("tenant_id"); ok { m.TenantId = v }
-	if v, ok := r.String("name"); ok { m.Name = v }
-	if v, ok := r.String("device_id"); ok { m.DeviceId = v }
-	if v, ok := r.Int("updated_at"); ok { m.UpdatedAt = time.Unix(v) }
+	if v, ok := r.String("id"); ok {
+		m.Id = v
+	}
+	if v, ok := r.String("tenant_id"); ok {
+		m.TenantId = v
+	}
+	if v, ok := r.String("name"); ok {
+		m.Name = v
+	}
+	if v, ok := r.String("device_id"); ok {
+		m.DeviceId = v
+	}
+	if v, ok := r.Int("updated_at"); ok {
+		m.UpdatedAt = time.Unix(v)
+	}
 }
 
 type EquipmentList []*Equipment
 
-func (s *EquipmentList) Len() int             { return len(*s) }
-func (s *EquipmentList) At(i int) model.Fielder { return (*s)[i] }
-func (s *EquipmentList) Append() model.Fielder  { v := &Equipment{}; *s = append(*s, v); return v }
-func (s *EquipmentList) IsNil() bool          { return s == nil }
+func (s *EquipmentList) Len() int                         { return len(*s) }
+func (s *EquipmentList) At(i int) model.Fielder           { return (*s)[i] }
+func (s *EquipmentList) Append() model.Fielder            { v := &Equipment{}; *s = append(*s, v); return v }
+func (s *EquipmentList) IsNil() bool                      { return s == nil }
 func (s *EquipmentList) EncodeFields(_ model.FieldWriter) {}
 func (s *EquipmentList) DecodeFields(_ model.FieldReader) {}
 
@@ -374,16 +470,16 @@ func (m *Equipment) Item() model.Item {
 }
 
 var Equipment_ = struct {
-	Id string
-	TenantId string
-	Name string
-	DeviceId string
+	Id        string
+	TenantId  string
+	Name      string
+	DeviceId  string
 	UpdatedAt string
 }{
-	Id: "id",
-	TenantId: "tenant_id",
-	Name: "name",
-	DeviceId: "device_id",
+	Id:        "id",
+	TenantId:  "tenant_id",
+	Name:      "name",
+	DeviceId:  "device_id",
 	UpdatedAt: "updated_at",
 }
 
@@ -405,12 +501,12 @@ func ReadAllEquipment(qb *orm.QB) (EquipmentList, error) {
 }
 
 type RoomEquipment struct {
-	TenantId string
-	RoomId string
+	TenantId    string
+	RoomId      string
 	EquipmentId string
 }
 
-func (m *RoomEquipment) ModelName() string { return "room_equipment" }
+func (m *RoomEquipment) ModelName() string { return "room_space_equipment" }
 
 func (m *RoomEquipment) Schema() []model.Field { return RoomEquipmentModel.Fields }
 
@@ -425,17 +521,27 @@ func (m *RoomEquipment) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *RoomEquipment) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("tenant_id"); ok { m.TenantId = v }
-	if v, ok := r.String("room_id"); ok { m.RoomId = v }
-	if v, ok := r.String("equipment_id"); ok { m.EquipmentId = v }
+	if v, ok := r.String("tenant_id"); ok {
+		m.TenantId = v
+	}
+	if v, ok := r.String("room_id"); ok {
+		m.RoomId = v
+	}
+	if v, ok := r.String("equipment_id"); ok {
+		m.EquipmentId = v
+	}
 }
 
 type RoomEquipmentList []*RoomEquipment
 
-func (s *RoomEquipmentList) Len() int             { return len(*s) }
+func (s *RoomEquipmentList) Len() int               { return len(*s) }
 func (s *RoomEquipmentList) At(i int) model.Fielder { return (*s)[i] }
-func (s *RoomEquipmentList) Append() model.Fielder  { v := &RoomEquipment{}; *s = append(*s, v); return v }
-func (s *RoomEquipmentList) IsNil() bool          { return s == nil }
+func (s *RoomEquipmentList) Append() model.Fielder {
+	v := &RoomEquipment{}
+	*s = append(*s, v)
+	return v
+}
+func (s *RoomEquipmentList) IsNil() bool                      { return s == nil }
 func (s *RoomEquipmentList) EncodeFields(_ model.FieldWriter) {}
 func (s *RoomEquipmentList) DecodeFields(_ model.FieldReader) {}
 
@@ -444,12 +550,12 @@ func (m *RoomEquipment) Validate(action byte) error {
 }
 
 var RoomEquipment_ = struct {
-	TenantId string
-	RoomId string
+	TenantId    string
+	RoomId      string
 	EquipmentId string
 }{
-	TenantId: "tenant_id",
-	RoomId: "room_id",
+	TenantId:    "tenant_id",
+	RoomId:      "room_id",
 	EquipmentId: "equipment_id",
 }
 
@@ -472,14 +578,14 @@ func ReadAllRoomEquipment(qb *orm.QB) (RoomEquipmentList, error) {
 
 func (m *RoomEquipment) SchemaExt() []model.FieldExt {
 	return []model.FieldExt{
-		{Field: RoomEquipmentModel.Fields[1], Ref: "room", RefColumn: "id", OnDelete: ""},
-		{Field: RoomEquipmentModel.Fields[2], Ref: "equipment", RefColumn: "id", OnDelete: ""},
+		{Field: RoomEquipmentModel.Fields[1], Ref: "room_space", RefColumn: "id", OnDelete: ""},
+		{Field: RoomEquipmentModel.Fields[2], Ref: "room_equipment", RefColumn: "id", OnDelete: ""},
 	}
 }
 
 type RoomCategory struct {
-	TenantId string
-	RoomId string
+	TenantId   string
+	RoomId     string
 	CategoryId string
 }
 
@@ -498,17 +604,23 @@ func (m *RoomCategory) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *RoomCategory) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("tenant_id"); ok { m.TenantId = v }
-	if v, ok := r.String("room_id"); ok { m.RoomId = v }
-	if v, ok := r.String("category_id"); ok { m.CategoryId = v }
+	if v, ok := r.String("tenant_id"); ok {
+		m.TenantId = v
+	}
+	if v, ok := r.String("room_id"); ok {
+		m.RoomId = v
+	}
+	if v, ok := r.String("category_id"); ok {
+		m.CategoryId = v
+	}
 }
 
 type RoomCategoryList []*RoomCategory
 
-func (s *RoomCategoryList) Len() int             { return len(*s) }
-func (s *RoomCategoryList) At(i int) model.Fielder { return (*s)[i] }
-func (s *RoomCategoryList) Append() model.Fielder  { v := &RoomCategory{}; *s = append(*s, v); return v }
-func (s *RoomCategoryList) IsNil() bool          { return s == nil }
+func (s *RoomCategoryList) Len() int                         { return len(*s) }
+func (s *RoomCategoryList) At(i int) model.Fielder           { return (*s)[i] }
+func (s *RoomCategoryList) Append() model.Fielder            { v := &RoomCategory{}; *s = append(*s, v); return v }
+func (s *RoomCategoryList) IsNil() bool                      { return s == nil }
 func (s *RoomCategoryList) EncodeFields(_ model.FieldWriter) {}
 func (s *RoomCategoryList) DecodeFields(_ model.FieldReader) {}
 
@@ -517,12 +629,12 @@ func (m *RoomCategory) Validate(action byte) error {
 }
 
 var RoomCategory_ = struct {
-	TenantId string
-	RoomId string
+	TenantId   string
+	RoomId     string
 	CategoryId string
 }{
-	TenantId: "tenant_id",
-	RoomId: "room_id",
+	TenantId:   "tenant_id",
+	RoomId:     "room_id",
 	CategoryId: "category_id",
 }
 
@@ -545,69 +657,101 @@ func ReadAllRoomCategory(qb *orm.QB) (RoomCategoryList, error) {
 
 func (m *RoomCategory) SchemaExt() []model.FieldExt {
 	return []model.FieldExt{
-		{Field: RoomCategoryModel.Fields[1], Ref: "room", RefColumn: "id", OnDelete: ""},
+		{Field: RoomCategoryModel.Fields[1], Ref: "room_space", RefColumn: "id", OnDelete: ""},
 	}
 }
 
 type RoomShift struct {
-	Id string
-	TenantId string
-	RoomId string
-	CategoryId string
-	OccupantId string
+	Id            string
+	TenantId      string
+	RoomId        string
+	CategoryId    string
+	OccupantId    string
 	OccupantLabel string
-	DayOfWeek int64
-	SpecificDate time.Unix
-	StartMin int64
-	EndMin int64
-	IsActive bool
-	UpdatedAt time.Unix
+	DayOfWeek     int64
+	SpecificDate  time.Unix
+	StartMin      int64
+	EndMin        int64
+	IsActive      bool
+	UpdatedAt     time.Unix
 }
 
 func (m *RoomShift) ModelName() string { return "room_shift" }
 
 func (m *RoomShift) Schema() []model.Field { return RoomShiftModel.Fields }
 
-func (m *RoomShift) Pointers() []any { return []any{&m.Id, &m.TenantId, &m.RoomId, &m.CategoryId, &m.OccupantId, &m.OccupantLabel, &m.DayOfWeek, (*int64)(&m.SpecificDate), &m.StartMin, &m.EndMin, &m.IsActive, (*int64)(&m.UpdatedAt)} }
+func (m *RoomShift) Pointers() []any {
+	return []any{&m.Id, &m.TenantId, &m.RoomId, &m.CategoryId, &m.OccupantId, &m.OccupantLabel, &m.DayOfWeek, (*int64)(&m.SpecificDate), &m.StartMin, &m.EndMin, &m.IsActive, (*int64)(&m.UpdatedAt)}
+}
 
 func (m *RoomShift) IsNil() bool { return m == nil }
 
 func (m *RoomShift) EncodeFields(w model.FieldWriter) {
-	if m.Id != "" { w.String("id", m.Id) }
+	if m.Id != "" {
+		w.String("id", m.Id)
+	}
 	w.String("tenant_id", m.TenantId)
 	w.String("room_id", m.RoomId)
 	w.String("category_id", m.CategoryId)
-	if m.OccupantId != "" { w.String("occupant_id", m.OccupantId) }
+	if m.OccupantId != "" {
+		w.String("occupant_id", m.OccupantId)
+	}
 	w.String("occupant_label", m.OccupantLabel)
 	w.Int("day_of_week", m.DayOfWeek)
 	w.Int("specific_date", int64(m.SpecificDate))
 	w.Int("start_min", m.StartMin)
 	w.Int("end_min", m.EndMin)
 	w.Bool("is_active", m.IsActive)
-	if m.UpdatedAt != 0 { w.Int("updated_at", int64(m.UpdatedAt)) }
+	if m.UpdatedAt != 0 {
+		w.Int("updated_at", int64(m.UpdatedAt))
+	}
 }
 
 func (m *RoomShift) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("id"); ok { m.Id = v }
-	if v, ok := r.String("tenant_id"); ok { m.TenantId = v }
-	if v, ok := r.String("room_id"); ok { m.RoomId = v }
-	if v, ok := r.String("category_id"); ok { m.CategoryId = v }
-	if v, ok := r.String("occupant_id"); ok { m.OccupantId = v }
-	if v, ok := r.String("occupant_label"); ok { m.OccupantLabel = v }
-	if v, ok := r.Int("day_of_week"); ok { m.DayOfWeek = v }
-	if v, ok := r.Int("specific_date"); ok { m.SpecificDate = time.Unix(v) }
-	if v, ok := r.Int("start_min"); ok { m.StartMin = v }
-	if v, ok := r.Int("end_min"); ok { m.EndMin = v }
-	if v, ok := r.Bool("is_active"); ok { m.IsActive = v }
-	if v, ok := r.Int("updated_at"); ok { m.UpdatedAt = time.Unix(v) }
+	if v, ok := r.String("id"); ok {
+		m.Id = v
+	}
+	if v, ok := r.String("tenant_id"); ok {
+		m.TenantId = v
+	}
+	if v, ok := r.String("room_id"); ok {
+		m.RoomId = v
+	}
+	if v, ok := r.String("category_id"); ok {
+		m.CategoryId = v
+	}
+	if v, ok := r.String("occupant_id"); ok {
+		m.OccupantId = v
+	}
+	if v, ok := r.String("occupant_label"); ok {
+		m.OccupantLabel = v
+	}
+	if v, ok := r.Int("day_of_week"); ok {
+		m.DayOfWeek = v
+	}
+	if v, ok := r.Int("specific_date"); ok {
+		m.SpecificDate = time.Unix(v)
+	}
+	if v, ok := r.Int("start_min"); ok {
+		m.StartMin = v
+	}
+	if v, ok := r.Int("end_min"); ok {
+		m.EndMin = v
+	}
+	if v, ok := r.Bool("is_active"); ok {
+		m.IsActive = v
+	}
+	if v, ok := r.Int("updated_at"); ok {
+		m.UpdatedAt = time.Unix(v)
+	}
 }
 
 type RoomShiftList []*RoomShift
 
-func (s *RoomShiftList) Len() int             { return len(*s) }
-func (s *RoomShiftList) At(i int) model.Fielder { return (*s)[i] }
-func (s *RoomShiftList) Append() model.Fielder  { v := &RoomShift{}; *s = append(*s, v); return v }
-func (s *RoomShiftList) IsNil() bool          { return s == nil }
+func (s *RoomShiftList) Len() int                         { return len(*s) }
+func (s *RoomShiftList) At(i int) model.Fielder           { return (*s)[i] }
+func (s *RoomShiftList) Append() model.Fielder            { v := &RoomShift{}; *s = append(*s, v); return v }
+func (s *RoomShiftList) IsNil() bool                      { return s == nil }
 func (s *RoomShiftList) EncodeFields(_ model.FieldWriter) {}
 func (s *RoomShiftList) DecodeFields(_ model.FieldReader) {}
 
@@ -616,31 +760,31 @@ func (m *RoomShift) Validate(action byte) error {
 }
 
 var RoomShift_ = struct {
-	Id string
-	TenantId string
-	RoomId string
-	CategoryId string
-	OccupantId string
+	Id            string
+	TenantId      string
+	RoomId        string
+	CategoryId    string
+	OccupantId    string
 	OccupantLabel string
-	DayOfWeek string
-	SpecificDate string
-	StartMin string
-	EndMin string
-	IsActive string
-	UpdatedAt string
+	DayOfWeek     string
+	SpecificDate  string
+	StartMin      string
+	EndMin        string
+	IsActive      string
+	UpdatedAt     string
 }{
-	Id: "id",
-	TenantId: "tenant_id",
-	RoomId: "room_id",
-	CategoryId: "category_id",
-	OccupantId: "occupant_id",
+	Id:            "id",
+	TenantId:      "tenant_id",
+	RoomId:        "room_id",
+	CategoryId:    "category_id",
+	OccupantId:    "occupant_id",
 	OccupantLabel: "occupant_label",
-	DayOfWeek: "day_of_week",
-	SpecificDate: "specific_date",
-	StartMin: "start_min",
-	EndMin: "end_min",
-	IsActive: "is_active",
-	UpdatedAt: "updated_at",
+	DayOfWeek:     "day_of_week",
+	SpecificDate:  "specific_date",
+	StartMin:      "start_min",
+	EndMin:        "end_min",
+	IsActive:      "is_active",
+	UpdatedAt:     "updated_at",
 }
 
 func ReadOneRoomShift(qb *orm.QB, model *RoomShift) (*RoomShift, error) {
@@ -662,13 +806,13 @@ func ReadAllRoomShift(qb *orm.QB) (RoomShiftList, error) {
 
 func (m *RoomShift) SchemaExt() []model.FieldExt {
 	return []model.FieldExt{
-		{Field: RoomShiftModel.Fields[2], Ref: "room", RefColumn: "id", OnDelete: ""},
+		{Field: RoomShiftModel.Fields[2], Ref: "room_space", RefColumn: "id", OnDelete: ""},
 	}
 }
 
 type RoomShiftCancellation struct {
-	TenantId string
-	ShiftId string
+	TenantId     string
+	ShiftId      string
 	SpecificDate time.Unix
 }
 
@@ -676,7 +820,9 @@ func (m *RoomShiftCancellation) ModelName() string { return "room_shift_cancella
 
 func (m *RoomShiftCancellation) Schema() []model.Field { return RoomShiftCancellationModel.Fields }
 
-func (m *RoomShiftCancellation) Pointers() []any { return []any{&m.TenantId, &m.ShiftId, (*int64)(&m.SpecificDate)} }
+func (m *RoomShiftCancellation) Pointers() []any {
+	return []any{&m.TenantId, &m.ShiftId, (*int64)(&m.SpecificDate)}
+}
 
 func (m *RoomShiftCancellation) IsNil() bool { return m == nil }
 
@@ -687,17 +833,27 @@ func (m *RoomShiftCancellation) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *RoomShiftCancellation) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("tenant_id"); ok { m.TenantId = v }
-	if v, ok := r.String("shift_id"); ok { m.ShiftId = v }
-	if v, ok := r.Int("specific_date"); ok { m.SpecificDate = time.Unix(v) }
+	if v, ok := r.String("tenant_id"); ok {
+		m.TenantId = v
+	}
+	if v, ok := r.String("shift_id"); ok {
+		m.ShiftId = v
+	}
+	if v, ok := r.Int("specific_date"); ok {
+		m.SpecificDate = time.Unix(v)
+	}
 }
 
 type RoomShiftCancellationList []*RoomShiftCancellation
 
-func (s *RoomShiftCancellationList) Len() int             { return len(*s) }
+func (s *RoomShiftCancellationList) Len() int               { return len(*s) }
 func (s *RoomShiftCancellationList) At(i int) model.Fielder { return (*s)[i] }
-func (s *RoomShiftCancellationList) Append() model.Fielder  { v := &RoomShiftCancellation{}; *s = append(*s, v); return v }
-func (s *RoomShiftCancellationList) IsNil() bool          { return s == nil }
+func (s *RoomShiftCancellationList) Append() model.Fielder {
+	v := &RoomShiftCancellation{}
+	*s = append(*s, v)
+	return v
+}
+func (s *RoomShiftCancellationList) IsNil() bool                      { return s == nil }
 func (s *RoomShiftCancellationList) EncodeFields(_ model.FieldWriter) {}
 func (s *RoomShiftCancellationList) DecodeFields(_ model.FieldReader) {}
 
@@ -706,12 +862,12 @@ func (m *RoomShiftCancellation) Validate(action byte) error {
 }
 
 var RoomShiftCancellation_ = struct {
-	TenantId string
-	ShiftId string
+	TenantId     string
+	ShiftId      string
 	SpecificDate string
 }{
-	TenantId: "tenant_id",
-	ShiftId: "shift_id",
+	TenantId:     "tenant_id",
+	ShiftId:      "shift_id",
 	SpecificDate: "specific_date",
 }
 
@@ -739,55 +895,89 @@ func (m *RoomShiftCancellation) SchemaExt() []model.FieldExt {
 }
 
 type RoomShiftForm struct {
-	Id string
-	RoomId string
-	CategoryId string
-	OccupantId string
+	Id            string
+	RoomId        string
+	CategoryId    string
+	OccupantId    string
 	OccupantLabel string
-	DayOfWeek string
-	Date string
-	Start string
-	End string
+	DayOfWeek     string
+	Date          string
+	Start         string
+	End           string
 }
 
 func (m *RoomShiftForm) ModelName() string { return "room_shift_form" }
 
 func (m *RoomShiftForm) Schema() []model.Field { return RoomShiftFormModel.Fields }
 
-func (m *RoomShiftForm) Pointers() []any { return []any{&m.Id, &m.RoomId, &m.CategoryId, &m.OccupantId, &m.OccupantLabel, &m.DayOfWeek, &m.Date, &m.Start, &m.End} }
+func (m *RoomShiftForm) Pointers() []any {
+	return []any{&m.Id, &m.RoomId, &m.CategoryId, &m.OccupantId, &m.OccupantLabel, &m.DayOfWeek, &m.Date, &m.Start, &m.End}
+}
 
 func (m *RoomShiftForm) IsNil() bool { return m == nil }
 
 func (m *RoomShiftForm) EncodeFields(w model.FieldWriter) {
-	if m.Id != "" { w.String("id", m.Id) }
+	if m.Id != "" {
+		w.String("id", m.Id)
+	}
 	w.String("room_id", m.RoomId)
 	w.String("category_id", m.CategoryId)
-	if m.OccupantId != "" { w.String("occupant_id", m.OccupantId) }
-	if m.OccupantLabel != "" { w.String("occupant_label", m.OccupantLabel) }
-	if m.DayOfWeek != "" { w.String("day_of_week", m.DayOfWeek) }
-	if m.Date != "" { w.String("date", m.Date) }
+	if m.OccupantId != "" {
+		w.String("occupant_id", m.OccupantId)
+	}
+	if m.OccupantLabel != "" {
+		w.String("occupant_label", m.OccupantLabel)
+	}
+	if m.DayOfWeek != "" {
+		w.String("day_of_week", m.DayOfWeek)
+	}
+	if m.Date != "" {
+		w.String("date", m.Date)
+	}
 	w.String("start", m.Start)
 	w.String("end", m.End)
 }
 
 func (m *RoomShiftForm) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("id"); ok { m.Id = v }
-	if v, ok := r.String("room_id"); ok { m.RoomId = v }
-	if v, ok := r.String("category_id"); ok { m.CategoryId = v }
-	if v, ok := r.String("occupant_id"); ok { m.OccupantId = v }
-	if v, ok := r.String("occupant_label"); ok { m.OccupantLabel = v }
-	if v, ok := r.String("day_of_week"); ok { m.DayOfWeek = v }
-	if v, ok := r.String("date"); ok { m.Date = v }
-	if v, ok := r.String("start"); ok { m.Start = v }
-	if v, ok := r.String("end"); ok { m.End = v }
+	if v, ok := r.String("id"); ok {
+		m.Id = v
+	}
+	if v, ok := r.String("room_id"); ok {
+		m.RoomId = v
+	}
+	if v, ok := r.String("category_id"); ok {
+		m.CategoryId = v
+	}
+	if v, ok := r.String("occupant_id"); ok {
+		m.OccupantId = v
+	}
+	if v, ok := r.String("occupant_label"); ok {
+		m.OccupantLabel = v
+	}
+	if v, ok := r.String("day_of_week"); ok {
+		m.DayOfWeek = v
+	}
+	if v, ok := r.String("date"); ok {
+		m.Date = v
+	}
+	if v, ok := r.String("start"); ok {
+		m.Start = v
+	}
+	if v, ok := r.String("end"); ok {
+		m.End = v
+	}
 }
 
 type RoomShiftFormList []*RoomShiftForm
 
-func (s *RoomShiftFormList) Len() int             { return len(*s) }
+func (s *RoomShiftFormList) Len() int               { return len(*s) }
 func (s *RoomShiftFormList) At(i int) model.Fielder { return (*s)[i] }
-func (s *RoomShiftFormList) Append() model.Fielder  { v := &RoomShiftForm{}; *s = append(*s, v); return v }
-func (s *RoomShiftFormList) IsNil() bool          { return s == nil }
+func (s *RoomShiftFormList) Append() model.Fielder {
+	v := &RoomShiftForm{}
+	*s = append(*s, v)
+	return v
+}
+func (s *RoomShiftFormList) IsNil() bool                      { return s == nil }
 func (s *RoomShiftFormList) EncodeFields(_ model.FieldWriter) {}
 func (s *RoomShiftFormList) DecodeFields(_ model.FieldReader) {}
 
@@ -812,15 +1002,17 @@ func (m *IdRef) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *IdRef) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("id"); ok { m.Id = v }
+	if v, ok := r.String("id"); ok {
+		m.Id = v
+	}
 }
 
 type IdRefList []*IdRef
 
-func (s *IdRefList) Len() int             { return len(*s) }
-func (s *IdRefList) At(i int) model.Fielder { return (*s)[i] }
-func (s *IdRefList) Append() model.Fielder  { v := &IdRef{}; *s = append(*s, v); return v }
-func (s *IdRefList) IsNil() bool          { return s == nil }
+func (s *IdRefList) Len() int                         { return len(*s) }
+func (s *IdRefList) At(i int) model.Fielder           { return (*s)[i] }
+func (s *IdRefList) Append() model.Fielder            { v := &IdRef{}; *s = append(*s, v); return v }
+func (s *IdRefList) IsNil() bool                      { return s == nil }
 func (s *IdRefList) EncodeFields(_ model.FieldWriter) {}
 func (s *IdRefList) DecodeFields(_ model.FieldReader) {}
 
@@ -847,10 +1039,14 @@ func (m *ListFloorsArgs) DecodeFields(r model.FieldReader) {
 
 type ListFloorsArgsList []*ListFloorsArgs
 
-func (s *ListFloorsArgsList) Len() int             { return len(*s) }
+func (s *ListFloorsArgsList) Len() int               { return len(*s) }
 func (s *ListFloorsArgsList) At(i int) model.Fielder { return (*s)[i] }
-func (s *ListFloorsArgsList) Append() model.Fielder  { v := &ListFloorsArgs{}; *s = append(*s, v); return v }
-func (s *ListFloorsArgsList) IsNil() bool          { return s == nil }
+func (s *ListFloorsArgsList) Append() model.Fielder {
+	v := &ListFloorsArgs{}
+	*s = append(*s, v)
+	return v
+}
+func (s *ListFloorsArgsList) IsNil() bool                      { return s == nil }
 func (s *ListFloorsArgsList) EncodeFields(_ model.FieldWriter) {}
 func (s *ListFloorsArgsList) DecodeFields(_ model.FieldReader) {}
 
@@ -875,15 +1071,21 @@ func (m *ListRoomsArgs) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *ListRoomsArgs) DecodeFields(r model.FieldReader) {
-	if v, ok := r.Bool("active_only"); ok { m.ActiveOnly = v }
+	if v, ok := r.Bool("active_only"); ok {
+		m.ActiveOnly = v
+	}
 }
 
 type ListRoomsArgsList []*ListRoomsArgs
 
-func (s *ListRoomsArgsList) Len() int             { return len(*s) }
+func (s *ListRoomsArgsList) Len() int               { return len(*s) }
 func (s *ListRoomsArgsList) At(i int) model.Fielder { return (*s)[i] }
-func (s *ListRoomsArgsList) Append() model.Fielder  { v := &ListRoomsArgs{}; *s = append(*s, v); return v }
-func (s *ListRoomsArgsList) IsNil() bool          { return s == nil }
+func (s *ListRoomsArgsList) Append() model.Fielder {
+	v := &ListRoomsArgs{}
+	*s = append(*s, v)
+	return v
+}
+func (s *ListRoomsArgsList) IsNil() bool                      { return s == nil }
 func (s *ListRoomsArgsList) EncodeFields(_ model.FieldWriter) {}
 func (s *ListRoomsArgsList) DecodeFields(_ model.FieldReader) {}
 
@@ -908,15 +1110,17 @@ func (m *GetRoomArgs) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *GetRoomArgs) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("id"); ok { m.Id = v }
+	if v, ok := r.String("id"); ok {
+		m.Id = v
+	}
 }
 
 type GetRoomArgsList []*GetRoomArgs
 
-func (s *GetRoomArgsList) Len() int             { return len(*s) }
-func (s *GetRoomArgsList) At(i int) model.Fielder { return (*s)[i] }
-func (s *GetRoomArgsList) Append() model.Fielder  { v := &GetRoomArgs{}; *s = append(*s, v); return v }
-func (s *GetRoomArgsList) IsNil() bool          { return s == nil }
+func (s *GetRoomArgsList) Len() int                         { return len(*s) }
+func (s *GetRoomArgsList) At(i int) model.Fielder           { return (*s)[i] }
+func (s *GetRoomArgsList) Append() model.Fielder            { v := &GetRoomArgs{}; *s = append(*s, v); return v }
+func (s *GetRoomArgsList) IsNil() bool                      { return s == nil }
 func (s *GetRoomArgsList) EncodeFields(_ model.FieldWriter) {}
 func (s *GetRoomArgsList) DecodeFields(_ model.FieldReader) {}
 
@@ -941,15 +1145,21 @@ func (m *DeactivateRoomArgs) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *DeactivateRoomArgs) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("id"); ok { m.Id = v }
+	if v, ok := r.String("id"); ok {
+		m.Id = v
+	}
 }
 
 type DeactivateRoomArgsList []*DeactivateRoomArgs
 
-func (s *DeactivateRoomArgsList) Len() int             { return len(*s) }
+func (s *DeactivateRoomArgsList) Len() int               { return len(*s) }
 func (s *DeactivateRoomArgsList) At(i int) model.Fielder { return (*s)[i] }
-func (s *DeactivateRoomArgsList) Append() model.Fielder  { v := &DeactivateRoomArgs{}; *s = append(*s, v); return v }
-func (s *DeactivateRoomArgsList) IsNil() bool          { return s == nil }
+func (s *DeactivateRoomArgsList) Append() model.Fielder {
+	v := &DeactivateRoomArgs{}
+	*s = append(*s, v)
+	return v
+}
+func (s *DeactivateRoomArgsList) IsNil() bool                      { return s == nil }
 func (s *DeactivateRoomArgsList) EncodeFields(_ model.FieldWriter) {}
 func (s *DeactivateRoomArgsList) DecodeFields(_ model.FieldReader) {}
 
@@ -976,10 +1186,14 @@ func (m *ListEquipmentArgs) DecodeFields(r model.FieldReader) {
 
 type ListEquipmentArgsList []*ListEquipmentArgs
 
-func (s *ListEquipmentArgsList) Len() int             { return len(*s) }
+func (s *ListEquipmentArgsList) Len() int               { return len(*s) }
 func (s *ListEquipmentArgsList) At(i int) model.Fielder { return (*s)[i] }
-func (s *ListEquipmentArgsList) Append() model.Fielder  { v := &ListEquipmentArgs{}; *s = append(*s, v); return v }
-func (s *ListEquipmentArgsList) IsNil() bool          { return s == nil }
+func (s *ListEquipmentArgsList) Append() model.Fielder {
+	v := &ListEquipmentArgs{}
+	*s = append(*s, v)
+	return v
+}
+func (s *ListEquipmentArgsList) IsNil() bool                      { return s == nil }
 func (s *ListEquipmentArgsList) EncodeFields(_ model.FieldWriter) {}
 func (s *ListEquipmentArgsList) DecodeFields(_ model.FieldReader) {}
 
@@ -1004,15 +1218,21 @@ func (m *ListRoomEquipmentArgs) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *ListRoomEquipmentArgs) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("room_id"); ok { m.RoomId = v }
+	if v, ok := r.String("room_id"); ok {
+		m.RoomId = v
+	}
 }
 
 type ListRoomEquipmentArgsList []*ListRoomEquipmentArgs
 
-func (s *ListRoomEquipmentArgsList) Len() int             { return len(*s) }
+func (s *ListRoomEquipmentArgsList) Len() int               { return len(*s) }
 func (s *ListRoomEquipmentArgsList) At(i int) model.Fielder { return (*s)[i] }
-func (s *ListRoomEquipmentArgsList) Append() model.Fielder  { v := &ListRoomEquipmentArgs{}; *s = append(*s, v); return v }
-func (s *ListRoomEquipmentArgsList) IsNil() bool          { return s == nil }
+func (s *ListRoomEquipmentArgsList) Append() model.Fielder {
+	v := &ListRoomEquipmentArgs{}
+	*s = append(*s, v)
+	return v
+}
+func (s *ListRoomEquipmentArgsList) IsNil() bool                      { return s == nil }
 func (s *ListRoomEquipmentArgsList) EncodeFields(_ model.FieldWriter) {}
 func (s *ListRoomEquipmentArgsList) DecodeFields(_ model.FieldReader) {}
 
@@ -1021,7 +1241,7 @@ func (m *ListRoomEquipmentArgs) Validate(action byte) error {
 }
 
 type SetRoomEquipmentArgs struct {
-	RoomId string
+	RoomId       string
 	EquipmentIds []IdRef
 }
 
@@ -1035,16 +1255,18 @@ func (m *SetRoomEquipmentArgs) IsNil() bool { return m == nil }
 
 func (m *SetRoomEquipmentArgs) EncodeFields(w model.FieldWriter) {
 	w.String("room_id", m.RoomId)
-		{
-			arr := w.Array("equipment_ids", len(m.EquipmentIds))
-			for _, x := range m.EquipmentIds {
-				arr.Object(&x)
-			}
+	{
+		arr := w.Array("equipment_ids", len(m.EquipmentIds))
+		for _, x := range m.EquipmentIds {
+			arr.Object(&x)
 		}
+	}
 }
 
 func (m *SetRoomEquipmentArgs) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("room_id"); ok { m.RoomId = v }
+	if v, ok := r.String("room_id"); ok {
+		m.RoomId = v
+	}
 	if arr, ok := r.Array("equipment_ids"); ok {
 		n := arr.Len()
 		m.EquipmentIds = make([]IdRef, n)
@@ -1056,10 +1278,14 @@ func (m *SetRoomEquipmentArgs) DecodeFields(r model.FieldReader) {
 
 type SetRoomEquipmentArgsList []*SetRoomEquipmentArgs
 
-func (s *SetRoomEquipmentArgsList) Len() int             { return len(*s) }
+func (s *SetRoomEquipmentArgsList) Len() int               { return len(*s) }
 func (s *SetRoomEquipmentArgsList) At(i int) model.Fielder { return (*s)[i] }
-func (s *SetRoomEquipmentArgsList) Append() model.Fielder  { v := &SetRoomEquipmentArgs{}; *s = append(*s, v); return v }
-func (s *SetRoomEquipmentArgsList) IsNil() bool          { return s == nil }
+func (s *SetRoomEquipmentArgsList) Append() model.Fielder {
+	v := &SetRoomEquipmentArgs{}
+	*s = append(*s, v)
+	return v
+}
+func (s *SetRoomEquipmentArgsList) IsNil() bool                      { return s == nil }
 func (s *SetRoomEquipmentArgsList) EncodeFields(_ model.FieldWriter) {}
 func (s *SetRoomEquipmentArgsList) DecodeFields(_ model.FieldReader) {}
 
@@ -1084,15 +1310,21 @@ func (m *ListRoomCategoriesArgs) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *ListRoomCategoriesArgs) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("room_id"); ok { m.RoomId = v }
+	if v, ok := r.String("room_id"); ok {
+		m.RoomId = v
+	}
 }
 
 type ListRoomCategoriesArgsList []*ListRoomCategoriesArgs
 
-func (s *ListRoomCategoriesArgsList) Len() int             { return len(*s) }
+func (s *ListRoomCategoriesArgsList) Len() int               { return len(*s) }
 func (s *ListRoomCategoriesArgsList) At(i int) model.Fielder { return (*s)[i] }
-func (s *ListRoomCategoriesArgsList) Append() model.Fielder  { v := &ListRoomCategoriesArgs{}; *s = append(*s, v); return v }
-func (s *ListRoomCategoriesArgsList) IsNil() bool          { return s == nil }
+func (s *ListRoomCategoriesArgsList) Append() model.Fielder {
+	v := &ListRoomCategoriesArgs{}
+	*s = append(*s, v)
+	return v
+}
+func (s *ListRoomCategoriesArgsList) IsNil() bool                      { return s == nil }
 func (s *ListRoomCategoriesArgsList) EncodeFields(_ model.FieldWriter) {}
 func (s *ListRoomCategoriesArgsList) DecodeFields(_ model.FieldReader) {}
 
@@ -1101,7 +1333,7 @@ func (m *ListRoomCategoriesArgs) Validate(action byte) error {
 }
 
 type SetRoomCategoriesArgs struct {
-	RoomId string
+	RoomId      string
 	CategoryIds []IdRef
 }
 
@@ -1115,16 +1347,18 @@ func (m *SetRoomCategoriesArgs) IsNil() bool { return m == nil }
 
 func (m *SetRoomCategoriesArgs) EncodeFields(w model.FieldWriter) {
 	w.String("room_id", m.RoomId)
-		{
-			arr := w.Array("category_ids", len(m.CategoryIds))
-			for _, x := range m.CategoryIds {
-				arr.Object(&x)
-			}
+	{
+		arr := w.Array("category_ids", len(m.CategoryIds))
+		for _, x := range m.CategoryIds {
+			arr.Object(&x)
 		}
+	}
 }
 
 func (m *SetRoomCategoriesArgs) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("room_id"); ok { m.RoomId = v }
+	if v, ok := r.String("room_id"); ok {
+		m.RoomId = v
+	}
 	if arr, ok := r.Array("category_ids"); ok {
 		n := arr.Len()
 		m.CategoryIds = make([]IdRef, n)
@@ -1136,10 +1370,14 @@ func (m *SetRoomCategoriesArgs) DecodeFields(r model.FieldReader) {
 
 type SetRoomCategoriesArgsList []*SetRoomCategoriesArgs
 
-func (s *SetRoomCategoriesArgsList) Len() int             { return len(*s) }
+func (s *SetRoomCategoriesArgsList) Len() int               { return len(*s) }
 func (s *SetRoomCategoriesArgsList) At(i int) model.Fielder { return (*s)[i] }
-func (s *SetRoomCategoriesArgsList) Append() model.Fielder  { v := &SetRoomCategoriesArgs{}; *s = append(*s, v); return v }
-func (s *SetRoomCategoriesArgsList) IsNil() bool          { return s == nil }
+func (s *SetRoomCategoriesArgsList) Append() model.Fielder {
+	v := &SetRoomCategoriesArgs{}
+	*s = append(*s, v)
+	return v
+}
+func (s *SetRoomCategoriesArgsList) IsNil() bool                      { return s == nil }
 func (s *SetRoomCategoriesArgsList) EncodeFields(_ model.FieldWriter) {}
 func (s *SetRoomCategoriesArgsList) DecodeFields(_ model.FieldReader) {}
 
@@ -1166,10 +1404,14 @@ func (m *ListOptionsArgs) DecodeFields(r model.FieldReader) {
 
 type ListOptionsArgsList []*ListOptionsArgs
 
-func (s *ListOptionsArgsList) Len() int             { return len(*s) }
+func (s *ListOptionsArgsList) Len() int               { return len(*s) }
 func (s *ListOptionsArgsList) At(i int) model.Fielder { return (*s)[i] }
-func (s *ListOptionsArgsList) Append() model.Fielder  { v := &ListOptionsArgs{}; *s = append(*s, v); return v }
-func (s *ListOptionsArgsList) IsNil() bool          { return s == nil }
+func (s *ListOptionsArgsList) Append() model.Fielder {
+	v := &ListOptionsArgs{}
+	*s = append(*s, v)
+	return v
+}
+func (s *ListOptionsArgsList) IsNil() bool                      { return s == nil }
 func (s *ListOptionsArgsList) EncodeFields(_ model.FieldWriter) {}
 func (s *ListOptionsArgsList) DecodeFields(_ model.FieldReader) {}
 
@@ -1194,15 +1436,21 @@ func (m *ListRoomShiftsArgs) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *ListRoomShiftsArgs) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("room_id"); ok { m.RoomId = v }
+	if v, ok := r.String("room_id"); ok {
+		m.RoomId = v
+	}
 }
 
 type ListRoomShiftsArgsList []*ListRoomShiftsArgs
 
-func (s *ListRoomShiftsArgsList) Len() int             { return len(*s) }
+func (s *ListRoomShiftsArgsList) Len() int               { return len(*s) }
 func (s *ListRoomShiftsArgsList) At(i int) model.Fielder { return (*s)[i] }
-func (s *ListRoomShiftsArgsList) Append() model.Fielder  { v := &ListRoomShiftsArgs{}; *s = append(*s, v); return v }
-func (s *ListRoomShiftsArgsList) IsNil() bool          { return s == nil }
+func (s *ListRoomShiftsArgsList) Append() model.Fielder {
+	v := &ListRoomShiftsArgs{}
+	*s = append(*s, v)
+	return v
+}
+func (s *ListRoomShiftsArgsList) IsNil() bool                      { return s == nil }
 func (s *ListRoomShiftsArgsList) EncodeFields(_ model.FieldWriter) {}
 func (s *ListRoomShiftsArgsList) DecodeFields(_ model.FieldReader) {}
 
@@ -1227,15 +1475,21 @@ func (m *DeleteRoomShiftArgs) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *DeleteRoomShiftArgs) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("id"); ok { m.Id = v }
+	if v, ok := r.String("id"); ok {
+		m.Id = v
+	}
 }
 
 type DeleteRoomShiftArgsList []*DeleteRoomShiftArgs
 
-func (s *DeleteRoomShiftArgsList) Len() int             { return len(*s) }
+func (s *DeleteRoomShiftArgsList) Len() int               { return len(*s) }
 func (s *DeleteRoomShiftArgsList) At(i int) model.Fielder { return (*s)[i] }
-func (s *DeleteRoomShiftArgsList) Append() model.Fielder  { v := &DeleteRoomShiftArgs{}; *s = append(*s, v); return v }
-func (s *DeleteRoomShiftArgsList) IsNil() bool          { return s == nil }
+func (s *DeleteRoomShiftArgsList) Append() model.Fielder {
+	v := &DeleteRoomShiftArgs{}
+	*s = append(*s, v)
+	return v
+}
+func (s *DeleteRoomShiftArgsList) IsNil() bool                      { return s == nil }
 func (s *DeleteRoomShiftArgsList) EncodeFields(_ model.FieldWriter) {}
 func (s *DeleteRoomShiftArgsList) DecodeFields(_ model.FieldReader) {}
 
@@ -1245,12 +1499,14 @@ func (m *DeleteRoomShiftArgs) Validate(action byte) error {
 
 type CancelShiftOccurrenceArgs struct {
 	ShiftId string
-	Date string
+	Date    string
 }
 
 func (m *CancelShiftOccurrenceArgs) ModelName() string { return "cancel_shift_occurrence_args" }
 
-func (m *CancelShiftOccurrenceArgs) Schema() []model.Field { return CancelShiftOccurrenceArgsModel.Fields }
+func (m *CancelShiftOccurrenceArgs) Schema() []model.Field {
+	return CancelShiftOccurrenceArgsModel.Fields
+}
 
 func (m *CancelShiftOccurrenceArgs) Pointers() []any { return []any{&m.ShiftId, &m.Date} }
 
@@ -1262,16 +1518,24 @@ func (m *CancelShiftOccurrenceArgs) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *CancelShiftOccurrenceArgs) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("shift_id"); ok { m.ShiftId = v }
-	if v, ok := r.String("date"); ok { m.Date = v }
+	if v, ok := r.String("shift_id"); ok {
+		m.ShiftId = v
+	}
+	if v, ok := r.String("date"); ok {
+		m.Date = v
+	}
 }
 
 type CancelShiftOccurrenceArgsList []*CancelShiftOccurrenceArgs
 
-func (s *CancelShiftOccurrenceArgsList) Len() int             { return len(*s) }
+func (s *CancelShiftOccurrenceArgsList) Len() int               { return len(*s) }
 func (s *CancelShiftOccurrenceArgsList) At(i int) model.Fielder { return (*s)[i] }
-func (s *CancelShiftOccurrenceArgsList) Append() model.Fielder  { v := &CancelShiftOccurrenceArgs{}; *s = append(*s, v); return v }
-func (s *CancelShiftOccurrenceArgsList) IsNil() bool          { return s == nil }
+func (s *CancelShiftOccurrenceArgsList) Append() model.Fielder {
+	v := &CancelShiftOccurrenceArgs{}
+	*s = append(*s, v)
+	return v
+}
+func (s *CancelShiftOccurrenceArgsList) IsNil() bool                      { return s == nil }
 func (s *CancelShiftOccurrenceArgsList) EncodeFields(_ model.FieldWriter) {}
 func (s *CancelShiftOccurrenceArgsList) DecodeFields(_ model.FieldReader) {}
 
@@ -1280,8 +1544,8 @@ func (m *CancelShiftOccurrenceArgs) Validate(action byte) error {
 }
 
 type MoveShiftOccurrenceArgs struct {
-	ShiftId string
-	Date string
+	ShiftId      string
+	Date         string
 	TargetRoomId string
 }
 
@@ -1289,7 +1553,9 @@ func (m *MoveShiftOccurrenceArgs) ModelName() string { return "move_shift_occurr
 
 func (m *MoveShiftOccurrenceArgs) Schema() []model.Field { return MoveShiftOccurrenceArgsModel.Fields }
 
-func (m *MoveShiftOccurrenceArgs) Pointers() []any { return []any{&m.ShiftId, &m.Date, &m.TargetRoomId} }
+func (m *MoveShiftOccurrenceArgs) Pointers() []any {
+	return []any{&m.ShiftId, &m.Date, &m.TargetRoomId}
+}
 
 func (m *MoveShiftOccurrenceArgs) IsNil() bool { return m == nil }
 
@@ -1300,17 +1566,27 @@ func (m *MoveShiftOccurrenceArgs) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *MoveShiftOccurrenceArgs) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("shift_id"); ok { m.ShiftId = v }
-	if v, ok := r.String("date"); ok { m.Date = v }
-	if v, ok := r.String("target_room_id"); ok { m.TargetRoomId = v }
+	if v, ok := r.String("shift_id"); ok {
+		m.ShiftId = v
+	}
+	if v, ok := r.String("date"); ok {
+		m.Date = v
+	}
+	if v, ok := r.String("target_room_id"); ok {
+		m.TargetRoomId = v
+	}
 }
 
 type MoveShiftOccurrenceArgsList []*MoveShiftOccurrenceArgs
 
-func (s *MoveShiftOccurrenceArgsList) Len() int             { return len(*s) }
+func (s *MoveShiftOccurrenceArgsList) Len() int               { return len(*s) }
 func (s *MoveShiftOccurrenceArgsList) At(i int) model.Fielder { return (*s)[i] }
-func (s *MoveShiftOccurrenceArgsList) Append() model.Fielder  { v := &MoveShiftOccurrenceArgs{}; *s = append(*s, v); return v }
-func (s *MoveShiftOccurrenceArgsList) IsNil() bool          { return s == nil }
+func (s *MoveShiftOccurrenceArgsList) Append() model.Fielder {
+	v := &MoveShiftOccurrenceArgs{}
+	*s = append(*s, v)
+	return v
+}
+func (s *MoveShiftOccurrenceArgsList) IsNil() bool                      { return s == nil }
 func (s *MoveShiftOccurrenceArgsList) EncodeFields(_ model.FieldWriter) {}
 func (s *MoveShiftOccurrenceArgsList) DecodeFields(_ model.FieldReader) {}
 
@@ -1320,7 +1596,7 @@ func (m *MoveShiftOccurrenceArgs) Validate(action byte) error {
 
 type ListRoomDayArgs struct {
 	RoomId string
-	Date string
+	Date   string
 }
 
 func (m *ListRoomDayArgs) ModelName() string { return "list_room_day_args" }
@@ -1337,16 +1613,24 @@ func (m *ListRoomDayArgs) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *ListRoomDayArgs) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("room_id"); ok { m.RoomId = v }
-	if v, ok := r.String("date"); ok { m.Date = v }
+	if v, ok := r.String("room_id"); ok {
+		m.RoomId = v
+	}
+	if v, ok := r.String("date"); ok {
+		m.Date = v
+	}
 }
 
 type ListRoomDayArgsList []*ListRoomDayArgs
 
-func (s *ListRoomDayArgsList) Len() int             { return len(*s) }
+func (s *ListRoomDayArgsList) Len() int               { return len(*s) }
 func (s *ListRoomDayArgsList) At(i int) model.Fielder { return (*s)[i] }
-func (s *ListRoomDayArgsList) Append() model.Fielder  { v := &ListRoomDayArgs{}; *s = append(*s, v); return v }
-func (s *ListRoomDayArgsList) IsNil() bool          { return s == nil }
+func (s *ListRoomDayArgsList) Append() model.Fielder {
+	v := &ListRoomDayArgs{}
+	*s = append(*s, v)
+	return v
+}
+func (s *ListRoomDayArgsList) IsNil() bool                      { return s == nil }
 func (s *ListRoomDayArgsList) EncodeFields(_ model.FieldWriter) {}
 func (s *ListRoomDayArgsList) DecodeFields(_ model.FieldReader) {}
 
@@ -1355,7 +1639,7 @@ func (m *ListRoomDayArgs) Validate(action byte) error {
 }
 
 type ListBoardArgs struct {
-	CategoryId string
+	CategoryId  string
 	EquipmentId string
 }
 
@@ -1373,16 +1657,24 @@ func (m *ListBoardArgs) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *ListBoardArgs) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("category_id"); ok { m.CategoryId = v }
-	if v, ok := r.String("equipment_id"); ok { m.EquipmentId = v }
+	if v, ok := r.String("category_id"); ok {
+		m.CategoryId = v
+	}
+	if v, ok := r.String("equipment_id"); ok {
+		m.EquipmentId = v
+	}
 }
 
 type ListBoardArgsList []*ListBoardArgs
 
-func (s *ListBoardArgsList) Len() int             { return len(*s) }
+func (s *ListBoardArgsList) Len() int               { return len(*s) }
 func (s *ListBoardArgsList) At(i int) model.Fielder { return (*s)[i] }
-func (s *ListBoardArgsList) Append() model.Fielder  { v := &ListBoardArgs{}; *s = append(*s, v); return v }
-func (s *ListBoardArgsList) IsNil() bool          { return s == nil }
+func (s *ListBoardArgsList) Append() model.Fielder {
+	v := &ListBoardArgs{}
+	*s = append(*s, v)
+	return v
+}
+func (s *ListBoardArgsList) IsNil() bool                      { return s == nil }
 func (s *ListBoardArgsList) EncodeFields(_ model.FieldWriter) {}
 func (s *ListBoardArgsList) DecodeFields(_ model.FieldReader) {}
 
@@ -1391,9 +1683,9 @@ func (m *ListBoardArgs) Validate(action byte) error {
 }
 
 type FindFreeRoomsArgs struct {
-	Date string
-	Start string
-	End string
+	Date       string
+	Start      string
+	End        string
 	CategoryId string
 }
 
@@ -1413,18 +1705,30 @@ func (m *FindFreeRoomsArgs) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *FindFreeRoomsArgs) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("date"); ok { m.Date = v }
-	if v, ok := r.String("start"); ok { m.Start = v }
-	if v, ok := r.String("end"); ok { m.End = v }
-	if v, ok := r.String("category_id"); ok { m.CategoryId = v }
+	if v, ok := r.String("date"); ok {
+		m.Date = v
+	}
+	if v, ok := r.String("start"); ok {
+		m.Start = v
+	}
+	if v, ok := r.String("end"); ok {
+		m.End = v
+	}
+	if v, ok := r.String("category_id"); ok {
+		m.CategoryId = v
+	}
 }
 
 type FindFreeRoomsArgsList []*FindFreeRoomsArgs
 
-func (s *FindFreeRoomsArgsList) Len() int             { return len(*s) }
+func (s *FindFreeRoomsArgsList) Len() int               { return len(*s) }
 func (s *FindFreeRoomsArgsList) At(i int) model.Fielder { return (*s)[i] }
-func (s *FindFreeRoomsArgsList) Append() model.Fielder  { v := &FindFreeRoomsArgs{}; *s = append(*s, v); return v }
-func (s *FindFreeRoomsArgsList) IsNil() bool          { return s == nil }
+func (s *FindFreeRoomsArgsList) Append() model.Fielder {
+	v := &FindFreeRoomsArgs{}
+	*s = append(*s, v)
+	return v
+}
+func (s *FindFreeRoomsArgsList) IsNil() bool                      { return s == nil }
 func (s *FindFreeRoomsArgsList) EncodeFields(_ model.FieldWriter) {}
 func (s *FindFreeRoomsArgsList) DecodeFields(_ model.FieldReader) {}
 
@@ -1433,13 +1737,15 @@ func (m *FindFreeRoomsArgs) Validate(action byte) error {
 }
 
 type ListPublicAvailabilityArgs struct {
-	Date string
+	Date       string
 	CategoryId string
 }
 
 func (m *ListPublicAvailabilityArgs) ModelName() string { return "list_public_availability_args" }
 
-func (m *ListPublicAvailabilityArgs) Schema() []model.Field { return ListPublicAvailabilityArgsModel.Fields }
+func (m *ListPublicAvailabilityArgs) Schema() []model.Field {
+	return ListPublicAvailabilityArgsModel.Fields
+}
 
 func (m *ListPublicAvailabilityArgs) Pointers() []any { return []any{&m.Date, &m.CategoryId} }
 
@@ -1451,16 +1757,24 @@ func (m *ListPublicAvailabilityArgs) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *ListPublicAvailabilityArgs) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("date"); ok { m.Date = v }
-	if v, ok := r.String("category_id"); ok { m.CategoryId = v }
+	if v, ok := r.String("date"); ok {
+		m.Date = v
+	}
+	if v, ok := r.String("category_id"); ok {
+		m.CategoryId = v
+	}
 }
 
 type ListPublicAvailabilityArgsList []*ListPublicAvailabilityArgs
 
-func (s *ListPublicAvailabilityArgsList) Len() int             { return len(*s) }
+func (s *ListPublicAvailabilityArgsList) Len() int               { return len(*s) }
 func (s *ListPublicAvailabilityArgsList) At(i int) model.Fielder { return (*s)[i] }
-func (s *ListPublicAvailabilityArgsList) Append() model.Fielder  { v := &ListPublicAvailabilityArgs{}; *s = append(*s, v); return v }
-func (s *ListPublicAvailabilityArgsList) IsNil() bool          { return s == nil }
+func (s *ListPublicAvailabilityArgsList) Append() model.Fielder {
+	v := &ListPublicAvailabilityArgs{}
+	*s = append(*s, v)
+	return v
+}
+func (s *ListPublicAvailabilityArgsList) IsNil() bool                      { return s == nil }
 func (s *ListPublicAvailabilityArgsList) EncodeFields(_ model.FieldWriter) {}
 func (s *ListPublicAvailabilityArgsList) DecodeFields(_ model.FieldReader) {}
 
@@ -1469,7 +1783,7 @@ func (m *ListPublicAvailabilityArgs) Validate(action byte) error {
 }
 
 type Option struct {
-	Id string
+	Id    string
 	Label string
 }
 
@@ -1487,16 +1801,20 @@ func (m *Option) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *Option) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("id"); ok { m.Id = v }
-	if v, ok := r.String("label"); ok { m.Label = v }
+	if v, ok := r.String("id"); ok {
+		m.Id = v
+	}
+	if v, ok := r.String("label"); ok {
+		m.Label = v
+	}
 }
 
 type OptionList []*Option
 
-func (s *OptionList) Len() int             { return len(*s) }
-func (s *OptionList) At(i int) model.Fielder { return (*s)[i] }
-func (s *OptionList) Append() model.Fielder  { v := &Option{}; *s = append(*s, v); return v }
-func (s *OptionList) IsNil() bool          { return s == nil }
+func (s *OptionList) Len() int                         { return len(*s) }
+func (s *OptionList) At(i int) model.Fielder           { return (*s)[i] }
+func (s *OptionList) Append() model.Fielder            { v := &Option{}; *s = append(*s, v); return v }
+func (s *OptionList) IsNil() bool                      { return s == nil }
 func (s *OptionList) EncodeFields(_ model.FieldWriter) {}
 func (s *OptionList) DecodeFields(_ model.FieldReader) {}
 
@@ -1505,23 +1823,25 @@ func (m *Option) Validate(action byte) error {
 }
 
 type DayShift struct {
-	ShiftId string
-	RoomId string
-	RoomCode string
-	CategoryId string
+	ShiftId       string
+	RoomId        string
+	RoomCode      string
+	CategoryId    string
 	CategoryLabel string
-	OccupantId string
+	OccupantId    string
 	OccupantLabel string
-	Start string
-	End string
-	IsWeekly bool
+	Start         string
+	End           string
+	IsWeekly      bool
 }
 
 func (m *DayShift) ModelName() string { return "day_shift" }
 
 func (m *DayShift) Schema() []model.Field { return DayShiftModel.Fields }
 
-func (m *DayShift) Pointers() []any { return []any{&m.ShiftId, &m.RoomId, &m.RoomCode, &m.CategoryId, &m.CategoryLabel, &m.OccupantId, &m.OccupantLabel, &m.Start, &m.End, &m.IsWeekly} }
+func (m *DayShift) Pointers() []any {
+	return []any{&m.ShiftId, &m.RoomId, &m.RoomCode, &m.CategoryId, &m.CategoryLabel, &m.OccupantId, &m.OccupantLabel, &m.Start, &m.End, &m.IsWeekly}
+}
 
 func (m *DayShift) IsNil() bool { return m == nil }
 
@@ -1539,24 +1859,44 @@ func (m *DayShift) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *DayShift) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("shift_id"); ok { m.ShiftId = v }
-	if v, ok := r.String("room_id"); ok { m.RoomId = v }
-	if v, ok := r.String("room_code"); ok { m.RoomCode = v }
-	if v, ok := r.String("category_id"); ok { m.CategoryId = v }
-	if v, ok := r.String("category_label"); ok { m.CategoryLabel = v }
-	if v, ok := r.String("occupant_id"); ok { m.OccupantId = v }
-	if v, ok := r.String("occupant_label"); ok { m.OccupantLabel = v }
-	if v, ok := r.String("start"); ok { m.Start = v }
-	if v, ok := r.String("end"); ok { m.End = v }
-	if v, ok := r.Bool("is_weekly"); ok { m.IsWeekly = v }
+	if v, ok := r.String("shift_id"); ok {
+		m.ShiftId = v
+	}
+	if v, ok := r.String("room_id"); ok {
+		m.RoomId = v
+	}
+	if v, ok := r.String("room_code"); ok {
+		m.RoomCode = v
+	}
+	if v, ok := r.String("category_id"); ok {
+		m.CategoryId = v
+	}
+	if v, ok := r.String("category_label"); ok {
+		m.CategoryLabel = v
+	}
+	if v, ok := r.String("occupant_id"); ok {
+		m.OccupantId = v
+	}
+	if v, ok := r.String("occupant_label"); ok {
+		m.OccupantLabel = v
+	}
+	if v, ok := r.String("start"); ok {
+		m.Start = v
+	}
+	if v, ok := r.String("end"); ok {
+		m.End = v
+	}
+	if v, ok := r.Bool("is_weekly"); ok {
+		m.IsWeekly = v
+	}
 }
 
 type DayShiftList []*DayShift
 
-func (s *DayShiftList) Len() int             { return len(*s) }
-func (s *DayShiftList) At(i int) model.Fielder { return (*s)[i] }
-func (s *DayShiftList) Append() model.Fielder  { v := &DayShift{}; *s = append(*s, v); return v }
-func (s *DayShiftList) IsNil() bool          { return s == nil }
+func (s *DayShiftList) Len() int                         { return len(*s) }
+func (s *DayShiftList) At(i int) model.Fielder           { return (*s)[i] }
+func (s *DayShiftList) Append() model.Fielder            { v := &DayShift{}; *s = append(*s, v); return v }
+func (s *DayShiftList) IsNil() bool                      { return s == nil }
 func (s *DayShiftList) EncodeFields(_ model.FieldWriter) {}
 func (s *DayShiftList) DecodeFields(_ model.FieldReader) {}
 
@@ -1565,26 +1905,28 @@ func (m *DayShift) Validate(action byte) error {
 }
 
 type BoardRoom struct {
-	RoomId string
-	Code string
-	Name string
-	FloorName string
-	FloorPosition int64
-	CategoryLabels string
-	EquipmentLabels string
-	Status string
+	RoomId               string
+	Code                 string
+	Name                 string
+	FloorName            string
+	FloorPosition        int64
+	CategoryLabels       string
+	EquipmentLabels      string
+	Status               string
 	CurrentOccupantLabel string
-	CurrentUntil string
-	NextStart string
-	NextOccupantLabel string
-	Today string
+	CurrentUntil         string
+	NextStart            string
+	NextOccupantLabel    string
+	Today                string
 }
 
 func (m *BoardRoom) ModelName() string { return "board_room" }
 
 func (m *BoardRoom) Schema() []model.Field { return BoardRoomModel.Fields }
 
-func (m *BoardRoom) Pointers() []any { return []any{&m.RoomId, &m.Code, &m.Name, &m.FloorName, &m.FloorPosition, &m.CategoryLabels, &m.EquipmentLabels, &m.Status, &m.CurrentOccupantLabel, &m.CurrentUntil, &m.NextStart, &m.NextOccupantLabel, &m.Today} }
+func (m *BoardRoom) Pointers() []any {
+	return []any{&m.RoomId, &m.Code, &m.Name, &m.FloorName, &m.FloorPosition, &m.CategoryLabels, &m.EquipmentLabels, &m.Status, &m.CurrentOccupantLabel, &m.CurrentUntil, &m.NextStart, &m.NextOccupantLabel, &m.Today}
+}
 
 func (m *BoardRoom) IsNil() bool { return m == nil }
 
@@ -1605,27 +1947,53 @@ func (m *BoardRoom) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *BoardRoom) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("room_id"); ok { m.RoomId = v }
-	if v, ok := r.String("code"); ok { m.Code = v }
-	if v, ok := r.String("name"); ok { m.Name = v }
-	if v, ok := r.String("floor_name"); ok { m.FloorName = v }
-	if v, ok := r.Int("floor_position"); ok { m.FloorPosition = v }
-	if v, ok := r.String("category_labels"); ok { m.CategoryLabels = v }
-	if v, ok := r.String("equipment_labels"); ok { m.EquipmentLabels = v }
-	if v, ok := r.String("status"); ok { m.Status = v }
-	if v, ok := r.String("current_occupant_label"); ok { m.CurrentOccupantLabel = v }
-	if v, ok := r.String("current_until"); ok { m.CurrentUntil = v }
-	if v, ok := r.String("next_start"); ok { m.NextStart = v }
-	if v, ok := r.String("next_occupant_label"); ok { m.NextOccupantLabel = v }
-	if v, ok := r.String("today"); ok { m.Today = v }
+	if v, ok := r.String("room_id"); ok {
+		m.RoomId = v
+	}
+	if v, ok := r.String("code"); ok {
+		m.Code = v
+	}
+	if v, ok := r.String("name"); ok {
+		m.Name = v
+	}
+	if v, ok := r.String("floor_name"); ok {
+		m.FloorName = v
+	}
+	if v, ok := r.Int("floor_position"); ok {
+		m.FloorPosition = v
+	}
+	if v, ok := r.String("category_labels"); ok {
+		m.CategoryLabels = v
+	}
+	if v, ok := r.String("equipment_labels"); ok {
+		m.EquipmentLabels = v
+	}
+	if v, ok := r.String("status"); ok {
+		m.Status = v
+	}
+	if v, ok := r.String("current_occupant_label"); ok {
+		m.CurrentOccupantLabel = v
+	}
+	if v, ok := r.String("current_until"); ok {
+		m.CurrentUntil = v
+	}
+	if v, ok := r.String("next_start"); ok {
+		m.NextStart = v
+	}
+	if v, ok := r.String("next_occupant_label"); ok {
+		m.NextOccupantLabel = v
+	}
+	if v, ok := r.String("today"); ok {
+		m.Today = v
+	}
 }
 
 type BoardRoomList []*BoardRoom
 
-func (s *BoardRoomList) Len() int             { return len(*s) }
-func (s *BoardRoomList) At(i int) model.Fielder { return (*s)[i] }
-func (s *BoardRoomList) Append() model.Fielder  { v := &BoardRoom{}; *s = append(*s, v); return v }
-func (s *BoardRoomList) IsNil() bool          { return s == nil }
+func (s *BoardRoomList) Len() int                         { return len(*s) }
+func (s *BoardRoomList) At(i int) model.Fielder           { return (*s)[i] }
+func (s *BoardRoomList) Append() model.Fielder            { v := &BoardRoom{}; *s = append(*s, v); return v }
+func (s *BoardRoomList) IsNil() bool                      { return s == nil }
 func (s *BoardRoomList) EncodeFields(_ model.FieldWriter) {}
 func (s *BoardRoomList) DecodeFields(_ model.FieldReader) {}
 
@@ -1634,10 +2002,10 @@ func (m *BoardRoom) Validate(action byte) error {
 }
 
 type FreeRoom struct {
-	RoomId string
-	Code string
-	Name string
-	FloorName string
+	RoomId          string
+	Code            string
+	Name            string
+	FloorName       string
 	EquipmentLabels string
 }
 
@@ -1645,7 +2013,9 @@ func (m *FreeRoom) ModelName() string { return "free_room" }
 
 func (m *FreeRoom) Schema() []model.Field { return FreeRoomModel.Fields }
 
-func (m *FreeRoom) Pointers() []any { return []any{&m.RoomId, &m.Code, &m.Name, &m.FloorName, &m.EquipmentLabels} }
+func (m *FreeRoom) Pointers() []any {
+	return []any{&m.RoomId, &m.Code, &m.Name, &m.FloorName, &m.EquipmentLabels}
+}
 
 func (m *FreeRoom) IsNil() bool { return m == nil }
 
@@ -1658,19 +2028,29 @@ func (m *FreeRoom) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *FreeRoom) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("room_id"); ok { m.RoomId = v }
-	if v, ok := r.String("code"); ok { m.Code = v }
-	if v, ok := r.String("name"); ok { m.Name = v }
-	if v, ok := r.String("floor_name"); ok { m.FloorName = v }
-	if v, ok := r.String("equipment_labels"); ok { m.EquipmentLabels = v }
+	if v, ok := r.String("room_id"); ok {
+		m.RoomId = v
+	}
+	if v, ok := r.String("code"); ok {
+		m.Code = v
+	}
+	if v, ok := r.String("name"); ok {
+		m.Name = v
+	}
+	if v, ok := r.String("floor_name"); ok {
+		m.FloorName = v
+	}
+	if v, ok := r.String("equipment_labels"); ok {
+		m.EquipmentLabels = v
+	}
 }
 
 type FreeRoomList []*FreeRoom
 
-func (s *FreeRoomList) Len() int             { return len(*s) }
-func (s *FreeRoomList) At(i int) model.Fielder { return (*s)[i] }
-func (s *FreeRoomList) Append() model.Fielder  { v := &FreeRoom{}; *s = append(*s, v); return v }
-func (s *FreeRoomList) IsNil() bool          { return s == nil }
+func (s *FreeRoomList) Len() int                         { return len(*s) }
+func (s *FreeRoomList) At(i int) model.Fielder           { return (*s)[i] }
+func (s *FreeRoomList) Append() model.Fielder            { v := &FreeRoom{}; *s = append(*s, v); return v }
+func (s *FreeRoomList) IsNil() bool                      { return s == nil }
 func (s *FreeRoomList) EncodeFields(_ model.FieldWriter) {}
 func (s *FreeRoomList) DecodeFields(_ model.FieldReader) {}
 
@@ -1679,18 +2059,20 @@ func (m *FreeRoom) Validate(action byte) error {
 }
 
 type PublicSlot struct {
-	RoomCode string
-	RoomName string
+	RoomCode  string
+	RoomName  string
 	FloorName string
-	Start string
-	End string
+	Start     string
+	End       string
 }
 
 func (m *PublicSlot) ModelName() string { return "public_slot" }
 
 func (m *PublicSlot) Schema() []model.Field { return PublicSlotModel.Fields }
 
-func (m *PublicSlot) Pointers() []any { return []any{&m.RoomCode, &m.RoomName, &m.FloorName, &m.Start, &m.End} }
+func (m *PublicSlot) Pointers() []any {
+	return []any{&m.RoomCode, &m.RoomName, &m.FloorName, &m.Start, &m.End}
+}
 
 func (m *PublicSlot) IsNil() bool { return m == nil }
 
@@ -1703,23 +2085,32 @@ func (m *PublicSlot) EncodeFields(w model.FieldWriter) {
 }
 
 func (m *PublicSlot) DecodeFields(r model.FieldReader) {
-	if v, ok := r.String("room_code"); ok { m.RoomCode = v }
-	if v, ok := r.String("room_name"); ok { m.RoomName = v }
-	if v, ok := r.String("floor_name"); ok { m.FloorName = v }
-	if v, ok := r.String("start"); ok { m.Start = v }
-	if v, ok := r.String("end"); ok { m.End = v }
+	if v, ok := r.String("room_code"); ok {
+		m.RoomCode = v
+	}
+	if v, ok := r.String("room_name"); ok {
+		m.RoomName = v
+	}
+	if v, ok := r.String("floor_name"); ok {
+		m.FloorName = v
+	}
+	if v, ok := r.String("start"); ok {
+		m.Start = v
+	}
+	if v, ok := r.String("end"); ok {
+		m.End = v
+	}
 }
 
 type PublicSlotList []*PublicSlot
 
-func (s *PublicSlotList) Len() int             { return len(*s) }
-func (s *PublicSlotList) At(i int) model.Fielder { return (*s)[i] }
-func (s *PublicSlotList) Append() model.Fielder  { v := &PublicSlot{}; *s = append(*s, v); return v }
-func (s *PublicSlotList) IsNil() bool          { return s == nil }
+func (s *PublicSlotList) Len() int                         { return len(*s) }
+func (s *PublicSlotList) At(i int) model.Fielder           { return (*s)[i] }
+func (s *PublicSlotList) Append() model.Fielder            { v := &PublicSlot{}; *s = append(*s, v); return v }
+func (s *PublicSlotList) IsNil() bool                      { return s == nil }
 func (s *PublicSlotList) EncodeFields(_ model.FieldWriter) {}
 func (s *PublicSlotList) DecodeFields(_ model.FieldReader) {}
 
 func (m *PublicSlot) Validate(action byte) error {
 	return model.ValidateFields(action, m)
 }
-

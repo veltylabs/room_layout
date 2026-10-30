@@ -116,3 +116,10 @@ GOPRIVATE=webtyp.com/*,github.com/veltylabs/* GOFLAGS=-mod=mod gotest
 | 2 | `ui/data.go`, `ui/rootview.go` | compiles |
 | 3 | `ui/data.go`, `ui/stage*.go` | grep above clean |
 | 4 | `tests/map_data_test.go` | suite green |
+
+## Celdas guardadas como rectángulos (local, sin publicar)
+
+- `cells.go`: `Cell{Col, Row}` (cada piso numera desde 1), `EncodeArea`/`DecodeArea` con el formato
+  `columna,fila,ancho,alto;…` para `Floor.HabitableCells` y `Room.Cells`; `RoomArtifact.Cell` es `columna,fila`.
+  Texto mal formado → `ErrInvalidArea`. Pruebas: `tests/area_test.go`.
+- `ui`: cabeceras de columna con números (se borró `ColName`); `data.go` lee y guarda con el codec.

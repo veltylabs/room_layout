@@ -21,6 +21,14 @@ const (
 	labelMap       lang.Text = "Map"
 )
 
+// Íconos de cada pantalla (geometría en svg.go).
+const (
+	iconMap       = ID + "_map"
+	iconRoom      = ID + "_room"
+	iconFloor     = ID + "_floor"
+	iconEquipment = ID + "_equipment"
+)
+
 // Screens declara las pantallas que este módulo ofrece al menú de la app.
 func Screens(caller router.Caller) []view.Screen {
 	return []view.Screen{
@@ -33,7 +41,7 @@ func Screens(caller router.Caller) []view.Screen {
 				{
 					ID:         ID + ".map",
 					Label:      labelMap,
-					Icon:       ID,
+					Icon:       iconMap,
 					Help:       descMap,
 					Permission: model.ResourceOf(&roomlayout.FloorModel),
 					Component:  NewMap(caller),
@@ -41,21 +49,21 @@ func Screens(caller router.Caller) []view.Screen {
 				{
 					ID:         ID + ".rooms",
 					Label:      labelRooms,
-					Icon:       ID + "_room",
+					Icon:       iconRoom,
 					Permission: model.ResourceOf(&roomlayout.RoomModel),
 					Presenter:  roomlayout.NewRoomView(caller, view.WithDescription(descRooms)),
 				},
 				{
 					ID:         ID + ".floors",
 					Label:      labelFloors,
-					Icon:       ID + "_floor",
+					Icon:       iconFloor,
 					Permission: model.ResourceOf(&roomlayout.FloorModel),
 					Presenter:  roomlayout.NewFloorView(caller, view.WithDescription(descFloors)),
 				},
 				{
 					ID:         ID + ".equipment",
 					Label:      labelEquipment,
-					Icon:       ID + "_equipment",
+					Icon:       iconEquipment,
 					Permission: model.ResourceOf(&roomlayout.EquipmentModel),
 					Presenter:  roomlayout.NewEquipmentView(caller, view.WithDescription(descEquipment)),
 				},

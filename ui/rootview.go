@@ -1,9 +1,12 @@
 package ui
 
 import (
+	"webtyp.com/components/stepindicator"
 	"webtyp.com/dom"
 	"webtyp.com/fmt"
 	"webtyp.com/html"
+	"webtyp.com/lang"
+	"webtyp.com/layout"
 	"webtyp.com/model"
 	"webtyp.com/router"
 	"webtyp.com/widget"
@@ -38,7 +41,7 @@ type RootView struct {
 
 	verCount int
 	VerSig   *dom.SignalString
-	status   *dom.SignalString // el último error al leer o guardar; vacío si todo anduvo
+	notifier layout.Notifier // los avisos de la plataforma: «Guardado» o el error al leer o guardar
 
 	Cols int
 	Rows int
@@ -64,9 +67,6 @@ func (r *RootView) Init(_ dom.Ctx) {
 	}
 	if r.VerSig == nil {
 		r.VerSig = dom.NewString("0")
-	}
-	if r.status == nil {
-		r.status = dom.NewString("")
 	}
 	r.stage1 = &Stage1Planta{Root: r}
 	r.stage2 = &Stage2Espacios{Root: r}
@@ -97,6 +97,53 @@ func (r *RootView) Refresh() {
 	if r.ActiveStageSig != nil {
 		r.ActiveStageSig.Set(fmt.Sprint(r.ActiveStage))
 	}
+}
+
+// header es el encabezado de las etapas de diseño: los cuatro pasos y, a la derecha, lo que la
+// etapa agregue (el selector de piso).
+func (r *RootView) header(active int, actions ...dom.Component) *dom.Element {
+	stepper := &stepindicator.StepIndicator{
+		Steps:    []stepindicator.Step{{Label: "Floor plan"}, {Label: "Spaces"}, {Label: "Equipment"}, {Label: "Operation"}},
+		Active:   active,
+		OnChange: r.GoToStage,
+	}
+	return html.Header().Class(clsHeader).Child(stepper, html.Div().Class(clsActions).Child(actions...))
+}
+
+// shownFloors son los índices de los pisos que se dibujan: solo el activo, uno a la vez.
+func (r *RootView) shownFloors() []int {
+	if len(r.Floors) == 0 {
+		return nil
+	}
+	if r.ActiveFloor < 0 || r.ActiveFloor >= len(r.Floors) {
+		r.ActiveFloor = 0
+	}
+	return []int{r.ActiveFloor}
+}
+
+// floorNav es el selector de piso (◀ 1 de 2 ▶): va en la cabecera de la tarjeta del piso, junto a
+// su nombre, igual en las cuatro etapas. La tarjeta se rehace al cambiar de piso.
+func (r *RootView) floorNav() *dom.Element {
+	nav := html.Div().Class(clsNav)
+	if len(r.Floors) < 2 {
+		return nav
+	}
+	step := func(delta int, glyph string) *dom.Element {
+		next := r.ActiveFloor + delta
+		btn := html.Button().Class(clsButton).Attr("type", "button").Text(glyph)
+		if next < 0 || next >= len(r.Floors) {
+			return btn.Attr("disabled", "true")
+		}
+		return btn.OnClick(func(dom.Event) {
+			r.ActiveFloor = next
+			r.RebuildAllFloors()
+		})
+	}
+	return nav.Child(
+		step(-1, "◀"),
+		html.Span().Text(lang.Translate(r.ActiveFloor+1, "of", len(r.Floors)).String()),
+		step(1, "▶"),
+	)
 }
 
 func (r *RootView) RebuildAllFloors() {
@@ -141,8 +188,7 @@ func (r *RootView) Render() *dom.Element {
 		r.Init(nil)
 	}
 
-	container := html.Div().Class("rm-container")
-	container.Child(html.Div().Class("rm-status").BindText(r.status))
+	container := html.Div().Class(NameRoomMap.Root().String())
 
 	// Dynamic conditional rendering using dom.Show and derived signals
 	showStage1 := dom.DeriveBool(func() bool { return r.ActiveStageSig.Get() == "0" })

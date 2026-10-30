@@ -2,7 +2,6 @@ package ui
 
 import (
 	"webtyp.com/components/segmentedcontrol"
-	"webtyp.com/components/themetoggle"
 	"webtyp.com/dom"
 	"webtyp.com/fmt"
 	"webtyp.com/html"
@@ -45,8 +44,8 @@ func (s *Stage4Operacion) Render() *dom.Element {
 
 	modeSeg := &segmentedcontrol.SegmentedControl{
 		Options: []segmentedcontrol.Option{
-			{Value: "plan", Label: "Planificar"},
-			{Value: "now", Label: "Ahora"},
+			{Value: "plan", Label: "Plan"},
+			{Value: "now", Label: "Now"},
 		},
 		Selected: s.Mode,
 		OnChange: func(val string) {
@@ -55,28 +54,20 @@ func (s *Stage4Operacion) Render() *dom.Element {
 		},
 	}
 
-	configBtn := html.Button().Class("btn").
+	configBtn := html.Button().Class(clsButton).
 		Child(
 			html.Span().Class("icon-gear").Text("⚙"),
-			html.Span().Text("Configure map"),
+			html.Span().Text(lang.Translate("Configure map").String()),
 		).
 		OnClick(func(dom.Event) {
 			root.GoToStage(0)
 		})
 
-	header := html.Header().Class("rm-header").
+	header := html.Header().Class(clsHeader).
 		Child(
-			html.Div().Class("rm-brand").
-				Child(
-					html.Div().Class("rm-brand-title").Text("Room Map"),
-					html.Span().Class("rm-brand-sub").Text("Clínica Central"),
-				),
 			modeSeg,
-			html.Div().Class("rm-header-actions").
-				Child(
-					&themetoggle.ThemeToggle{},
-					configBtn,
-				),
+			html.Div().Class(clsActions).
+				Child(configBtn),
 		)
 
 	// Toolbar
@@ -85,8 +76,8 @@ func (s *Stage4Operacion) Render() *dom.Element {
 	if s.Mode == "plan" {
 		periodSeg := &segmentedcontrol.SegmentedControl{
 			Options: []segmentedcontrol.Option{
-				{Value: "week", Label: "Semana"},
-				{Value: "month", Label: "Mes"},
+				{Value: "week", Label: "Week"},
+				{Value: "month", Label: "Month"},
 			},
 			Selected: s.PlanPeriod,
 			OnChange: func(val string) {
@@ -108,8 +99,8 @@ func (s *Stage4Operacion) Render() *dom.Element {
 
 		stats := html.Div().Class("stats").
 			Child(
-				html.Span().Child(html.Span().Text("Occupancy: "), html.Strong().Text(fmt.Sprint(occPct)+"%")),
-				html.Span().Child(html.Strong().Text(fmt.Sprint(freeBlocks)), html.Span().Text(" free blocks")),
+				html.Span().Child(html.Span().Text(lang.Translate("Occupancy").String()+": "), html.Strong().Text(fmt.Sprint(occPct)+"%")),
+				html.Span().Child(html.Strong().Text(fmt.Sprint(freeBlocks)), html.Span().Text(" "+lang.Translate("free blocks").String())),
 			)
 
 		toolbar.Child(periodSeg, stats)
@@ -132,8 +123,8 @@ func (s *Stage4Operacion) Render() *dom.Element {
 
 		shiftSeg := &segmentedcontrol.SegmentedControl{
 			Options: []segmentedcontrol.Option{
-				{Value: "morning", Label: "Mañana (09:00 - 13:00)"},
-				{Value: "afternoon", Label: "Tarde (14:00 - 18:00)"},
+				{Value: "morning", Label: "Morning"},
+				{Value: "afternoon", Label: "Afternoon"},
 			},
 			Selected: s.NowShift,
 			OnChange: func(val string) {
@@ -148,8 +139,8 @@ func (s *Stage4Operacion) Render() *dom.Element {
 	// Layer switch (Ocupación / Funcionamiento)
 	layerSeg := &segmentedcontrol.SegmentedControl{
 		Options: []segmentedcontrol.Option{
-			{Value: "occupancy", Label: "Ocupación"},
-			{Value: "equipment", Label: "Funcionamiento"},
+			{Value: "occupancy", Label: "Occupancy"},
+			{Value: "equipment", Label: "Operation"},
 		},
 		Selected: s.Layer,
 		OnChange: func(val string) {
@@ -159,16 +150,16 @@ func (s *Stage4Operacion) Render() *dom.Element {
 	}
 	toolbar.Child(layerSeg)
 
-	columns := html.Div().Class("rm-columns")
+	columns := html.Div().Class(clsColumns)
 
 	// Left: Content (Floor Map Canvas)
-	content := html.Div().Class("rm-content")
+	content := html.Div().Class(clsContent)
 	s.sliderNodes = dom.NewNodes(s.buildFloorCards()...)
-	slider := html.Div().Class("rm-slider").BindChildren(s.sliderNodes)
+	slider := html.Div().Class(clsSlider).BindChildren(s.sliderNodes)
 	content.Child(slider)
 
 	// Right: Aside (Selected Room Detail OR Doctors & Alerts)
-	aside := html.Aside().Class("rm-aside")
+	aside := html.Aside().Class(clsAside)
 
 	var selectedRoom *RoomData
 	if s.SelectedRoomID != "" {
@@ -193,18 +184,18 @@ func (s *Stage4Operacion) Render() *dom.Element {
 	columns.Child(content, aside)
 
 	// Footer
-	footer := html.Footer().Class("rm-footer").
+	footer := html.Footer().Class(clsFooter).
 		Child(
-			html.Button().Class("btn").Text("← Artifacts").
+			html.Button().Class(clsButton).Text("← "+lang.Translate("Equipment").String()).
 				OnClick(func(dom.Event) {
 					root.GoToStage(2)
 				}),
-			html.Span().Class("rm-footer-summary").
-				Text("Operation Dashboard · Central Clinic"),
+			html.Span().Class(clsSummary).
+				Text(lang.Translate("Operation").String()),
 		)
 
-	layout := html.Div().Class("rm-stage").
-		Child(header, toolbar, columns, footer)
+	layout := html.Div().Class(clsStage).
+		Child(header, footer, toolbar, columns)
 
 	return layout
 }
@@ -219,75 +210,51 @@ func (s *Stage4Operacion) buildFloorCards() []*dom.Element {
 	root := s.Root
 	var cards []*dom.Element
 
-	for i := range root.Floors {
+	for _, i := range root.shownFloors() {
 		fl := &root.Floors[i]
 
-		floorCard := html.Article().Class("floor").Key(fmt.Sprintf("floor-s4-%s-%dx%d", fl.ID, root.Cols, root.Rows))
-		fHeader := html.Div().Class("rm-floor-header").
+		floorCard := html.Article().Class(clsFloor).Key(fmt.Sprintf("floor-s4-%s-%dx%d", fl.ID, root.Cols, root.Rows))
+		fHeader := html.Div().Class(clsFloorHeader).
 			Child(
-				html.Span().Class("rm-floor-badge").Text(fmt.Sprint(fl.Position)),
-				html.Span().Class("name-input").Text(fl.Name),
-				html.Span().Class("rm-floor-count").
-					BindTextFunc(func() string {
-						_ = root.VerSig.Get()
-						return fmt.Sprint(len(fl.HabitableCells)) + " hab."
-					}),
+				html.Span().Class(clsFloorBadge).Text(fmt.Sprint(fl.Position)),
+				html.Span().Class(clsFloorName).Text(fl.Name),
+				root.floorNav(),
 			)
 
 		gridEl := html.Div().Class("grid").
-			Attr("style", fmt.Sprintf("display: grid; grid-template-columns: 24px repeat(%d, minmax(22px, 1fr)); gap: 2px; padding: 10px; background: var(--color-background); border: 1px solid var(--color-outline); border-radius: 12px; overflow-x: auto;", root.Cols))
-
-		// Column headers
-		gridEl.Child(html.Span())
-		for c := 0; c < root.Cols; c++ {
-			gridEl.Child(html.Span().Class("lbl-col").
-				Attr("style", "font-size: 11px; font-weight: 700; color: var(--color-muted); text-align: center; height: 20px; display: flex; align-items: center; justify-content: center;").
-				Text(ColName(c)))
-		}
+			Attr("style", fmt.Sprintf(planGrid, root.Cols))
 
 		for r := 0; r < root.Rows; r++ {
 			rowIdx := r
-			gridEl.Child(html.Span().Class("lbl-row").
-				Attr("style", "font-size: 11px; font-weight: 700; color: var(--color-muted); display: flex; align-items: center; justify-content: center;").
-				Text(fmt.Sprint(rowIdx + 1)))
-
 			for c := 0; c < root.Cols; c++ {
 				colIdx := c
 				coord := FormatCell(rowIdx, colIdx)
 				cellEl := html.Div().Class("cell")
 
-				if !CellInList(fl.HabitableCells, coord) {
-					cellEl.Attr("style", "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1px dashed var(--color-outline); opacity: 0.12; pointer-events: none; border-radius: 4px;")
-					gridEl.Child(cellEl)
-					continue
-				}
-
 				room := FindRoomByCell(root.Rooms, fl.ID, coord)
+				cellEl.Attr("style", gridPos(rowIdx, colIdx)+planCell(fl, room, coord)+planContent+" position: relative;")
 				if room == nil {
-					cellEl.Attr("style", "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px dashed var(--color-outline); background: var(--color-surface); border-radius: 4px;")
 					gridEl.Child(cellEl)
 					continue
-				}
-
-				// Room cell
-				cellStyle := "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-primary); background: var(--color-primary); opacity: 0.85; border-radius: 4px; display: flex; align-items: center; justify-content: center; position: relative;"
-				if room.RoomType == RoomTypeShared {
-					cellStyle = "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-muted); background: var(--color-muted); opacity: 0.75; border-radius: 4px; display: flex; align-items: center; justify-content: center; position: relative;"
-				} else if room.RoomType == RoomTypeStore {
-					cellStyle = "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-accent, #e8a33d); background: var(--color-accent, #e8a33d); opacity: 0.85; border-radius: 4px; display: flex; align-items: center; justify-content: center; position: relative;"
-				}
-				cellEl.Attr("style", cellStyle)
-
-				minCol, minRow, _, _ := BoundingBox(room.Cells)
-				if rowIdx == minRow && colIdx == minCol {
-					ov := s.renderRoomOverlay(room, fl.ID)
-					cellEl.Child(ov)
 				}
 
 				gridEl.Child(cellEl)
 			}
 		}
 
+		for _, outline := range root.roomOutlines(fl.ID, "", plain, nameNone) {
+			gridEl.Child(outline)
+		}
+		// el botón de cada espacio cubre su bloque más grande: se toca el espacio entero
+		for i := range root.Rooms {
+			room := &root.Rooms[i]
+			if room.FloorID != fl.ID {
+				continue
+			}
+			if place, ok := roomPlace(room.Cells); ok {
+				gridEl.Child(s.renderRoomOverlay(room, fl.ID).Attr("style", place+roomButton))
+			}
+		}
 		floorCard.Child(fHeader, gridEl)
 		cards = append(cards, floorCard)
 	}
@@ -363,7 +330,7 @@ func (s *Stage4Operacion) renderRoomOverlay(room *RoomData, floorID string) *dom
 				)
 			ov.Child(docBox)
 		} else {
-			ov.Child(html.Span().Class("freep").Text("Free"))
+			ov.Child(html.Span().Class("freep").Text(lang.Translate("Free").String()))
 		}
 	}
 
@@ -377,22 +344,22 @@ func (s *Stage4Operacion) renderRoomOverlay(room *RoomData, floorID string) *dom
 
 func (s *Stage4Operacion) renderRoomDetailPanel(room *RoomData) *dom.Element {
 	root := s.Root
-	panel := html.Div().Class("panel").
+	panel := html.Div().Class(clsPanel).
 		Child(
 			html.Div().Class("rm-sel-header").
 				Child(
 					html.Div().
 						Child(
 							html.Strong().Text(room.Name),
-							html.Span().Class("rm-room-range").Text(" ("+room.Code+")"),
+							html.Span().Class(clsItemMeta).Text(" ("+room.Code+")"),
 						),
-					html.Button().Class("btn", "btn-sm").Text("✕").
+					html.Button().Class(clsButton).Text("✕").
 						OnClick(func(dom.Event) {
 							s.SelectedRoomID = ""
 							root.Refresh()
 						}),
 				),
-			html.Span().Class("field").Text("Weekly schedule for this box:"),
+			html.Span().Class(clsField).Text(lang.Translate("Weekly schedule of this room").String()+":"),
 		)
 
 	// List weekly shifts
@@ -405,7 +372,7 @@ func (s *Stage4Operacion) renderRoomDetailPanel(room *RoomData) *dom.Element {
 				Child(
 					html.Strong().Text(lang.Translate(string(dayName)).String()+": "),
 					html.Span().Text(shift.OccupantLabel+" ("+shift.StartHour+" - "+shift.EndHour+")"),
-					html.Button().Class("btn", "btn-sm", "btn-danger").Text("✕").
+					html.Button().Class(clsDanger).Text("✕").
 						OnClick(func(dom.Event) {
 							var updated []ShiftData
 							for _, item := range root.Shifts {
@@ -429,8 +396,8 @@ func (s *Stage4Operacion) renderRoomDetailPanel(room *RoomData) *dom.Element {
 	}
 	assignForm := html.Div().Class("rm-assign-box").
 		Child(
-			html.Span().Class("field").Text("Assign shift to professional:"),
-			dom.NewElement("select").Class("input").
+			html.Span().Class(clsField).Text(lang.Translate("Assign a shift to a professional").String()+":"),
+			dom.NewElement("select").Class(clsInput).
 				Child(func() []dom.Component {
 					var opts []dom.Component
 					for _, doc := range root.Doctors {
@@ -438,8 +405,8 @@ func (s *Stage4Operacion) renderRoomDetailPanel(room *RoomData) *dom.Element {
 					}
 					return opts
 				}()...),
-			html.Button().Class("btn", "btn-primary", "btn-sm").
-				Text("+ Assign monday morning").
+			html.Button().Class(clsPrimary).
+				Text("+ "+lang.Translate("Assign Monday morning").String()).
 				OnClick(func(dom.Event) {
 					docName := "Dr. Juan Pérez"
 					for _, d := range root.Doctors {
@@ -468,10 +435,10 @@ func (s *Stage4Operacion) renderRoomDetailPanel(room *RoomData) *dom.Element {
 
 func (s *Stage4Operacion) renderProfessionalsPanel() *dom.Element {
 	root := s.Root
-	panel := html.Div().Class("panel").
+	panel := html.Div().Class(clsPanel).
 		Child(
-			html.Span().Class("rm-panel-title").Text("Professionals"),
-			html.Input("search").Class("input").Attr("placeholder", "Buscar profesional...").
+			html.Span().Class(clsPanelTitle).Text(lang.Translate("Professionals").String()),
+			html.Input("search").Class(clsInput).Attr("placeholder", lang.Translate("Search professional").String()).
 				OnChange(func(e dom.Event) {
 					// Search filter
 				}),
@@ -485,7 +452,7 @@ func (s *Stage4Operacion) renderProfessionalsPanel() *dom.Element {
 				html.Div().Class("rm-pro-info").
 					Child(
 						html.Strong().Text(doctor.Name),
-						html.Span().Class("field").Text(doctor.Specialty),
+						html.Span().Class(clsField).Text(doctor.Specialty),
 						html.Div().Class("meter").
 							Child(html.Span().Attr("style", fmt.Sprintf("width: %d%%;", doctor.WeeklyOccupancy))),
 					),
@@ -502,8 +469,8 @@ func (s *Stage4Operacion) renderProfessionalsPanel() *dom.Element {
 
 func (s *Stage4Operacion) renderAlertsPanel() *dom.Element {
 	root := s.Root
-	panel := html.Div().Class("panel").
-		Child(html.Span().Class("rm-panel-title").Text("Operational alerts"))
+	panel := html.Div().Class(clsPanel).
+		Child(html.Span().Class(clsPanelTitle).Text(lang.Translate("Alerts").String()))
 
 	hasAlerts := false
 	for _, art := range root.Artifacts {
@@ -514,13 +481,13 @@ func (s *Stage4Operacion) renderAlertsPanel() *dom.Element {
 			if alert.Status == StatusCrit {
 				badgeCls = "adot crit"
 			}
-			item := html.Div().Class("room-item").
+			item := html.Div().Class(clsItem).
 				Child(
 					html.Span().Class(badgeCls),
-					html.Div().Class("rm-room-info").
+					html.Div().Class(clsItemInfo).
 						Child(
 							html.Strong().Text(alert.Code+" · "+artifactKindLabel(alert.Kind)),
-							html.Span().Class("field").Text(alert.Reason),
+							html.Span().Class(clsField).Text(alert.Reason),
 						),
 				)
 			panel.Child(item)
@@ -528,7 +495,7 @@ func (s *Stage4Operacion) renderAlertsPanel() *dom.Element {
 	}
 
 	if !hasAlerts {
-		panel.Child(html.Span().Class("field").Text("No active alerts."))
+		panel.Child(html.Span().Class(clsField).Text(lang.Translate("No active alerts").String()))
 	}
 
 	return panel

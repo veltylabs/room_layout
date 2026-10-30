@@ -64,6 +64,7 @@ const (
 	ErrRoomOverlap        model.Conflict = "room_layout: room already has a shift in that time range"
 	ErrOccupantOverlap    model.Conflict = "room_layout: occupant already has a shift in that time range"
 	ErrOutsideBounds      model.Invalid  = "room_layout: shift is outside the establishment's opening hours for that date"
+	ErrInvalidArea        model.Invalid  = "room_layout: invalid cells, expected column,row,width,height separated by ;"
 	ErrNotWeekly          model.Invalid  = "room_layout: only a weekly shift can have one occurrence cancelled"
 	ErrCannotRead         model.Invalid  = "room_layout: cannot read the request"
 )
@@ -81,7 +82,7 @@ func weekdayInput() input.Input {
 }
 
 var FloorModel = model.Definition{
-	Name: "floor",
+	Name: "room_floor",
 	Fields: model.Fields{
 		{Name: "cols", Type: model.Int()},
 		{Name: "rows", Type: model.Int()},
@@ -96,7 +97,7 @@ var FloorModel = model.Definition{
 }
 
 var RoomModel = model.Definition{
-	Name: "room",
+	Name: "room_space",
 	Fields: model.Fields{
 		{Name: "room_type", Type: model.Text()},
 		{Name: "cells", Type: model.Text()},
@@ -128,7 +129,7 @@ var RoomArtifactModel = model.Definition{
 }
 
 var EquipmentModel = model.Definition{
-	Name: "equipment",
+	Name: "room_equipment",
 	Fields: model.Fields{
 		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true},
 		{Name: "tenant_id", Type: model.Text(), NotNull: true},
@@ -142,7 +143,7 @@ var EquipmentModel = model.Definition{
 }
 
 var RoomEquipmentModel = model.Definition{
-	Name: "room_equipment",
+	Name: "room_space_equipment",
 	Fields: model.Fields{
 		{Name: "tenant_id", Type: model.Text(), NotNull: true},
 		{Name: "room_id", Type: model.Text(), Ref: &RoomModel, DB: &model.FieldDB{PK: true, RefColumn: "id"}, NotNull: true},

@@ -14,7 +14,7 @@ func TestMigrate_CreatesEveryTable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Migrate failed: %v", err)
 	}
-	want := []string{"floor", "room", "room_artifact", "equipment", "room_equipment", "room_category", "room_shift", "room_shift_cancellation"}
+	want := []string{"room_floor", "room_space", "room_artifact", "room_equipment", "room_space_equipment", "room_category", "room_shift", "room_shift_cancellation"}
 	for _, name := range want {
 		found := false
 		for _, tb := range tables {
