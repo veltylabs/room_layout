@@ -49,11 +49,6 @@ func (s *Stage1Planta) Render() *dom.Element {
 			html.Div().Class("rm-header-actions").
 				Child(
 					&themetoggle.ThemeToggle{},
-					html.Button().Class("btn").
-						Child(html.Span().Text("Save")).
-						OnClick(func(dom.Event) {
-							root.SaveAll()
-						}),
 				),
 		)
 
@@ -65,7 +60,7 @@ func (s *Stage1Planta) Render() *dom.Element {
 		OnClick(func(dom.Event) {
 			if root.Cols > 6 {
 				root.Cols--
-				root.RebuildAllFloors()
+				root.gridChanged()
 			}
 		})
 
@@ -77,7 +72,7 @@ func (s *Stage1Planta) Render() *dom.Element {
 		OnClick(func(dom.Event) {
 			if root.Cols < 40 {
 				root.Cols++
-				root.RebuildAllFloors()
+				root.gridChanged()
 			}
 		})
 
@@ -89,7 +84,7 @@ func (s *Stage1Planta) Render() *dom.Element {
 		OnClick(func(dom.Event) {
 			if root.Rows > 4 {
 				root.Rows--
-				root.RebuildAllFloors()
+				root.gridChanged()
 			}
 		})
 
@@ -101,7 +96,7 @@ func (s *Stage1Planta) Render() *dom.Element {
 		OnClick(func(dom.Event) {
 			if root.Rows < 40 {
 				root.Rows++
-				root.RebuildAllFloors()
+				root.gridChanged()
 			}
 		})
 
@@ -116,14 +111,14 @@ func (s *Stage1Planta) Render() *dom.Element {
 			v := ParsePositiveInt(e.TargetValue())
 			if v >= 6 && v <= 40 && v != root.Cols {
 				root.Cols = v
-				root.RebuildAllFloors()
+				root.gridChanged()
 			}
 		}).
 		OnChange(func(e dom.Event) {
 			v := ParsePositiveInt(e.TargetValue())
 			if v >= 6 && v <= 40 && v != root.Cols {
 				root.Cols = v
-				root.RebuildAllFloors()
+				root.gridChanged()
 			}
 		})
 
@@ -138,14 +133,14 @@ func (s *Stage1Planta) Render() *dom.Element {
 			v := ParsePositiveInt(e.TargetValue())
 			if v >= 4 && v <= 40 && v != root.Rows {
 				root.Rows = v
-				root.RebuildAllFloors()
+				root.gridChanged()
 			}
 		}).
 		OnChange(func(e dom.Event) {
 			v := ParsePositiveInt(e.TargetValue())
 			if v >= 4 && v <= 40 && v != root.Rows {
 				root.Rows = v
-				root.RebuildAllFloors()
+				root.gridChanged()
 			}
 		})
 
@@ -266,6 +261,7 @@ func (s *Stage1Planta) buildFloorCards() []*dom.Element {
 				html.Input("text").Class("name-input").Attr("value", f.Name).
 					OnChange(func(e dom.Event) {
 						f.Name = e.TargetValue()
+						root.saveFloor(*f)
 					}),
 				html.Span().Class("rm-floor-count").BindText(floorCountSig),
 			)
@@ -342,6 +338,7 @@ func (s *Stage1Planta) buildFloorCards() []*dom.Element {
 
 				cellBtn.OnPointerUp(func(dom.Event) {
 					s.isDragging = false
+					root.saveFloor(*f) // una sola vez por trazo, no por celda
 				})
 
 				gridEl.Child(cellBtn)
@@ -354,7 +351,7 @@ func (s *Stage1Planta) buildFloorCards() []*dom.Element {
 				html.Button().Class("btn", "btn-sm").Text("Clear").
 					OnClick(func(dom.Event) {
 						f.HabitableCells = nil
-						s.RebuildFloors()
+						root.saveFloor(*f)
 					}),
 			)
 

@@ -80,6 +80,11 @@ registra una vez. El que no tiene red deja el campo vacío. Este módulo no impo
 módulo: lo que necesita de otro lo pide por una interfaz que él mismo declara (`CategoryReader`,
 `OccupantReader`) y la app la conecta.
 
+El mapa del recinto (`ui.NewMap(caller)`) lee los pisos, boxes y equipos del servidor y guarda cada
+cambio en el momento por las mismas operaciones (`save_floor`, `save_room`, `save_room_artifact`, …);
+después de cada cambio vuelve a leer, así que muestra siempre lo guardado. Las celdas se guardan como
+un texto separado por comas (`"A1,B1"`). Los turnos de la etapa de operación todavía no se guardan.
+
 ## Archivos Clave
 
 - `model.go`: Definición de modelos, parámetros y respuestas.

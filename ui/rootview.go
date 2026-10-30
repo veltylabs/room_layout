@@ -38,6 +38,7 @@ type RootView struct {
 
 	verCount int
 	VerSig   *dom.SignalString
+	status   *dom.SignalString // el último error al leer o guardar; vacío si todo anduvo
 
 	Cols int
 	Rows int
@@ -64,10 +65,14 @@ func (r *RootView) Init(_ dom.Ctx) {
 	if r.VerSig == nil {
 		r.VerSig = dom.NewString("0")
 	}
+	if r.status == nil {
+		r.status = dom.NewString("")
+	}
 	r.stage1 = &Stage1Planta{Root: r}
 	r.stage2 = &Stage2Espacios{Root: r}
 	r.stage3 = &Stage3Artefactos{Root: r}
 	r.stage4 = &Stage4Operacion{Root: r}
+	r.reload()
 }
 
 func (r *RootView) GoToStage(idx int) {
@@ -123,19 +128,12 @@ func (r *RootView) NewID() string {
 	return fmt.Sprint(r.Cols*1000 + len(r.Rooms)*100 + len(r.Artifacts) + 1)
 }
 
+// AddFloor crea un piso nuevo y lo guarda en el momento; el servidor le pone su id.
+//
+// Ejemplo: mapa.AddFloor("Piso 3")
 func (r *RootView) AddFloor(name string) {
-	f := FloorData{
-		ID:       r.NewID(),
-		Name:     name,
-		Position: len(r.Floors) + 1,
-	}
-	r.Floors = append(r.Floors, f)
-	r.ActiveFloor = len(r.Floors) - 1
-	r.RebuildAllFloors()
-}
-
-func (r *RootView) SaveAll() {
-	// Notifies or triggers persistence via caller or local state
+	r.ActiveFloor = len(r.Floors)
+	r.saveFloor(FloorData{Name: name, Position: len(r.Floors) + 1})
 }
 
 func (r *RootView) Render() *dom.Element {
@@ -144,6 +142,7 @@ func (r *RootView) Render() *dom.Element {
 	}
 
 	container := html.Div().Class("rm-container")
+	container.Child(html.Div().Class("rm-status").BindText(r.status))
 
 	// Dynamic conditional rendering using dom.Show and derived signals
 	showStage1 := dom.DeriveBool(func() bool { return r.ActiveStageSig.Get() == "0" })

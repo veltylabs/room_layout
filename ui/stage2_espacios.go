@@ -60,11 +60,6 @@ func (s *Stage2Espacios) Render() *dom.Element {
 			html.Div().Class("rm-header-actions").
 				Child(
 					&themetoggle.ThemeToggle{},
-					html.Button().Class("btn").
-						Child(html.Span().Text("Save")).
-						OnClick(func(dom.Event) {
-							root.SaveAll()
-						}),
 				),
 		)
 
@@ -111,21 +106,7 @@ func (s *Stage2Espacios) Render() *dom.Element {
 						html.Button().Class("btn", "btn-primary", "btn-sm").
 							Text("✓ Save space").
 							OnClick(func(dom.Event) {
-								if len(s.DraftCells) > 0 {
-									newRoom := RoomData{
-										ID:       root.NewID(),
-										FloorID:  s.DraftFloorID,
-										Code:     "B-" + fmt.Sprint(len(root.Rooms)+101),
-										Name:     s.DraftName,
-										RoomType: s.DraftType,
-										Cells:    s.DraftCells,
-									}
-									root.Rooms = append(root.Rooms, newRoom)
-									s.IsDrafting = false
-									s.DraftCells = nil
-									s.DraftName = "Box " + fmt.Sprint(len(root.Rooms)+101)
-									root.Refresh()
-								}
+								s.saveDraft()
 							}),
 						html.Button().Class("btn", "btn-sm").
 							Text("✕ Cancel").
@@ -226,20 +207,8 @@ func (s *Stage2Espacios) Render() *dom.Element {
 						s.IsDrafting = true
 						s.DraftCells = nil
 						root.Refresh()
-					} else if len(s.DraftCells) > 0 {
-						newRoom := RoomData{
-							ID:       root.NewID(),
-							FloorID:  s.DraftFloorID,
-							Code:     "B-" + fmt.Sprint(len(root.Rooms)+101),
-							Name:     s.DraftName,
-							RoomType: s.DraftType,
-							Cells:    s.DraftCells,
-						}
-						root.Rooms = append(root.Rooms, newRoom)
-						s.IsDrafting = false
-						s.DraftCells = nil
-						s.DraftName = "Box " + fmt.Sprint(len(root.Rooms)+101)
-						root.Refresh()
+					} else {
+						s.saveDraft()
 					}
 				}),
 		)
@@ -254,7 +223,6 @@ func (s *Stage2Espacios) Render() *dom.Element {
 
 	for rIdx := range root.Rooms {
 		rm := &root.Rooms[rIdx]
-		idx := rIdx
 
 		swCls := "sw-box"
 		swColor := "var(--color-primary)"
@@ -277,14 +245,7 @@ func (s *Stage2Espacios) Render() *dom.Element {
 					),
 				html.Button().Class("btn", "btn-sm", "btn-danger").Text("✕").
 					OnClick(func(dom.Event) {
-						var updated []RoomData
-						for j, room := range root.Rooms {
-							if j != idx {
-								updated = append(updated, room)
-							}
-						}
-						root.Rooms = updated
-						root.Refresh()
+						root.deactivateRoom(rm.ID)
 					}),
 			)
 		listPanel.Child(item)
@@ -473,4 +434,22 @@ func (s *Stage2Espacios) buildFloorCards() []*dom.Element {
 	}
 
 	return cards
+}
+
+// saveDraft guarda en el servidor el box que se está marcando; el servidor le pone su id.
+func (s *Stage2Espacios) saveDraft() {
+	if len(s.DraftCells) == 0 {
+		return
+	}
+	root := s.Root
+	root.saveRoom(RoomData{
+		FloorID:  s.DraftFloorID,
+		Code:     "B-" + fmt.Sprint(len(root.Rooms)+101),
+		Name:     s.DraftName,
+		RoomType: s.DraftType,
+		Cells:    s.DraftCells,
+	})
+	s.IsDrafting = false
+	s.DraftCells = nil
+	s.DraftName = "Box " + fmt.Sprint(len(root.Rooms)+102)
 }

@@ -45,11 +45,6 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 			html.Div().Class("rm-header-actions").
 				Child(
 					&themetoggle.ThemeToggle{},
-					html.Button().Class("btn").
-						Child(html.Span().Text("Save")).
-						OnClick(func(dom.Event) {
-							root.SaveAll()
-						}),
 				),
 		)
 
@@ -143,8 +138,7 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 										btn.Class("on")
 									}
 									return btn.OnClick(func(dom.Event) {
-										selectedArt.Status = StatusOk
-										root.Refresh()
+										setArtifactStatus(root, *selectedArt, StatusOk, "")
 									})
 								}(),
 								func() *dom.Element {
@@ -153,11 +147,7 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 										btn.Class("on")
 									}
 									return btn.OnClick(func(dom.Event) {
-										selectedArt.Status = StatusWarn
-										if selectedArt.Reason == "" {
-											selectedArt.Reason = "Requiere revisión periódica"
-										}
-										root.Refresh()
+										setArtifactStatus(root, *selectedArt, StatusWarn, "Requiere revisión periódica")
 									})
 								}(),
 								func() *dom.Element {
@@ -166,11 +156,7 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 										btn.Class("on")
 									}
 									return btn.OnClick(func(dom.Event) {
-										selectedArt.Status = StatusCrit
-										if selectedArt.Reason == "" {
-											selectedArt.Reason = "Equipo fuera de servicio"
-										}
-										root.Refresh()
+										setArtifactStatus(root, *selectedArt, StatusCrit, "Equipo fuera de servicio")
 									})
 								}(),
 							),
@@ -183,7 +169,9 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 					html.Input("text").Class("input").
 						Attr("value", selectedArt.Reason).
 						OnChange(func(e dom.Event) {
-							// Update reason
+							a := *selectedArt
+							a.Reason = e.TargetValue()
+							root.saveArtifact(a)
 						}),
 				)
 			inspectorPanel.Child(reasonInput)
@@ -192,15 +180,8 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 		deleteBtn := html.Button().Class("btn", "btn-danger").
 			Text("Remove from map").
 			OnClick(func(dom.Event) {
-				var updated []ArtifactData
-				for _, a := range root.Artifacts {
-					if a.ID != selectedArt.ID {
-						updated = append(updated, a)
-					}
-				}
-				root.Artifacts = updated
 				s.SelectedArtifactID = ""
-				root.Refresh()
+				root.deleteArtifact(selectedArt.ID)
 			})
 		inspectorPanel.Child(deleteBtn)
 
@@ -384,19 +365,15 @@ func (s *Stage3Artefactos) buildFloorCards() []*dom.Element {
 						}
 						code := artifactKindCode(s.PlacingKind) + "-" + fmt.Sprintf("%02d", codeCount)
 
-						newArt := ArtifactData{
-							ID:      root.NewID(),
+						s.IsPlacing = false
+						root.saveArtifact(ArtifactData{
 							RoomID:  room.ID,
 							FloorID: fl.ID,
 							Kind:    s.PlacingKind,
 							Code:    code,
 							Cell:    coord,
 							Status:  StatusOk,
-						}
-						root.Artifacts = append(root.Artifacts, newArt)
-						s.SelectedArtifactID = newArt.ID
-						s.IsPlacing = false
-						root.Refresh()
+						})
 					})
 				}
 
@@ -486,4 +463,14 @@ func artifactKindLabel(kind string) string {
 	default:
 		return "Equipo"
 	}
+}
+
+// setArtifactStatus cambia el estado de un equipo y lo guarda; al pasar a alerta sin motivo,
+// le pone el motivo por defecto de ese estado.
+func setArtifactStatus(root *RootView, a ArtifactData, status, defaultReason string) {
+	a.Status = status
+	if a.Reason == "" {
+		a.Reason = defaultReason
+	}
+	root.saveArtifact(a)
 }

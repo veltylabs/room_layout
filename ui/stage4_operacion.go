@@ -201,11 +201,6 @@ func (s *Stage4Operacion) Render() *dom.Element {
 				}),
 			html.Span().Class("rm-footer-summary").
 				Text("Operation Dashboard · Central Clinic"),
-			html.Button().Class("btn", "btn-primary").
-				Child(html.Span().Text("Save changes")).
-				OnClick(func(dom.Event) {
-					root.SaveAll()
-				}),
 		)
 
 	layout := html.Div().Class("rm-stage").
