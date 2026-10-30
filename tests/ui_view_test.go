@@ -36,14 +36,18 @@ func TestUI_Screens(t *testing.T) {
 	if grp.ID != ui.ID {
 		t.Errorf("grp.ID = %q, want %q", grp.ID, ui.ID)
 	}
-	if len(grp.Children) != 3 {
-		t.Fatalf("len(grp.Children) = %d, want 3", len(grp.Children))
+	// El mapa (pantalla propia) y las tres listas: boxes, pisos y equipamiento.
+	if len(grp.Children) != 4 {
+		t.Fatalf("len(grp.Children) = %d, want 4", len(grp.Children))
+	}
+	if grp.Children[0].Component == nil || grp.Children[0].Help == "" {
+		t.Errorf("first child must be the map: a Component with Help, got %+v", grp.Children[0].ID)
 	}
 	for _, child := range grp.Children {
 		if err := child.Validate(); err != nil {
 			t.Errorf("child %s Validate() error: %v", child.ID, err)
 		}
-		if child.Presenter.Description() == "" {
+		if child.Presenter != nil && child.Presenter.Description() == "" {
 			t.Errorf("child %s Description() is empty", child.ID)
 		}
 	}

@@ -13,10 +13,12 @@ const (
 	descRooms     lang.Text = "Rooms, consultations and procedure spaces."
 	descFloors    lang.Text = "Building levels and architectural floors."
 	descEquipment lang.Text = "Clinical and operational equipment allocated to spaces."
+	descMap       lang.Text = "The floor plan of each level: draw its usable area, its rooms and where each piece of equipment is. Every change is saved at once."
 
 	labelRooms     lang.Text = "Rooms"
 	labelFloors    lang.Text = "Floors"
 	labelEquipment lang.Text = "Equipment"
+	labelMap       lang.Text = "Map"
 )
 
 // Screens declara las pantallas que este módulo ofrece al menú de la app.
@@ -28,6 +30,14 @@ func Screens(caller router.Caller) []view.Screen {
 			Icon:  ID,
 			Help:  descSpaces,
 			Children: []view.Screen{
+				{
+					ID:         ID + ".map",
+					Label:      labelMap,
+					Icon:       ID,
+					Help:       descMap,
+					Permission: model.ResourceOf(&roomlayout.FloorModel),
+					Component:  NewMap(caller),
+				},
 				{
 					ID:         ID + ".rooms",
 					Label:      labelRooms,
