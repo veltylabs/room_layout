@@ -64,7 +64,7 @@ func (m *Module) SaveShift(tenantID string, f RoomShiftForm) (RoomShift, error) 
 			return RoomShift{}, ErrInvalidDate
 		}
 		specDate = parsedDate
-		dow = time.Weekday(specDate)
+		dow = time.WeekdayUTC(specDate)
 	}
 
 	// 5. Category check
@@ -201,11 +201,11 @@ func (m *Module) checkOverlap(cand RoomShift) error {
 			if e.SpecificDate == 0 {
 				dateOverlap = (e.DayOfWeek == cand.DayOfWeek)
 			} else {
-				dateOverlap = (time.Weekday(e.SpecificDate) == int(cand.DayOfWeek) && e.SpecificDate >= todayDate)
+				dateOverlap = (time.WeekdayUTC(e.SpecificDate) == int(cand.DayOfWeek) && e.SpecificDate >= todayDate)
 			}
 		} else { // Candidate is dated (date D = cand.SpecificDate)
 			if e.SpecificDate == 0 {
-				if e.DayOfWeek == int64(time.Weekday(cand.SpecificDate)) {
+				if e.DayOfWeek == int64(time.WeekdayUTC(cand.SpecificDate)) {
 					// Check if E is cancelled on cand.SpecificDate
 					cancelled, err := m.isShiftCancelled(e.TenantId, e.Id, cand.SpecificDate)
 					if err != nil {
@@ -350,7 +350,7 @@ func (m *Module) CancelShiftOccurrence(tenantID, shiftID string, date time.Unix)
 	if s.SpecificDate > 0 {
 		return ErrNotWeekly
 	}
-	if time.Weekday(date) != int(s.DayOfWeek) {
+	if time.WeekdayUTC(date) != int(s.DayOfWeek) {
 		return ErrInvalidDate
 	}
 
@@ -438,7 +438,7 @@ func (m *Module) MoveShiftOccurrence(tenantID, shiftID string, date time.Unix, t
 		}
 
 		if s.SpecificDate == 0 { // Weekly
-			if time.Weekday(date) != int(s.DayOfWeek) {
+			if time.WeekdayUTC(date) != int(s.DayOfWeek) {
 				return ErrInvalidDate
 			}
 			// 1. Cancel occurrence of original shift

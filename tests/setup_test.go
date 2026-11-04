@@ -135,12 +135,13 @@ func newTestEnv(tenantID string) *testEnv {
 		clockSec:  1700000000,
 	}
 
+	zone, _ := time.LoadZone("America/Santiago")
 	deps := roomlayout.Deps{
 		IDs:        ids,
 		Categories: cats,
 		Occupants:  occs,
 		TenantID:   tenantID,
-		Timezone:   "America/Santiago",
+		Zone:       zone,
 		Bounds:     bounds,
 		Publisher:  pub,
 		Clock: func() time.Nano {

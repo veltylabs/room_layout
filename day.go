@@ -10,20 +10,10 @@ func (m *Module) localNow() (time.Unix, int) {
 	return m.localAt(m.now().Unix())
 }
 
-// localAt splits an instant (Unix seconds UTC) into the local day it falls on, as the day key the shifts use (its
-// midnight UTC), and the minute of that local day.
+// localAt: el día local (como clave: su medianoche UTC) y el minuto de ese día, en la zona de la instalación.
 func (m *Module) localAt(sec time.Unix) (time.Unix, int) {
-	D := time.MidnightUTC(sec)
-	min := int((sec - time.LocalMinutesToUnixUTC(D, 0, m.deps.Timezone)) / 60)
-	if min < 0 {
-		D -= 86400
-		min = int((sec - time.LocalMinutesToUnixUTC(D, 0, m.deps.Timezone)) / 60)
-	}
-	if min >= 1440 {
-		D += 86400
-		min = int((sec - time.LocalMinutesToUnixUTC(D, 0, m.deps.Timezone)) / 60)
-	}
-	return D, min
+	D, _ := time.ParseDateUTC(m.deps.Zone.Date(sec))
+	return D, m.deps.Zone.Minutes(sec)
 }
 
 // RoomOfOccupant returns the room where occupantID has a shift covering the instant at (Unix seconds UTC, read in the
@@ -107,7 +97,7 @@ func (m *Module) shiftsOn(tenantID string, date time.Unix) ([]RoomShift, error) 
 		}
 	}
 
-	dow := time.Weekday(date)
+	dow := time.WeekdayUTC(date)
 
 	var activeShifts []RoomShift
 	err := m.db.Query(&RoomShift{}).

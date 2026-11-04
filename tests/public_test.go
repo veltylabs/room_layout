@@ -20,7 +20,7 @@ func TestListPublicAvailability(t *testing.T) {
 	})
 	_ = env.mod.SetRoomCategories("tenantA", r.Id, []string{"cat1"})
 
-	dateSec, _ := time.ParseDate("2026-03-16")
+	dateSec, _ := time.ParseDateUTC("2026-03-16")
 
 	// Bounds: 08:00 (480) - 12:00 (720)
 	env.bounds.setBounds(dateSec, time.DayBounds{Open: true, OpenMin: 480, CloseMin: 720})

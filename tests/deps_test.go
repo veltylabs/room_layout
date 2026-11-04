@@ -6,6 +6,7 @@ import (
 	roomlayout "github.com/veltylabs/room_layout"
 	"webtyp.com/orm"
 	"webtyp.com/storage/mem"
+	"webtyp.com/time"
 )
 
 func TestDependencyValidation(t *testing.T) {
@@ -14,12 +15,13 @@ func TestDependencyValidation(t *testing.T) {
 	cats := newFakeCategories()
 	occs := newFakeOccupants()
 
+	zone, _ := time.LoadZone("America/Santiago")
 	base := roomlayout.Deps{
 		IDs:        ids,
 		Categories: cats,
 		Occupants:  occs,
 		TenantID:   "tenant1",
-		Timezone:   "America/Santiago",
+		Zone:       zone,
 	}
 
 	// 1. Missing IDs
@@ -54,11 +56,11 @@ func TestDependencyValidation(t *testing.T) {
 		t.Fatalf("expected Deps.TenantID error, got %v", err)
 	}
 
-	// 5. Missing Timezone
+	// 5. Missing Zone
 	d = base
-	d.Timezone = ""
+	d.Zone = time.Zone{}
 	_, err = roomlayout.New(db, d)
-	if err == nil || err.Error() != "room_layout: Deps.Timezone is required" {
-		t.Fatalf("expected Deps.Timezone error, got %v", err)
+	if err == nil || err.Error() != "room_layout: Deps.Zone is required" {
+		t.Fatalf("expected Deps.Zone error, got %v", err)
 	}
 }

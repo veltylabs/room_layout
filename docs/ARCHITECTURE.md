@@ -96,6 +96,8 @@ turnos semanales y los de fecha; no cuentan una ocurrencia cancelada ni un box i
 turno, `found` es falso. Otro módulo lo declara en una interfaz estrecha propia y la aplicación le pasa este módulo: así
 `clinical_encounter` sabe en qué box ocurrió una atención sin importar `room_layout`.
 
+Las fechas que ve una persona salen de la zona de la instalación (`Deps.Zone` / `BrowserDeps.Zone`); un día guardado como clave usa las funciones UTC.
+
 ## 6. Ejemplo de Raíz de Composición
 
 ```go
@@ -136,7 +138,7 @@ func main() {
 		Categories: &categoryAdapter{},
 		Occupants:  &occupantAdapter{},
 		TenantID:   "tenant-1",
-		Timezone:   "America/Santiago",
+		Zone:       zone, // asumiendo zone fue cargado con time.LoadZone
 	})
 	if err != nil {
 		panic(err)
