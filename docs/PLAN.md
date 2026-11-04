@@ -2,6 +2,8 @@
 PLAN: "feat!: room_layout reads opening hours as time.DayLimits; contracts in interfaces.go"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 10274966057306954943
 ---
 
 > Read AGENTS.md at the repo root before any change.
