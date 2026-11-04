@@ -2,8 +2,10 @@
 PLAN: "feat!: room days from the installation zone (Deps.Zone instead of a zone name)"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 1448402033474033232
+PR: https://github.com/veltylabs/room_layout/pull/11
+REVIEWED_COMMIT: e204ae8f0707c8c3d31ecc3452803f735cbba556
 ---
 
 > Read AGENTS.md at the repo root before any change.
