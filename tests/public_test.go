@@ -23,7 +23,7 @@ func TestListPublicAvailability(t *testing.T) {
 	dateSec, _ := time.ParseDateUTC("2026-03-16")
 
 	// Bounds: 08:00 (480) - 12:00 (720)
-	env.bounds.setBounds(dateSec, time.DayBounds{Open: true, OpenMin: 480, CloseMin: 720})
+	env.hours.setBounds(dateSec, time.DayLimits{Open: true, OpenMin: 480, CloseMin: 720})
 
 	// Shift from 08:00 to 09:00, and 09:10 to 10:00
 	_, _ = env.mod.SaveShift("tenantA", roomlayout.RoomShiftForm{

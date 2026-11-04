@@ -25,8 +25,9 @@ func build(d appkit.Deps) (model.ModuleNaming, error) {
 	if err != nil {
 		return nil, err
 	}
+	hours, _ := appkit.Find[roomlayout.HoursReader](d)
 	return roomlayout.New(d.DB, roomlayout.Deps{
 		IDs: d.IDs, Publisher: d.Events, TenantID: d.TenantID, Zone: d.Zone,
-		Categories: cats, Occupants: occ,
+		Categories: cats, Occupants: occ, Hours: hours,
 	})
 }

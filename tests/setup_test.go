@@ -68,34 +68,34 @@ func (f *fakeOccupants) OccupantOptions(tenantID string) ([]fmt.KeyValue, error)
 
 type boundEntry struct {
 	date   time.Unix
-	bounds time.DayBounds
+	hours time.DayLimits
 }
 
-type fakeBounds struct {
-	bounds []boundEntry
+type fakeHours struct {
+	hours []boundEntry
 }
 
-func newFakeBounds() *fakeBounds {
-	return &fakeBounds{}
+func newFakeHours() *fakeHours {
+	return &fakeHours{}
 }
 
-func (f *fakeBounds) GetDayBounds(date time.Unix) (time.DayBounds, error) {
-	for _, b := range f.bounds {
+func (f *fakeHours) DayLimits(date time.Unix) (time.DayLimits, error) {
+	for _, b := range f.hours {
 		if b.date == date {
-			return b.bounds, nil
+			return b.hours, nil
 		}
 	}
-	return time.DayBounds{Open: true, OpenMin: 480, CloseMin: 1200}, nil // 08:00 - 20:00
+	return time.DayLimits{Open: true, OpenMin: 480, CloseMin: 1200}, nil // 08:00 - 20:00
 }
 
-func (f *fakeBounds) setBounds(date time.Unix, b time.DayBounds) {
-	for i, entry := range f.bounds {
+func (f *fakeHours) setBounds(date time.Unix, b time.DayLimits) {
+	for i, entry := range f.hours {
 		if entry.date == date {
-			f.bounds[i].bounds = b
+			f.hours[i].hours = b
 			return
 		}
 	}
-	f.bounds = append(f.bounds, boundEntry{date: date, bounds: b})
+	f.hours = append(f.hours, boundEntry{date: date, hours: b})
 }
 
 type testEnv struct {
@@ -103,7 +103,7 @@ type testEnv struct {
 	ids       *simpleIDs
 	cats      *fakeCategories
 	occs      *fakeOccupants
-	bounds    *fakeBounds
+	hours    *fakeHours
 	publisher *mockPublisher
 	clockSec  time.Unix
 	mod       *roomlayout.Module
@@ -122,7 +122,7 @@ func newTestEnv(tenantID string) *testEnv {
 	ids := &simpleIDs{}
 	cats := newFakeCategories()
 	occs := newFakeOccupants()
-	bounds := newFakeBounds()
+	hours := newFakeHours()
 	pub := &mockPublisher{}
 
 	env := &testEnv{
@@ -130,7 +130,7 @@ func newTestEnv(tenantID string) *testEnv {
 		ids:       ids,
 		cats:      cats,
 		occs:      occs,
-		bounds:    bounds,
+		hours:    hours,
 		publisher: pub,
 		clockSec:  1700000000,
 	}
@@ -142,7 +142,7 @@ func newTestEnv(tenantID string) *testEnv {
 		Occupants:  occs,
 		TenantID:   tenantID,
 		Zone:       zone,
-		Bounds:     bounds,
+		Hours:      hours,
 		Publisher:  pub,
 		Clock: func() time.Nano {
 			return env.clockSec.Nano()
