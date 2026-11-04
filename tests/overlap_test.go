@@ -60,7 +60,7 @@ func TestShiftOverlapCases(t *testing.T) {
 	}
 
 	// Cancel Monday occurrence of shift 1 on date 2026-03-16 (a Monday)
-	mondayDateSec, _ := time.ParseDate("2026-03-16")
+	mondayDateSec, _ := time.ParseDateUTC("2026-03-16")
 
 	// Get shift 1 ID
 	shifts, _ := env.mod.ListRoomShifts("tenantA", r.Id)

@@ -9,7 +9,7 @@ func parseDate(s string) (time.Unix, error) {
 	if s == "" {
 		return 0, nil
 	}
-	sec, err := time.ParseDate(s)
+	sec, err := time.ParseDateUTC(s)
 	if err != nil {
 		return 0, ErrInvalidDate
 	}
@@ -20,7 +20,8 @@ func formatDate(sec time.Unix) string {
 	if sec <= 0 {
 		return ""
 	}
-	return time.FormatDate(sec)
+	y, mo, d, _, _, _ := time.CivilUTC(sec)
+	return fmt.Sprintf("%04d-%02d-%02d", y, mo, d)
 }
 
 func parseHour(s string) (int, error) {

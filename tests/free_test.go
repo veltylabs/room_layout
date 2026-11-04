@@ -29,7 +29,7 @@ func TestFindFreeRooms(t *testing.T) {
 	_ = env.mod.SetRoomCategories("tenantA", r1.Id, []string{"cat1"})
 	_ = env.mod.SetRoomCategories("tenantA", r2.Id, []string{"cat1"})
 
-	dateSec, _ := time.ParseDate("2026-03-16")
+	dateSec, _ := time.ParseDateUTC("2026-03-16")
 
 	// Shift in r1 from 10:00 to 12:00
 	_, _ = env.mod.SaveShift("tenantA", roomlayout.RoomShiftForm{

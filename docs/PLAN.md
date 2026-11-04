@@ -84,3 +84,6 @@ New test: `localAt(2019-07-16 01:30 UTC)` with Santiago → day key of `2019-07-
 
 Commit after every stage. Never edit a generated `*_orm.go`. Never run `git reset`, `git restore`, `git checkout --
 <file>` or `git stash` on your own work. Stuck 30 minutes: open the PR anyway listing what fails.
+
+## Executor notes
+Everything was successfully completed.

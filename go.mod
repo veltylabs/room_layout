@@ -3,7 +3,7 @@ module github.com/veltylabs/room_layout
 go 1.26.8
 
 require (
-	webtyp.com/appkit v0.2.4
+	webtyp.com/appkit v0.2.7
 	webtyp.com/components v0.8.57
 	webtyp.com/ddl v0.0.39
 	webtyp.com/dom v0.13.29
@@ -19,7 +19,7 @@ require (
 	webtyp.com/rpc v0.2.15
 	webtyp.com/storage v0.1.18
 	webtyp.com/svg v0.3.33
-	webtyp.com/time v0.6.2
+	webtyp.com/time v0.6.3
 	webtyp.com/widget v0.6.46
 )
 

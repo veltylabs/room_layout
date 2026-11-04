@@ -10,11 +10,11 @@ import (
 // santiagoAt is the instant of a local hour in America/Santiago (UTC-3 in March 2026) on the given date.
 func santiagoAt(t *testing.T, date string, hour, minute int) time.Unix {
 	t.Helper()
-	day, err := time.ParseDate(date)
+	day, err := time.ParseDateUTC(date)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return time.LocalMinutesToUnixUTC(day, hour*60+minute, "America/Santiago")
+	return day + int64(hour*3600+minute*60) + 3*3600
 }
 
 func TestRoomOfOccupant(t *testing.T) {

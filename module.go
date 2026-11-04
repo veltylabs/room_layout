@@ -25,7 +25,7 @@ type Deps struct {
 	Categories CategoryReader    // requerido
 	Occupants  OccupantReader    // requerido
 	TenantID   string            // requerido
-	Timezone   string            // requerido
+	Zone       time.Zone         // requerido
 	Bounds     BoundsReader      // opcional
 	Publisher  events.Publisher  // opcional
 	Clock      func() time.Nano  // opcional
@@ -44,7 +44,7 @@ var (
 	errDepsCategories = "room_layout: Deps.Categories"
 	errDepsOccupants  = "room_layout: Deps.Occupants"
 	errDepsTenantID   = "room_layout: Deps.TenantID"
-	errDepsTimezone   = "room_layout: Deps.Timezone"
+	errDepsZone       = "room_layout: Deps.Zone"
 )
 
 func New(db *orm.DB, deps Deps) (*Module, error) {
@@ -60,8 +60,8 @@ func New(db *orm.DB, deps Deps) (*Module, error) {
 	if deps.TenantID == "" {
 		return nil, fmt.Err(errDepsTenantID, "is required")
 	}
-	if deps.Timezone == "" {
-		return nil, fmt.Err(errDepsTimezone, "is required")
+	if deps.Zone.Name() == "" {
+		return nil, fmt.Err(errDepsZone, "is required")
 	}
 	if deps.Clock == nil {
 		deps.Clock = time.NowNano

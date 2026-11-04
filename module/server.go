@@ -26,7 +26,7 @@ func build(d appkit.Deps) (model.ModuleNaming, error) {
 		return nil, err
 	}
 	return roomlayout.New(d.DB, roomlayout.Deps{
-		IDs: d.IDs, Publisher: d.Events, TenantID: d.TenantID, Timezone: d.Timezone,
+		IDs: d.IDs, Publisher: d.Events, TenantID: d.TenantID, Zone: d.Zone,
 		Categories: cats, Occupants: occ,
 	})
 }
