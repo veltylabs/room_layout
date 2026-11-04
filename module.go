@@ -60,7 +60,7 @@ func New(db *orm.DB, deps Deps) (*Module, error) {
 	if deps.TenantID == "" {
 		return nil, fmt.Err(errDepsTenantID, "is required")
 	}
-	if deps.Zone.Name() == "" {
+	if deps.Zone == (time.Zone{}) {
 		return nil, fmt.Err(errDepsZone, "is required")
 	}
 	if deps.Clock == nil {

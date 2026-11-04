@@ -6,6 +6,7 @@ import (
 	roomlayout "github.com/veltylabs/room_layout"
 	"webtyp.com/orm"
 	"webtyp.com/storage/mem"
+	"webtyp.com/time"
 )
 
 func TestDependencyValidation(t *testing.T) {
