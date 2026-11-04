@@ -2,6 +2,8 @@
 PLAN: "feat!: room days from the installation zone (Deps.Zone instead of a zone name)"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 1448402033474033232
 ---
 
 > Read AGENTS.md at the repo root before any change.
