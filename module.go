@@ -8,25 +8,13 @@ import (
 	"webtyp.com/time"
 )
 
-type CategoryReader interface {
-	CategoryOptions(tenantID string) ([]fmt.KeyValue, error)
-}
-
-type OccupantReader interface {
-	OccupantOptions(tenantID string) ([]fmt.KeyValue, error)
-}
-
-type BoundsReader interface {
-	GetDayBounds(date time.Unix) (time.DayBounds, error)
-}
-
 type Deps struct {
 	IDs        model.IDGenerator // requerido
 	Categories CategoryReader    // requerido
 	Occupants  OccupantReader    // requerido
 	TenantID   string            // requerido
 	Zone       time.Zone         // requerido
-	Bounds     BoundsReader      // opcional
+	Hours      HoursReader       // opcional
 	Publisher  events.Publisher  // opcional
 	Clock      func() time.Nano  // opcional
 }

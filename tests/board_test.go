@@ -26,7 +26,7 @@ func TestShiftsOnAndBoard(t *testing.T) {
 	env.clockSec = dateSec + 10*3600 + 30*60 + 3*3600
 
 	// Set bounds for this date: 08:00 (480) to 20:00 (1200)
-	env.bounds.setBounds(dateSec, time.DayBounds{Open: true, OpenMin: 480, CloseMin: 1200})
+	env.hours.setBounds(dateSec, time.DayLimits{Open: true, OpenMin: 480, CloseMin: 1200})
 
 	// Add busy shift: 10:00 - 12:00
 	_, err := env.mod.SaveShift("tenantA", roomlayout.RoomShiftForm{

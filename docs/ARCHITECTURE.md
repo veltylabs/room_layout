@@ -37,7 +37,7 @@ El módulo gestiona espacios físicos en establecimientos (p. ej. consultorios, 
 ## 3. Reglas de Negocio
 
 - **Validación de solapamiento**: Dos turnos en el mismo espacio (o para el mismo ocupante) no pueden solaparse en sus franjas horarias `[start_min, end_min)`.
-- **Límites de establecimiento (`DayBounds`)**: Los turnos fechados deben encontrarse dentro del horario de apertura del día.
+- **Límites de establecimiento (`DayLimits`)**: Los turnos fechados deben encontrarse dentro del horario de apertura del día.
 - **Transacciones e Integridad**: Los cambios en categorías y equipamiento de un espacio se realizan de forma atómica en transacciones. No se puede deshabilitar una categoría si el espacio tiene turnos activos vinculados a ella.
 - **Aislamiento Multi-Tenant**: Toda consulta y mutación filtra strictly por `tenant_id`.
 

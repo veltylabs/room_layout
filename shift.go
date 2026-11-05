@@ -124,9 +124,9 @@ func (m *Module) SaveShift(tenantID string, f RoomShiftForm) (RoomShift, error) 
 
 	// 7. Bounds check (only for dated shifts)
 	if specDate > 0 {
-		bounds := time.Unbounded()
-		if m.deps.Bounds != nil {
-			b, err := m.deps.Bounds.GetDayBounds(specDate)
+		bounds := time.Unlimited()
+		if m.deps.Hours != nil {
+			b, err := m.deps.Hours.DayLimits(specDate)
 			if err != nil {
 				return RoomShift{}, err
 			}
@@ -425,9 +425,9 @@ func (m *Module) MoveShiftOccurrence(tenantID, shiftID string, date time.Unix, t
 		}
 
 		// Bounds check
-		bounds := time.Unbounded()
-		if m.deps.Bounds != nil {
-			b, err := m.deps.Bounds.GetDayBounds(date)
+		bounds := time.Unlimited()
+		if m.deps.Hours != nil {
+			b, err := m.deps.Hours.DayLimits(date)
 			if err != nil {
 				return err
 			}

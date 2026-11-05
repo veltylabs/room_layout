@@ -21,6 +21,7 @@ mod, err := roomlayout.New(db, roomlayout.Deps{
 	IDs:        ids,
 	Categories: categoryReader,
 	Occupants:  occupantReader,
+	Hours:      hoursReader,
 	TenantID:   "tenant-1",
 	Timezone:   "America/Santiago",
 })
@@ -77,8 +78,8 @@ El módulo expone operaciones estándar usando `view.MountSave`/`view.MountDelet
 
 Un equipamiento puede llevar el id de un equipo de red (`device_id`, opcional): un aparato se
 registra una vez. El que no tiene red deja el campo vacío. Este módulo no importa ningún otro
-módulo: lo que necesita de otro lo pide por una interfaz que él mismo declara (`CategoryReader`,
-`OccupantReader`) y la app la conecta.
+módulo: lo que necesita de otro lo pide por una interfaz que él mismo declara (`interfaces.go`: `CategoryReader`,
+`OccupantReader`, `HoursReader`) y la app la conecta.
 
 El mapa del recinto (`ui.NewMap(caller)`) lee los pisos, boxes y equipos del servidor y guarda cada
 cambio en el momento por las mismas operaciones (`save_floor`, `save_room`, `save_room_artifact`, …);

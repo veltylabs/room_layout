@@ -87,8 +87,8 @@ func containsString(list []string, target string) bool {
 }
 
 func (m *Module) shiftsOn(tenantID string, date time.Unix) ([]RoomShift, error) {
-	if m.deps.Bounds != nil {
-		bounds, err := m.deps.Bounds.GetDayBounds(date)
+	if m.deps.Hours != nil {
+		bounds, err := m.deps.Hours.DayLimits(date)
 		if err != nil {
 			return nil, err
 		}
@@ -288,8 +288,8 @@ func (m *Module) ListBoard(tenantID, categoryID, equipmentID string) ([]BoardRoo
 	}
 
 	boundsOpen := true
-	if m.deps.Bounds != nil {
-		b, err := m.deps.Bounds.GetDayBounds(todayDate)
+	if m.deps.Hours != nil {
+		b, err := m.deps.Hours.DayLimits(todayDate)
 		if err != nil {
 			return nil, err
 		}
@@ -367,9 +367,9 @@ func (m *Module) FindFreeRooms(tenantID string, date time.Unix, startMin, endMin
 		return nil, ErrInvalidRange
 	}
 
-	bounds := time.Unbounded()
-	if m.deps.Bounds != nil {
-		b, err := m.deps.Bounds.GetDayBounds(date)
+	bounds := time.Unlimited()
+	if m.deps.Hours != nil {
+		b, err := m.deps.Hours.DayLimits(date)
 		if err != nil {
 			return nil, err
 		}
@@ -467,9 +467,9 @@ func (m *Module) FindFreeRooms(tenantID string, date time.Unix, startMin, endMin
 
 func (m *Module) ListPublicAvailability(date time.Unix, categoryID string) ([]PublicSlot, error) {
 	tenantID := m.deps.TenantID
-	bounds := time.Unbounded()
-	if m.deps.Bounds != nil {
-		b, err := m.deps.Bounds.GetDayBounds(date)
+	bounds := time.Unlimited()
+	if m.deps.Hours != nil {
+		b, err := m.deps.Hours.DayLimits(date)
 		if err != nil {
 			return nil, err
 		}

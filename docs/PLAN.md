@@ -2,8 +2,10 @@
 PLAN: "feat!: room_layout reads opening hours as time.DayLimits; contracts in interfaces.go"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 10274966057306954943
+PR: https://github.com/veltylabs/room_layout/pull/12
+REVIEWED_COMMIT: 9368dfb128a0685d42064a33d0bc155c0cf328dc
 ---
 
 > Read AGENTS.md at the repo root before any change.
