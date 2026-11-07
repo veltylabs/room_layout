@@ -18,6 +18,7 @@ func NewFloorView(caller router.Caller, opts ...view.Option) view.Presenter {
 			List:   OpListFloors,
 			Save:   OpSaveFloor,
 			Delete: OpDeleteFloor,
+			Page:   view.Page{First: view.All},
 		},
 		func() model.ModelSlice { return &FloorList{} },
 	)
@@ -32,6 +33,7 @@ func NewRoomView(caller router.Caller, opts ...view.Option) view.Presenter {
 			Module: ModelName,
 			List:   OpListRooms,
 			Save:   OpSaveRoom,
+			Page:   view.Page{First: view.All},
 		},
 		func() model.ModelSlice { return &RoomList{} },
 	)
@@ -47,6 +49,7 @@ func NewEquipmentView(caller router.Caller, opts ...view.Option) view.Presenter 
 			List:   OpListEquipment,
 			Save:   OpSaveEquipment,
 			Delete: OpDeleteEquipment,
+			Page:   view.Page{First: view.All},
 		},
 		func() model.ModelSlice { return &EquipmentList{} },
 	)
@@ -59,7 +62,11 @@ type roomShiftLister struct {
 	roomID string
 }
 
-func (l *roomShiftLister) List(done func(rows []view.Record, err error)) {
+func (l *roomShiftLister) Page() view.Page {
+	return view.Page{First: view.All}
+}
+
+func (l *roomShiftLister) List(_ view.ListArgs, done func(rows []view.Record, err error)) {
 	args := ListRoomShiftsArgs{RoomId: l.roomID}
 	var res RoomShiftFormList
 	l.caller.Call(ModelName+"."+OpListRoomShifts, &args, &res, func(err error) {

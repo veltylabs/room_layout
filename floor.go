@@ -55,6 +55,27 @@ func (m *Module) ListFloors(tenantID string) ([]Floor, error) {
 	return res, nil
 }
 
+func (m *Module) listFloors(search, after string, limit int64) ([]Floor, error) {
+	var f Floor
+	qb := m.db.Query(&f).Where(Floor_.TenantId).Eq(m.tenantID)
+	if search != "" {
+		qb = qb.Where(Floor_.Name).Like("%" + search + "%")
+	}
+	if after != "" {
+		qb = qb.Where(Floor_.Id).Gt(after)
+	}
+	qb = qb.OrderBy(Floor_.Id).Asc().Limit(int(limit))
+	results, err := ReadAllFloor(qb)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]Floor, len(results))
+	for i, item := range results {
+		res[i] = *item
+	}
+	return res, nil
+}
+
 func (m *Module) DeleteFloor(tenantID, id string) error {
 	if tenantID == "" {
 		return ErrTenantRequired

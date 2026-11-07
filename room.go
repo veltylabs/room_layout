@@ -105,6 +105,27 @@ func (m *Module) ListRooms(tenantID string, activeOnly bool) ([]Room, error) {
 	return res, nil
 }
 
+func (m *Module) listRooms(search, after string, limit int64) ([]Room, error) {
+	var r Room
+	qb := m.db.Query(&r).Where(Room_.TenantId).Eq(m.tenantID)
+	if search != "" {
+		qb = qb.Where(Room_.Code).Like("%" + search + "%")
+	}
+	if after != "" {
+		qb = qb.Where(Room_.Id).Gt(after)
+	}
+	qb = qb.OrderBy(Room_.Id).Asc().Limit(int(limit))
+	results, err := ReadAllRoom(qb)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]Room, len(results))
+	for i, item := range results {
+		res[i] = *item
+	}
+	return res, nil
+}
+
 func (m *Module) DeactivateRoom(tenantID, id string) error {
 	r, err := m.GetRoom(tenantID, id)
 	if err != nil {

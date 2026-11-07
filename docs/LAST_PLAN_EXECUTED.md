@@ -1,125 +1,170 @@
-# Último plan ejecutado — R2b (ejecutado en local, 2026-10-29)
-
-> Hecho en local por pedido del usuario. **Quedó fuera la etapa 4 (turnos)**: un turno exige `category_id` y el mapa todavía no lo maneja; los turnos siguen solo en memoria hasta su plan. Además se corrigió `migrate/migrate.go`: no creaba la tabla `room_artifact` y terminaba en silencio sin compilador de SQL.
+---
+PLAN: "feat!: paged lists searched on the server (view v0.6.64)"
+EXECUTOR: jules
+REVIEWER: none
+---
 
 > Read AGENTS.md at the repo root before any change.
+> **Finish by yourself:** when the delivery check passes, commit, push and open the pull request. Never ask whether to
+> proceed or finalize — nobody answers, and a session that waits ends without your work.
 
-# PLAN — R2b: the map works with the real data
+# room_layout — paged lists searched on the server
 
-## Why
+`webtyp.com/view` v0.6.64 changed its list contract. Until this repo follows it, its list screens answer 400
+("cannot read the request") because the view now sends `view.ListArgs` to the list operation. The full recipe is
+restated below; source: `https://github.com/webtyp/view/blob/main/docs/LIST_PAGING.md`.
 
-Phase R2 of `veltylabs/mjosefa-cms/docs/MVP_DEPLOYMENT_ROADMAP.md`, decision D34: «Espacios» enters the
-app only when the map works. Today `ui/rootview.go` keeps floors, rooms, artifacts and shifts in
-memory slices (`Floors`, `Rooms`, `Artifacts`, `Shifts`, `Doctors`), never reads them from the server,
-and `SaveAll` is empty (`ui/rootview.go:137`): whatever is drawn is lost. The server side already has
-every operation (part 1, v0.3.64 added the artifact ones).
+## Tools
 
-**Decided by the user: every change is saved at once**, like the list screens. There is no «Save»
-button. After each save or delete the map reads the list again from the server, so the map always
-shows what the server has and never invents ids: a new record is sent with `Id: ""` and the server
-gives it its id.
+```
+go install webtyp.com/devflow/cmd/gotest@latest
+go install webtyp.com/lang/cmd/langc@latest
+go get webtyp.com/view@v0.6.64
+go get webtyp.com/layout@latest   # the release that moved crudview to view v0.6.64
+```
 
-## APIs used
+Environment: `GOPRIVATE=webtyp.com/*,github.com/veltylabs/*`, `GOFLAGS=-mod=mod`, `go mod tidy` after `go get`.
 
-| Symbol | Exact | Where |
-|---|---|---|
-| `router.Caller.Call` | `Call(op string, args model.Encodable, out model.Decodable, done func(error))`; `op` is `ModelName + "." + OpX` | `webtyp.com/router` (as in `view.go:64`, `roomShiftLister.List`) |
-| `view.NewCallerLister` | `func NewCallerLister(caller router.Caller, ops view.Ops, newList func() model.ModelSlice) view.Presenter` | `webtyp.com/view` (as in `tests/room_artifact_ops_test.go`) |
-| `view.Saver` / `view.Deleter` | `Save(recs []model.Model, done func(error))` / `Delete(ids []string, done func(error))` | `webtyp.com/view` — the only way to write: the wire shape is private to `view` |
-| list ops | `OpListFloors` → `FloorList`; `OpListRooms` → `RoomList`; `OpListRoomArtifacts` (args `nil`) → `RoomArtifactList`; `OpListOccupants` → `OptionList` (`Option{Id, Label}`); `OpListRoomShifts` (args `&ListRoomShiftsArgs{RoomId}`) → `RoomShiftFormList` | `ops.go` |
-| write ops | `OpSaveFloor`/`OpDeleteFloor`, `OpSaveRoom`/`OpDeactivateRoom`, `OpSaveRoomArtifact`/`OpDeleteRoomArtifact`, `OpSaveRoomShift`/`OpDeleteRoomShift` | `ops.go` |
+## Sites in this repo (found by grep — change every one)
 
-Check each signature in the source before using it; if one differs, stop and say so in the PR.
+`view.Ops` declarations (each list operation named in `List:` accepts `view.ListArgs`; each `Ops` gets its `Page`):
 
-## Stage 1 — conversions (`ui/data.go`, new)
+```
+./view.go:16:		view.Ops{
+./view.go:31:		view.Ops{
+./view.go:45:		view.Ops{
+./ui/data.go:214:		view.Ops{Module: roomlayout.ModelName, List: roomlayout.OpListRoomArtifacts, Save: roomlayout.OpSaveRoomArtifact, Delete: roomlayout.OpDeleteRoomArtifact},
+./ui/data.go:224:	lister := view.NewCallerLister(r.caller, view.Ops{Module: roomlayout.ModelName, List: list, Save: save, Delete: del}, newList)
+```
 
-Unexported functions, one per direction, between the module models and the map types of
-`ui/types.go`:
+Hand-written `view.Lister` implementations (new `List(args view.ListArgs, done …)` and `Page()`):
 
-- Cells are stored on the server as **one text, comma-separated**: `"A1,B1,C1"`. `splitCells(s string) []string`
-  (empty text → `nil`) and `joinCells(cells []string) string`. Use `webtyp.com/fmt`, never `strings`.
-- `Floor` ↔ `FloorData` (`HabitableCells` via split/join; `Cols`, `Rows` go to `RootView.Cols/Rows`: the
-  largest of the floors read; when saving a floor, write the current `RootView.Cols/Rows`).
-- `Room` ↔ `RoomData` (`Cells`, `RoomType`, `FloorId`, `Code`, `Name`); `IsActive: true` on save.
-- `RoomArtifact` ↔ `ArtifactData` (`FloorID` is the floor of its room, looked up in `RootView.Rooms`).
-- `RoomShiftForm` ↔ `ShiftData`; `Option` → `DoctorData{ID, Name, Initials}` (initials: first letter of
-  the first two words).
+```
+./view.go:62:func (l *roomShiftLister) List(done func(rows []view.Record, err error)) {
+```
 
-## Stage 2 — reading (`ui/data.go`, `ui/rootview.go`)
+Calls to the deleted `Presenter.Filter` (→ `Search(term, nil)` then `Items()`):
 
-- `func NewMap(caller router.Caller) *RootView` — exported constructor, comment in Spanish with an
-  example. `Init` calls `r.reload()`.
-- `func (r *RootView) reload()`: calls the five list ops above (shifts: one call per room after the rooms
-  arrive), fills the slices through Stage 1, then `r.RebuildAllFloors()`. On an error, keep the previous
-  data and show the error text in the map's header (one `*dom.SignalString`), never `panic`.
-- Delete `NewID` and the `ids` field: ids come from the server.
+```
+(none)
+```
 
-## Stage 3 — writing at once (`ui/data.go` + the stages)
+## Page of each list
 
-Helpers in `ui/data.go`: `saveFloor(f FloorData)`, `saveRoom(rm RoomData)`, `saveArtifact(a ArtifactData)`,
-`saveShift(s ShiftData)`, `deleteFloor(id)`, `deactivateRoom(id)`, `deleteArtifact(id)`, `deleteShift(id)`.
-Each builds the model (Stage 1), writes through `view.NewCallerLister(...)` `Save`/`Delete` (or `Call` for
-`OpDeactivateRoom`, which is not a list op), and on success calls `r.reload()`. A new record has `Id: ""`.
+| List operation | `Page` in its `view.Ops` |
+|---|---|
+| every other list | `view.Page{First: view.All}` |
 
-Replace every in-memory change with the helper:
+## Recipe
 
-| Where | Today | Becomes |
-|---|---|---|
-| `rootview.go:126` `AddFloor` | appends a `FloorData` with a local id | `saveFloor(FloorData{Name, Position})` |
-| `stage1_planta.go:268` floor name input | `f.Name = …` | `saveFloor(*f)` after setting it |
-| `stage1_planta.go:342` `OnPointerUp` | `s.isDragging = false` | also `saveFloor(*f)` (one save per drag, not per cell) |
-| `stage1_planta.go:356` «Clear» | `f.HabitableCells = nil` | then `saveFloor(*f)` |
-| `stage2_espacios.go:123`, `:238` | `root.Rooms = append(…, newRoom)` | `saveRoom(newRoom)` with `ID: ""` |
-| `stage2_espacios.go:286` | `root.Rooms = updated` (removal) | `deactivateRoom(id)` |
-| any other edit of a room's name, type or cells in `stage2_espacios.go` | in-memory | `saveRoom(…)` |
-| `stage3_artefactos.go:396` | `append(…, newArt)` | `saveArtifact(newArt)` with `ID: ""` |
-| `stage3_artefactos.go:146,156,169` status changes | in-memory | `saveArtifact(*selectedArt)` after setting it |
-| `stage3_artefactos.go:201` | `root.Artifacts = updated` (removal) | `deleteArtifact(id)` |
-| `stage4_operacion.go:465` | `append(…, newShift)` | `saveShift(newShift)` with `ID: ""` |
-| `stage4_operacion.go:421` | `root.Shifts = updated` (removal) | `deleteShift(id)` |
+`webtyp.com/view` v0.6.63 replaced "list everything, filter in the browser" with **paged lists declared by the
+module and searched on the server**. A module that shows a list with `view.NewCallerLister` or implements
+`view.Lister` makes the changes below. Contract: [page.go](../page.go), [lister.go](../lister.go),
+[view.go](../view.go).
 
-Delete `SaveAll` and the four «Guardar» buttons that call it (`stage1_planta.go:55`,
-`stage2_espacios.go:66`, `stage3_artefactos.go:51`, `stage4_operacion.go:207`). After this stage
-`grep -n "root\.\(Floors\|Rooms\|Artifacts\|Shifts\) *= " ui/*.go` lists only `reload` in `ui/data.go`.
+## What changed in view
 
-## Stage 4 — tests (`tests/map_data_test.go`, new)
+| Before | Now |
+|---|---|
+| `Lister.List(done func(rows []view.Record, err error))` | `Lister.List(args view.ListArgs, done func(rows []view.Record, err error))` and `Lister.Page() view.Page` |
+| The list operation got no body | It gets `view.ListArgs{Search, After, Limit}` and **must accept it** (otherwise it answers 400 and the screen lists nothing) |
+| `Presenter.Filter(term) []model.Item` (local) | `Presenter.Search(term, done)`, `Presenter.HasMore()`, `Presenter.More(done)` (server) |
+| — | `view.Ops.Page` (`view.Page{First, Size, More}`), `view.All`, `view.DefaultPage`, `view.MaxPage`, `view.Cap` |
 
-Same setup as `tests/room_artifact_ops_test.go` (`newTestEnv` + `view.NewRecords().Caller(loopback.WithTenant(…))`).
+## 1. The list operation accepts `view.ListArgs`
 
-- `TestMap_LoadsServerData`: create through the module one floor (`HabitableCells: "A1,B1"`), one room
-  (`Cells: "A1"`), one artifact; `NewMap(caller)` + `Init(nil)` → `Floors[0].HabitableCells` is
-  `["A1","B1"]`, `Rooms[0].Cells` is `["A1"]`, one artifact with its `FloorID`.
-- `TestMap_AddFloorIsSaved`: `m.AddFloor("Piso 1")` → `env.mod.ListFloors(tenant)` has it, and `m.Floors`
-  has it with the server's id.
-- `TestMap_ArtifactRoundTrip`: save one through the helper path the stage uses, delete it → the
-  module has 0.
+Every operation named in `view.Ops.List` declares and decodes `view.ListArgs`, caps the limit, searches on the
+server and continues after the last row shown. Rows come in **ascending id order** (ids are unixid strings of equal
+length, so string order is time order), the same order every call, so `After` continues it.
+
+```go
+reg.Operation(OpListThings, m.opListThings).Requires(model.ResourceOf(&ThingModel), model.Read).Accepts(&view.ListArgs{})
+
+func (m *Module) opListThings(ctx router.Context) {
+	var args view.ListArgs
+	if err := ctx.Decode(&args); err != nil {
+		rpc.WriteError(ctx, ErrCannotRead) // the module's existing "cannot read" error
+		return
+	}
+	rows, err := m.listThings(args.Search, args.After, view.Cap(args.Limit))
+	if err != nil {
+		rpc.WriteError(ctx, err)
+		return
+	}
+	var list ThingList
+	for i := range rows {
+		list = append(list, &rows[i])
+	}
+	_ = ctx.Encode(&list)
+}
+
+// listThings: tenant from the module (m.tenantID), never from the request.
+func (m *Module) listThings(search, after string, limit int64) ([]Thing, error) {
+	var t Thing
+	qb := m.db.Query(&t).Where(Thing_.TenantId).Eq(m.tenantID)
+	if search != "" {
+		qb = qb.Where(Thing_.Name).Like("%" + search + "%") // the field marked Item: model.ItemLabel
+	}
+	if after != "" {
+		qb = qb.Where(Thing_.Id).Gt(after)
+	}
+	qb = qb.OrderBy(Thing_.Id).Asc().Limit(int(limit))
+	rows, err := ReadAllThing(qb)
+	…
+}
+```
+
+- **Never use `qb.Or()`**: `orm` does not group OR conditions, so `tenant = X AND a LIKE s OR b LIKE s` would leak
+  rows of other tenants. Search one field (the `model.ItemLabel` one); a module that needs several fields picks the
+  field by the shape of the term (e.g. a valid RUT → the RUT column, compared with `input.NormalizeRUT`).
+- A model without a tenant column drops that `Where`. A model without `Id` orders by its primary key.
+- If the operation already had arguments of its own (filters), those stay in the module's other operations; the
+  view's list operation receives only `view.ListArgs`.
+
+## 2. The module declares its Page
+
+In `view.Ops`:
+
+```go
+view.Ops{Module: ModelName, List: OpListThings, Save: OpUpsertThing, Page: view.Page{First: view.All}}
+```
+
+- Small or bounded lists (catalogs, configuration, staff, devices, zones): `view.Page{First: view.All}` (every
+  row up to `view.MaxPage` = 500, as today).
+- Lists that grow without bound (patients, payments, messages, audit): `view.Page{First: 0, Size: 20, More: true}`
+  (nothing until a search) or `view.Page{First: 50, Size: 50, More: true}`. The plan of each repo says which.
+
+## 3. A hand-written Lister
+
+```go
+func (l *thingLister) Page() view.Page { return view.Page{First: view.All} }
+
+func (l *thingLister) List(args view.ListArgs, done func([]view.Record, error)) { … same body, args may be ignored when Page is All … }
+```
+
+## 4. Tests
+
+- Replace every `p.Filter(term)` with `p.Search(term, nil)` and then read `p.Items()`.
+- A test double that implements `view.Lister` gets `Page()` and the new `List(args, done)`.
+- Add `Test<Area>_ListAcceptsListArgs`: call the list operation with `&view.ListArgs{Limit: 1}` → status 200 and
+  exactly 1 row; with `&view.ListArgs{Search: "<label of one seeded row>"}` → that row; with
+  `&view.ListArgs{After: <id of the first row>}` → the first row is not in the result.
+
+
+## Last stage — documentation
+
+README and `docs/ARCHITECTURE.md`: where they describe a list, say it loads as its `view.Page` declares and searches
+on the server. Translate to Spanish any README, docs/* file or code comment this plan touched that is still in English (veltylabs rule).
 
 ## Delivery check
 
 ```
-GOPRIVATE=webtyp.com/*,github.com/veltylabs/* GOFLAGS=-mod=mod gotest
+gotest
+langc sync .                                   # if the repo has lang.json: 0 untranslated, 0 reuse warnings
+grep -rn "\.Filter(" --include=*.go .           # → empty
+grep -rn "List(done func" --include=*.go .     # → empty
 ```
 
-- A PR that does not compile, or whose tests could not run, is a failed delivery.
-- Never pause to ask permission: when the check passes, commit, push and open the PR. Stuck 30
-  minutes: open the PR listing what fails.
-- `git diff --stat main` lists only: `ui/data.go`, `ui/rootview.go`, `ui/stage1_planta.go`,
-  `ui/stage2_espacios.go`, `ui/stage3_artefactos.go`, `ui/stage4_operacion.go`,
-  `tests/map_data_test.go`, this plan. No stray scripts. Texts and the menu entry are the next plan
-  (R2c): do not touch `ui/browser.go` or `lang.json` here.
-
-## Stages
-
-| # | Files | Done when |
-|---|---|---|
-| 1 | `ui/data.go` | compiles |
-| 2 | `ui/data.go`, `ui/rootview.go` | compiles |
-| 3 | `ui/data.go`, `ui/stage*.go` | grep above clean |
-| 4 | `tests/map_data_test.go` | suite green |
-
-## Celdas guardadas como rectángulos (local, sin publicar)
-
-- `cells.go`: `Cell{Col, Row}` (cada piso numera desde 1), `EncodeArea`/`DecodeArea` con el formato
-  `columna,fila,ancho,alto;…` para `Floor.HabitableCells` y `Room.Cells`; `RoomArtifact.Cell` es `columna,fila`.
-  Texto mal formado → `ErrInvalidArea`. Pruebas: `tests/area_test.go`.
-- `ui`: cabeceras de columna con números (se borró `ColName`); `data.go` lee y guarda con el codec.
+A PR that does not compile, or whose tests could not run, is a failed delivery. Never edit a generated file
+(`model_orm.go`). Commit after every stage; never run `git reset`, `git restore`, `git checkout -- <file>` or
+`git stash` on your own work. Stuck for 30 minutes: open the PR anyway listing what fails.

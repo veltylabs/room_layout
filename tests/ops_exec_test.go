@@ -7,6 +7,7 @@ import (
 	"webtyp.com/fmt"
 	"webtyp.com/model"
 	"webtyp.com/router"
+	"webtyp.com/view"
 )
 
 type testExecRegistry struct {
@@ -50,6 +51,10 @@ func (c *testOpContext) Decode(into model.Decodable) error {
 		return c.decodeErr
 	}
 	switch dst := into.(type) {
+	case *view.ListArgs:
+		if src, ok := c.args.(*view.ListArgs); ok {
+			*dst = *src
+		}
 	case *roomlayout.ListFloorsArgs:
 		if src, ok := c.args.(*roomlayout.ListFloorsArgs); ok {
 			*dst = *src
@@ -152,7 +157,7 @@ func TestAllOperationsExecution(t *testing.T) {
 	}
 
 	// 2. List floors via op
-	ctx = &testOpContext{args: &roomlayout.ListFloorsArgs{}}
+	ctx = &testOpContext{args: &view.ListArgs{}}
 	reg.handlers[roomlayout.OpListFloors](ctx)
 
 	// Setup data directly
@@ -167,11 +172,11 @@ func TestAllOperationsExecution(t *testing.T) {
 	reg.handlers[roomlayout.OpGetRoom](ctx)
 
 	// 5. List rooms via op
-	ctx = &testOpContext{args: &roomlayout.ListRoomsArgs{}}
+	ctx = &testOpContext{args: &view.ListArgs{}}
 	reg.handlers[roomlayout.OpListRooms](ctx)
 
 	// 7. List equipment via op
-	ctx = &testOpContext{args: &roomlayout.ListEquipmentArgs{}}
+	ctx = &testOpContext{args: &view.ListArgs{}}
 	reg.handlers[roomlayout.OpListEquipment](ctx)
 
 	// 8. Set room equipment via op

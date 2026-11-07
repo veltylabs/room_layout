@@ -48,13 +48,12 @@ const (
 func (m *Module) MountOperations(reg router.OperationRegistry) {
 	// list_floors
 	reg.Operation(OpListFloors, func(ctx router.Context) {
-		var args ListFloorsArgs
+		var args view.ListArgs
 		if err := ctx.Decode(&args); err != nil {
 			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
-		tenantID := m.tenantID
-		floors, err := m.ListFloors(tenantID)
+		floors, err := m.listFloors(args.Search, args.After, view.Cap(args.Limit))
 		if err != nil {
 			rpc.WriteError(ctx, err)
 			return
@@ -64,7 +63,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			list = append(list, &floors[i])
 		}
 		ctx.Encode(&list)
-	}).Requires(model.ResourceOf(&FloorModel), model.Read).Accepts(&ListFloorsArgs{})
+	}).Requires(model.ResourceOf(&FloorModel), model.Read).Accepts(&view.ListArgs{})
 
 	// save_floor
 	view.MountSave(reg, OpSaveFloor, func(x *Floor) error {
@@ -86,13 +85,12 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 
 	// list_rooms
 	reg.Operation(OpListRooms, func(ctx router.Context) {
-		var args ListRoomsArgs
+		var args view.ListArgs
 		if err := ctx.Decode(&args); err != nil {
 			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
-		tenantID := m.tenantID
-		rooms, err := m.ListRooms(tenantID, args.ActiveOnly)
+		rooms, err := m.listRooms(args.Search, args.After, view.Cap(args.Limit))
 		if err != nil {
 			rpc.WriteError(ctx, err)
 			return
@@ -102,7 +100,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			list = append(list, &rooms[i])
 		}
 		ctx.Encode(&list)
-	}).Requires(model.ResourceOf(&RoomModel), model.Read).Accepts(&ListRoomsArgs{})
+	}).Requires(model.ResourceOf(&RoomModel), model.Read).Accepts(&view.ListArgs{})
 
 	// get_room
 	reg.Operation(OpGetRoom, func(ctx router.Context) {
@@ -145,7 +143,12 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 
 	// list_room_artifacts: los artefactos dibujados en el mapa (equipos, sillones, insumos), de todos los boxes.
 	reg.Operation(OpListRoomArtifacts, func(ctx router.Context) {
-		arts, err := m.ListRoomArtifacts(m.tenantID, "")
+		var args view.ListArgs
+		if err := ctx.Decode(&args); err != nil {
+			rpc.WriteError(ctx, ErrCannotRead)
+			return
+		}
+		arts, err := m.listRoomArtifacts(args.Search, args.After, view.Cap(args.Limit))
 		if err != nil {
 			rpc.WriteError(ctx, err)
 			return
@@ -155,7 +158,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			list = append(list, &arts[i])
 		}
 		ctx.Encode(&list)
-	}).Requires(model.ResourceOf(&RoomArtifactModel), model.Read).Accepts(nil)
+	}).Requires(model.ResourceOf(&RoomArtifactModel), model.Read).Accepts(&view.ListArgs{})
 
 	// save_room_artifact
 	view.MountSave(reg, OpSaveRoomArtifact, func(x *RoomArtifact) error {
@@ -177,13 +180,12 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 
 	// list_equipment
 	reg.Operation(OpListEquipment, func(ctx router.Context) {
-		var args ListEquipmentArgs
+		var args view.ListArgs
 		if err := ctx.Decode(&args); err != nil {
 			rpc.WriteError(ctx, ErrCannotRead)
 			return
 		}
-		tenantID := m.tenantID
-		eqs, err := m.ListEquipment(tenantID)
+		eqs, err := m.listEquipment(args.Search, args.After, view.Cap(args.Limit))
 		if err != nil {
 			rpc.WriteError(ctx, err)
 			return
@@ -193,7 +195,7 @@ func (m *Module) MountOperations(reg router.OperationRegistry) {
 			list = append(list, &eqs[i])
 		}
 		ctx.Encode(&list)
-	}).Requires(model.ResourceOf(&EquipmentModel), model.Read).Accepts(&ListEquipmentArgs{})
+	}).Requires(model.ResourceOf(&EquipmentModel), model.Read).Accepts(&view.ListArgs{})
 
 	// save_equipment
 	view.MountSave(reg, OpSaveEquipment, func(x *Equipment) error {

@@ -4,14 +4,14 @@ go 1.26.8
 
 require (
 	webtyp.com/appkit v0.2.18
-	webtyp.com/components v0.8.57
+	webtyp.com/components v0.8.63
 	webtyp.com/ddl v0.0.46
 	webtyp.com/dom v0.13.29
 	webtyp.com/events v0.1.7
 	webtyp.com/form v0.4.61
 	webtyp.com/input v0.0.36
 	webtyp.com/lang v0.1.13
-	webtyp.com/layout v0.3.99
+	webtyp.com/layout v0.3.108
 	webtyp.com/model v0.2.13
 	webtyp.com/msgtype v0.1.0
 	webtyp.com/orm v0.12.26
@@ -65,5 +65,5 @@ require (
 	webtyp.com/font v0.0.5 // indirect
 	webtyp.com/html v0.0.30
 	webtyp.com/json v0.5.37 // indirect
-	webtyp.com/view v0.6.53
+	webtyp.com/view v0.6.65
 )

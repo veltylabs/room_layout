@@ -45,17 +45,17 @@ func (r *RootView) reload() {
 		return
 	}
 	floors := &roomlayout.FloorList{}
-	r.caller.Call(op(roomlayout.OpListFloors), &roomlayout.ListFloorsArgs{}, floors, func(err error) {
+	r.caller.Call(op(roomlayout.OpListFloors), &view.ListArgs{}, floors, func(err error) {
 		if r.failed(err) {
 			return
 		}
 		rooms := &roomlayout.RoomList{}
-		r.caller.Call(op(roomlayout.OpListRooms), &roomlayout.ListRoomsArgs{ActiveOnly: true}, rooms, func(err error) {
+		r.caller.Call(op(roomlayout.OpListRooms), &view.ListArgs{}, rooms, func(err error) {
 			if r.failed(err) {
 				return
 			}
 			arts := &roomlayout.RoomArtifactList{}
-			r.caller.Call(op(roomlayout.OpListRoomArtifacts), nil, arts, func(err error) {
+			r.caller.Call(op(roomlayout.OpListRoomArtifacts), &view.ListArgs{}, arts, func(err error) {
 				if r.failed(err) {
 					return
 				}
@@ -211,7 +211,7 @@ func (r *RootView) deactivateRoom(id string) {
 // deleteArtifact borra un equipo del mapa.
 func (r *RootView) deleteArtifact(id string) {
 	lister := view.NewCallerLister(r.caller,
-		view.Ops{Module: roomlayout.ModelName, List: roomlayout.OpListRoomArtifacts, Save: roomlayout.OpSaveRoomArtifact, Delete: roomlayout.OpDeleteRoomArtifact},
+		view.Ops{Module: roomlayout.ModelName, List: roomlayout.OpListRoomArtifacts, Save: roomlayout.OpSaveRoomArtifact, Delete: roomlayout.OpDeleteRoomArtifact, Page: view.Page{First: view.All}},
 		func() model.ModelSlice { return &roomlayout.RoomArtifactList{} })
 	lister.(view.Deleter).Delete([]string{id}, r.savedAndReload)
 }
@@ -221,7 +221,7 @@ func (r *RootView) save(list, save, del string, newList func() model.ModelSlice,
 	if r.caller == nil {
 		return
 	}
-	lister := view.NewCallerLister(r.caller, view.Ops{Module: roomlayout.ModelName, List: list, Save: save, Delete: del}, newList)
+	lister := view.NewCallerLister(r.caller, view.Ops{Module: roomlayout.ModelName, List: list, Save: save, Delete: del, Page: view.Page{First: view.All}}, newList)
 	lister.(view.Saver).Save([]model.Model{rec}, r.savedAndReload)
 }
 

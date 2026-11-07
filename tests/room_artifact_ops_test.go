@@ -15,7 +15,7 @@ func TestRoomArtifactOps_SaveListDelete(t *testing.T) {
 	env := newTestEnv("tenantA")
 	caller := view.NewRecords().Caller(loopback.WithTenant("tenantA", env.mod))
 	arts := view.NewCallerLister(caller,
-		view.Ops{Module: roomlayout.ModelName, List: roomlayout.OpListRoomArtifacts, Save: roomlayout.OpSaveRoomArtifact, Delete: roomlayout.OpDeleteRoomArtifact},
+		view.Ops{Module: roomlayout.ModelName, List: roomlayout.OpListRoomArtifacts, Save: roomlayout.OpSaveRoomArtifact, Delete: roomlayout.OpDeleteRoomArtifact, Page: view.Page{First: view.All}},
 		func() model.ModelSlice { return &roomlayout.RoomArtifactList{} })
 
 	var lastErr error

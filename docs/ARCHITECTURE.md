@@ -58,18 +58,23 @@ La pantalla del módulo en el navegador (`ui.Browser`) expone 6 pestañas organi
 
 ## 5. Tabla de Operaciones (Ops)
 
+Las operaciones de listado (`list_floors`, `list_rooms`, `list_equipment`, `list_room_artifacts`) cargan según su `view.Page{First: view.All}`, aceptan `view.ListArgs{Search, After, Limit}` y realizan la búsqueda y paginación en el servidor.
+
 | Op | Recurso | Acción | Descripción |
 |---|---|---|---|
-| `list_floors` | `floor` | `model.Read` | Lista los niveles del tenant |
+| `list_floors` | `floor` | `model.Read` | Lista los niveles del tenant (acepta `view.ListArgs`, búsqueda por nombre) |
 | `save_floor` | `floor` | `model.Create\|model.Update` | Crea o actualiza un nivel |
 | `delete_floor` | `floor` | `model.Delete` | Borra un nivel (si no tiene espacios) |
-| `list_rooms` | `room` | `model.Read` | Lista espacios del tenant |
+| `list_rooms` | `room` | `model.Read` | Lista espacios del tenant (acepta `view.ListArgs`, búsqueda por código) |
 | `get_room` | `room` | `model.Read` | Obtiene un espacio por ID |
 | `save_room` | `room` | `model.Create\|model.Update` | Crea o actualiza un espacio |
 | `deactivate_room` | `room` | `model.Update` | Desactiva un espacio |
-| `list_equipment` | `equipment` | `model.Read` | Lista equipamiento disponible |
+| `list_equipment` | `equipment` | `model.Read` | Lista equipamiento disponible (acepta `view.ListArgs`, búsqueda por nombre) |
 | `save_equipment` | `equipment` | `model.Create\|model.Update` | Crea o actualiza equipamiento |
 | `delete_equipment` | `equipment` | `model.Delete` | Borra equipamiento |
+| `list_room_artifacts` | `room_artifact` | `model.Read` | Lista artefactos del mapa (acepta `view.ListArgs`, búsqueda por código) |
+| `save_room_artifact` | `room_artifact` | `model.Create\|model.Update` | Crea o actualiza un artefacto |
+| `delete_room_artifact` | `room_artifact` | `model.Delete` | Borra un artefacto |
 | `list_room_equipment` | `room` | `model.Read` | Lista equipamiento asignado a un espacio |
 | `set_room_equipment` | `room` | `model.Update` | Reemplaza el equipamiento de un espacio |
 | `list_categories` | `room` | `model.Read` | Lista categorías globales desde `CategoryReader` |

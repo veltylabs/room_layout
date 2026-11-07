@@ -54,6 +54,27 @@ func (m *Module) ListEquipment(tenantID string) ([]Equipment, error) {
 	return res, nil
 }
 
+func (m *Module) listEquipment(search, after string, limit int64) ([]Equipment, error) {
+	var e Equipment
+	qb := m.db.Query(&e).Where(Equipment_.TenantId).Eq(m.tenantID)
+	if search != "" {
+		qb = qb.Where(Equipment_.Name).Like("%" + search + "%")
+	}
+	if after != "" {
+		qb = qb.Where(Equipment_.Id).Gt(after)
+	}
+	qb = qb.OrderBy(Equipment_.Id).Asc().Limit(int(limit))
+	results, err := ReadAllEquipment(qb)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]Equipment, len(results))
+	for i, item := range results {
+		res[i] = *item
+	}
+	return res, nil
+}
+
 func (m *Module) DeleteEquipment(tenantID, id string) error {
 	if tenantID == "" {
 		return ErrTenantRequired
@@ -185,6 +206,27 @@ func (m *Module) ListRoomArtifacts(tenantID string, roomID string) ([]RoomArtifa
 	})
 	if err != nil {
 		return nil, err
+	}
+	return res, nil
+}
+
+func (m *Module) listRoomArtifacts(search, after string, limit int64) ([]RoomArtifact, error) {
+	var a RoomArtifact
+	qb := m.db.Query(&a).Where(RoomArtifact_.TenantId).Eq(m.tenantID)
+	if search != "" {
+		qb = qb.Where(RoomArtifact_.Code).Like("%" + search + "%")
+	}
+	if after != "" {
+		qb = qb.Where(RoomArtifact_.Id).Gt(after)
+	}
+	qb = qb.OrderBy(RoomArtifact_.Id).Asc().Limit(int(limit))
+	results, err := ReadAllRoomArtifact(qb)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]RoomArtifact, len(results))
+	for i, item := range results {
+		res[i] = *item
 	}
 	return res, nil
 }
