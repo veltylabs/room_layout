@@ -2,7 +2,8 @@
 PLAN: "refactor!: room_layout on the closed crud contract — server tenant, transactional batch, single declarative validation, public read via registry, seed.Demo"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: dispatch
+STATUS: running
+SESSION: 15931334370260317991
 ---
 
 > Read AGENTS.md at the repo root before any change.
