@@ -2,6 +2,8 @@
 PLAN: "refactor!: room_layout on the crud-by-declaration framework, plan 1 of 2 — floors, rooms, equipment, categories, artifacts and every read; shift writes stay as methods"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 16561413314764707953
 ---
 
 > Read AGENTS.md at the repo root before any change.
