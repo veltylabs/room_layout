@@ -2,6 +2,7 @@ package ui
 
 import (
 	roomlayout "github.com/veltylabs/room_layout"
+	"webtyp.com/crud"
 	"webtyp.com/dom"
 	"webtyp.com/fmt"
 	"webtyp.com/lang"
@@ -19,6 +20,14 @@ import (
 func NewMap(caller router.Caller) *RootView {
 	return &RootView{caller: caller}
 }
+
+// operation arma la operación de una entidad del módulo.
+func operation(entity model.Model, action model.Action) router.Operation {
+	return router.Operation{Module: roomlayout.ModelName, Entity: entity.ModelName(), Action: action}
+}
+
+// readAll es lo que pide una lectura completa (el tope de una página de crud).
+var readAll = &crud.ReadArgs{Limit: crud.MaxPage}
 
 // UseNotifier recibe los avisos de la plataforma: la app la llama al montar la pantalla.
 func (r *RootView) UseNotifier(n layout.Notifier) { r.notifier = n }
@@ -45,22 +54,22 @@ func (r *RootView) reload() {
 		return
 	}
 	floors := &roomlayout.FloorList{}
-	r.caller.Call(op(roomlayout.OpListFloors), &view.ListArgs{}, floors, func(err error) {
+	r.caller.Call(operation(&roomlayout.Floor{}, model.Read), readAll, floors, func(err error) {
 		if r.failed(err) {
 			return
 		}
 		rooms := &roomlayout.RoomList{}
-		r.caller.Call(op(roomlayout.OpListRooms), &view.ListArgs{}, rooms, func(err error) {
+		r.caller.Call(operation(&roomlayout.Room{}, model.Read), readAll, rooms, func(err error) {
 			if r.failed(err) {
 				return
 			}
 			arts := &roomlayout.RoomArtifactList{}
-			r.caller.Call(op(roomlayout.OpListRoomArtifacts), &view.ListArgs{}, arts, func(err error) {
+			r.caller.Call(operation(&roomlayout.RoomArtifact{}, model.Read), readAll, arts, func(err error) {
 				if r.failed(err) {
 					return
 				}
-				occ := &roomlayout.OptionList{}
-				r.caller.Call(op(roomlayout.OpListOccupants), &roomlayout.ListOptionsArgs{}, occ, func(err error) {
+				occ := &roomlayout.OccupantOptionList{}
+				r.caller.Call(operation(&roomlayout.OccupantOption{}, model.Read), &crud.ReadArgs{Limit: crud.MaxPage, Filter: &roomlayout.OccupantOption{}}, occ, func(err error) {
 					if r.failed(err) {
 						return
 					}
@@ -85,7 +94,7 @@ func (r *RootView) failed(err error) bool {
 }
 
 // fill pasa lo leído del servidor al mapa; un piso o box con celdas mal guardadas es un error.
-func (r *RootView) fill(floors roomlayout.FloorList, rooms roomlayout.RoomList, arts roomlayout.RoomArtifactList, occ roomlayout.OptionList) error {
+func (r *RootView) fill(floors roomlayout.FloorList, rooms roomlayout.RoomList, arts roomlayout.RoomArtifactList, occ roomlayout.OccupantOptionList) error {
 	r.Floors = make([]FloorData, 0, len(floors))
 	for _, f := range floors {
 		cells, err := splitCells(f.HabitableCells)
@@ -136,8 +145,7 @@ func (r *RootView) floorOfRoom(roomID string) string {
 
 // saveFloor guarda un piso con el tamaño de cuadrícula actual. Un piso nuevo va con ID "".
 func (r *RootView) saveFloor(f FloorData) {
-	r.save(roomlayout.OpListFloors, roomlayout.OpSaveFloor, roomlayout.OpDeleteFloor,
-		func() model.ModelSlice { return &roomlayout.FloorList{} },
+	r.save(func() model.TableSlice { return &roomlayout.FloorList{} },
 		&roomlayout.Floor{Id: f.ID, Name: f.Name, Position: int64(f.Position), Cols: int64(r.Cols), Rows: int64(r.Rows), HabitableCells: joinCells(f.HabitableCells)})
 }
 
@@ -191,41 +199,37 @@ func (r *RootView) gridChanged() {
 
 // saveRoom guarda un box. Uno nuevo va con ID "".
 func (r *RootView) saveRoom(rm RoomData) {
-	r.save(roomlayout.OpListRooms, roomlayout.OpSaveRoom, "",
-		func() model.ModelSlice { return &roomlayout.RoomList{} },
+	r.save(func() model.TableSlice { return &roomlayout.RoomList{} },
 		&roomlayout.Room{Id: rm.ID, FloorId: rm.FloorID, Code: rm.Code, Name: rm.Name, RoomType: rm.RoomType, Cells: joinCells(rm.Cells), IsActive: true})
 }
 
 // saveArtifact guarda un equipo del mapa. Uno nuevo va con ID "".
 func (r *RootView) saveArtifact(a ArtifactData) {
-	r.save(roomlayout.OpListRoomArtifacts, roomlayout.OpSaveRoomArtifact, roomlayout.OpDeleteRoomArtifact,
-		func() model.ModelSlice { return &roomlayout.RoomArtifactList{} },
+	r.save(func() model.TableSlice { return &roomlayout.RoomArtifactList{} },
 		&roomlayout.RoomArtifact{Id: a.ID, RoomId: a.RoomID, Kind: a.Kind, Code: a.Code, Cell: a.Cell, Status: a.Status, Reason: a.Reason, NextMaintenance: a.NextMaintenance, Items: a.Items})
 }
 
 // deactivateRoom quita un box del mapa (se desactiva: sus turnos pasados siguen existiendo).
 func (r *RootView) deactivateRoom(id string) {
-	r.caller.Call(op(roomlayout.OpDeactivateRoom), &roomlayout.DeactivateRoomArgs{Id: id}, nil, r.savedAndReload)
+	args := &crud.UpdateArgs{IDs: []string{id}, Fields: []string{roomlayout.Room_.IsActive}, Record: &roomlayout.Room{}}
+	r.caller.Call(operation(&roomlayout.Room{}, model.Update), args, nil, r.savedAndReload)
 }
 
 // deleteArtifact borra un equipo del mapa.
 func (r *RootView) deleteArtifact(id string) {
-	lister := view.NewCallerLister(r.caller,
-		view.Ops{Module: roomlayout.ModelName, List: roomlayout.OpListRoomArtifacts, Save: roomlayout.OpSaveRoomArtifact, Delete: roomlayout.OpDeleteRoomArtifact, Page: view.Page{First: view.All}},
-		func() model.ModelSlice { return &roomlayout.RoomArtifactList{} })
+	lister := view.NewCallerLister(r.caller, view.Ops{Module: roomlayout.ModelName, Page: view.Page{First: view.All}},
+		func() model.TableSlice { return &roomlayout.RoomArtifactList{} })
 	lister.(view.Deleter).Delete([]string{id}, r.savedAndReload)
 }
 
 // save escribe un registro por el mismo camino que las pantallas de lista y relee al terminar.
-func (r *RootView) save(list, save, del string, newList func() model.ModelSlice, rec model.Model) {
+func (r *RootView) save(newList func() model.TableSlice, rec model.Model) {
 	if r.caller == nil {
 		return
 	}
-	lister := view.NewCallerLister(r.caller, view.Ops{Module: roomlayout.ModelName, List: list, Save: save, Delete: del, Page: view.Page{First: view.All}}, newList)
+	lister := view.NewCallerLister(r.caller, view.Ops{Module: roomlayout.ModelName, Page: view.Page{First: view.All}}, newList)
 	lister.(view.Saver).Save([]model.Model{rec}, r.savedAndReload)
 }
-
-func op(name string) string { return roomlayout.ModelName + "." + name }
 
 // splitCells lee los rectángulos guardados (roomlayout.EncodeArea) como celdas del mapa.
 func splitCells(s string) ([]string, error) {

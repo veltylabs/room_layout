@@ -6,9 +6,6 @@ import (
 	"webtyp.com/model"
 )
 
-// ModelName es la identidad del módulo: prefijo de cada op en el cable.
-const ModelName = "room_layout"
-
 // Constantes de estado del tablero.
 const (
 	BoardStatusFree   = "free"
@@ -45,28 +42,29 @@ const (
 )
 
 // Errores de dominio: cada uno lleva su tipo (model.NotFound, model.Conflict o
-// model.Invalid), y rpc.WriteError responde con el estado que corresponde.
+// model.Invalid), y crud responde con el estado que corresponde.
 //
 // Ejemplo: if model.KindOf(err) == model.ErrorConflict { ... }
 const (
-	ErrNotFound           model.NotFound = "room_layout: not found"
-	ErrTenantRequired     model.Invalid  = "room_layout: tenant_id is required"
-	ErrCodeAlreadyExists  model.Conflict = "room_layout: room code already exists in this tenant"
-	ErrFloorInUse         model.Conflict = "room_layout: floor still has rooms"
-	ErrInvalidRange       model.Invalid  = "room_layout: start must be before end, both within 00:00 and 24:00"
-	ErrInvalidDate        model.Invalid  = "room_layout: invalid date, expected YYYY-MM-DD"
-	ErrInvalidWeekday     model.Invalid  = "room_layout: day_of_week must be 0..6"
-	ErrUnknownCategory    model.Invalid  = "room_layout: unknown category"
-	ErrUnknownOccupant    model.Invalid  = "room_layout: unknown occupant"
-	ErrOccupantRequired   model.Invalid  = "room_layout: occupant_id or occupant_label is required"
-	ErrCategoryNotAllowed model.Invalid  = "room_layout: room is not enabled for this category"
-	ErrCategoryInUse      model.Conflict = "room_layout: category still has active shifts in this room"
-	ErrRoomOverlap        model.Conflict = "room_layout: room already has a shift in that time range"
-	ErrOccupantOverlap    model.Conflict = "room_layout: occupant already has a shift in that time range"
-	ErrOutsideBounds      model.Invalid  = "room_layout: shift is outside the establishment's opening hours for that date"
-	ErrInvalidArea        model.Invalid  = "room_layout: invalid cells, expected column,row,width,height separated by ;"
-	ErrNotWeekly          model.Invalid  = "room_layout: only a weekly shift can have one occurrence cancelled"
-	ErrCannotRead         model.Invalid  = "room_layout: cannot read the request"
+	ErrNotFound           model.NotFound = "not found"
+	ErrTenantRequired     model.Invalid  = "tenant id is required"
+	ErrCodeAlreadyExists  model.Conflict = "code already exists for a room in this tenant"
+	ErrFloorInUse         model.Conflict = "floor still has rooms"
+	ErrInvalidRange       model.Invalid  = "start must be before end, both within 00:00 and 24:00"
+	ErrInvalidDate        model.Invalid  = "invalid date, expected YYYY-MM-DD"
+	ErrInvalidWeekday     model.Invalid  = "day_of_week must be 0..6"
+	ErrUnknownCategory    model.Invalid  = "unknown category"
+	ErrUnknownOccupant    model.Invalid  = "unknown occupant"
+	ErrOccupantRequired   model.Invalid  = "an occupant is required (id or label)"
+	ErrCategoryNotAllowed model.Invalid  = "room is not enabled for this category"
+	ErrCategoryInUse      model.Conflict = "category still has active shifts in this space"
+	ErrRoomOverlap        model.Conflict = "room already has a shift in that time range"
+	ErrOccupantOverlap    model.Conflict = "occupant has a conflicting shift at the requested time"
+	ErrOutsideBounds      model.Invalid  = "shift is outside the establishment's opening hours for that date"
+	ErrInvalidArea        model.Invalid  = "invalid cells, expected column,row,width,height separated by ;"
+	ErrNotWeekly          model.Invalid  = "only a weekly shift can have one occurrence cancelled"
+	ErrBlankName          model.Invalid  = "the name cannot be blank"
+	ErrFieldNotEditable   model.Invalid  = "this field cannot be changed"
 )
 
 func weekdayInput() input.Input {
@@ -82,41 +80,62 @@ func weekdayInput() input.Input {
 }
 
 var FloorModel = model.Definition{
-	Name: "room_floor",
+	Name:  "room_floor",
+	Allow: model.Create | model.Read | model.Update | model.Delete,
+	Rules: model.Rules{
+		Create: model.AddMyBusinessRule,
+		Read:   model.HaveNoBusinessRule,
+		Update: model.AddMyBusinessRule,
+		Delete: model.AddMyBusinessRule,
+	},
 	Fields: model.Fields{
 		{Name: "cols", Type: model.Int()},
 		{Name: "rows", Type: model.Int()},
 		{Name: "grid_locked", Type: model.Bool()},
 		{Name: "habitable_cells", Type: model.Text()},
-		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true},
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
+		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true, ServerOnly: true},
+		{Name: "tenant_id", Type: model.Text(), NotNull: true, ServerOnly: true},
 		{Name: "name", Type: input.Text(), Item: model.ItemLabel, NotNull: true, Permitted: model.Permitted{Minimum: 1, Maximum: 60}},
 		{Name: "position", Type: input.Number(), OmitEmpty: true},
-		{Name: "updated_at", Type: model.UnixTime(), OmitEmpty: true},
+		{Name: "updated_at", Type: model.NanoTime(), OmitEmpty: true, ServerOnly: true},
 	},
 }
 
 var RoomModel = model.Definition{
-	Name: "room_space",
+	Name:  "room_space",
+	Allow: model.Create | model.Read | model.Update | model.Delete,
+	Rules: model.Rules{
+		Create: model.AddMyBusinessRule,
+		Read:   model.HaveNoBusinessRule,
+		Update: model.AddMyBusinessRule,
+		Delete: model.HaveNoBusinessRule,
+	},
 	Fields: model.Fields{
 		{Name: "room_type", Type: model.Text()},
 		{Name: "cells", Type: model.Text()},
-		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true},
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
+		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true, ServerOnly: true},
+		{Name: "tenant_id", Type: model.Text(), NotNull: true, ServerOnly: true},
 		{Name: "floor_id", Type: input.Select(), Ref: &FloorModel, DB: &model.FieldDB{RefColumn: "id"}, NotNull: true, Permitted: model.Permitted{Letters: true, Numbers: true, Extra: []rune{'-', '_'}}},
 		{Name: "code", Type: input.Text(), Item: model.ItemLabel, NotNull: true, Permitted: model.Permitted{Letters: true, Numbers: true, Extra: []rune{'-'}, Minimum: 1, Maximum: 20}},
 		{Name: "name", Type: input.Text(), Item: model.ItemDescription, NotNull: true, Permitted: model.Permitted{Minimum: 1, Maximum: 120}},
 		{Name: "notes", Type: input.Textarea(), OmitEmpty: true},
-		{Name: "is_active", Type: input.Checkbox(), NotNull: true},
-		{Name: "updated_at", Type: model.UnixTime(), OmitEmpty: true},
+		{Name: "is_active", Type: input.Checkbox()},
+		{Name: "updated_at", Type: model.NanoTime(), OmitEmpty: true, ServerOnly: true},
 	},
 }
 
 var RoomArtifactModel = model.Definition{
-	Name: "room_artifact",
+	Name:  "room_artifact",
+	Allow: model.Create | model.Read | model.Update | model.Delete,
+	Rules: model.Rules{
+		Create: model.HaveNoBusinessRule,
+		Read:   model.AddMyBusinessRule,
+		Update: model.HaveNoBusinessRule,
+		Delete: model.HaveNoBusinessRule,
+	},
 	Fields: model.Fields{
-		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true},
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
+		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true, ServerOnly: true},
+		{Name: "tenant_id", Type: model.Text(), NotNull: true, ServerOnly: true},
 		{Name: "room_id", Type: model.Text(), NotNull: true},
 		{Name: "kind", Type: model.Text(), NotNull: true, Item: model.ItemDescription},
 		{Name: "code", Type: model.Text(), NotNull: true, Item: model.ItemLabel},
@@ -129,61 +148,93 @@ var RoomArtifactModel = model.Definition{
 }
 
 var EquipmentModel = model.Definition{
-	Name: "room_equipment",
+	Name:  "room_equipment",
+	Allow: model.Create | model.Read | model.Update | model.Delete,
+	Rules: model.Rules{
+		Create: model.AddMyBusinessRule,
+		Read:   model.HaveNoBusinessRule,
+		Update: model.AddMyBusinessRule,
+		Delete: model.AddMyBusinessRule,
+	},
 	Fields: model.Fields{
-		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true},
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
+		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true, ServerOnly: true},
+		{Name: "tenant_id", Type: model.Text(), NotNull: true, ServerOnly: true},
 		{Name: "name", Type: input.Text(), Item: model.ItemLabel, NotNull: true, Permitted: model.Permitted{Minimum: 1, Maximum: 80}},
 		// Id suelto del equipo de red (device_manager) al que corresponde este equipamiento; vacío si
 		// no tiene red (un gastroscopio). Este módulo no importa device_manager: la app le entrega los
 		// equipos por una interfaz, y el id se asigna en el mapa, no en el formulario de la lista.
 		{Name: "device_id", Type: model.Text(), OmitEmpty: true},
-		{Name: "updated_at", Type: model.UnixTime(), OmitEmpty: true},
+		{Name: "updated_at", Type: model.NanoTime(), OmitEmpty: true, ServerOnly: true},
 	},
 }
 
 var RoomEquipmentModel = model.Definition{
-	Name: "room_space_equipment",
+	Name:  "room_space_equipment",
+	Allow: model.Create | model.Read | model.Delete,
+	Rules: model.Rules{
+		Create: model.AddMyBusinessRule,
+		Read:   model.AddMyBusinessRule,
+		Delete: model.HaveNoBusinessRule,
+	},
 	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
+		{Name: "tenant_id", Type: model.Text(), NotNull: true, ServerOnly: true},
 		{Name: "room_id", Type: model.Text(), Ref: &RoomModel, DB: &model.FieldDB{PK: true, RefColumn: "id"}, NotNull: true},
 		{Name: "equipment_id", Type: model.Text(), Ref: &EquipmentModel, DB: &model.FieldDB{PK: true, RefColumn: "id"}, NotNull: true},
 	},
 }
 
 var RoomCategoryModel = model.Definition{
-	Name: "room_category",
+	Name:  "room_category",
+	Allow: model.Create | model.Read | model.Delete,
+	Rules: model.Rules{
+		Create: model.AddMyBusinessRule,
+		Read:   model.AddMyBusinessRule,
+		Delete: model.AddMyBusinessRule,
+	},
 	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
+		{Name: "tenant_id", Type: model.Text(), NotNull: true, ServerOnly: true},
 		{Name: "room_id", Type: model.Text(), Ref: &RoomModel, DB: &model.FieldDB{PK: true, RefColumn: "id"}, NotNull: true},
 		{Name: "category_id", Type: model.Text(), DB: &model.FieldDB{PK: true}, NotNull: true},
 	},
 }
 
 var RoomShiftModel = model.Definition{
-	Name: "room_shift",
+	Name:  "room_shift",
+	Allow: model.Create | model.Read | model.Update | model.Delete,
+	Rules: model.Rules{
+		Create: model.AddMyBusinessRule,
+		Read:   model.AddMyBusinessRule,
+		Update: model.AddMyBusinessRule,
+		Delete: model.AddMyBusinessRule,
+	},
 	Fields: model.Fields{
-		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true},
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
+		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true, ServerOnly: true},
+		{Name: "tenant_id", Type: model.Text(), NotNull: true, ServerOnly: true},
 		{Name: "room_id", Type: model.Text(), Ref: &RoomModel, DB: &model.FieldDB{RefColumn: "id"}, NotNull: true},
 		{Name: "category_id", Type: model.Text(), NotNull: true},
 		{Name: "occupant_id", Type: model.Text(), OmitEmpty: true},
-		{Name: "occupant_label", Type: model.Text(), NotNull: true},
-		{Name: "day_of_week", Type: model.Int()},
-		{Name: "specific_date", Type: model.UnixTime()},
-		{Name: "start_min", Type: model.Int(), NotNull: true},
+		{Name: "occupant_label", Type: model.Text(), OmitEmpty: true}, // lo completa la regla con el nombre del ocupante; sin ocupante lo envía quien llama
+		{Name: "day_of_week", Type: model.Int(), OmitEmpty: true},     // turno semanal: 0 = domingo … 6 = sábado; en uno con fecha lo calcula la regla
+		{Name: "specific_date", Type: model.UnixTime(), OmitEmpty: true},
+		{Name: "start_min", Type: model.Int(), OmitEmpty: true}, // minutos desde la medianoche; la regla exige 0 ≤ inicio < fin ≤ 1440
 		{Name: "end_min", Type: model.Int(), NotNull: true},
-		{Name: "is_active", Type: model.Bool(), NotNull: true},
-		{Name: "updated_at", Type: model.UnixTime(), OmitEmpty: true},
+		{Name: "is_active", Type: model.Bool(), OmitEmpty: true, ServerOnly: true}, // la regla lo deja en true
+		{Name: "updated_at", Type: model.NanoTime(), OmitEmpty: true, ServerOnly: true},
 	},
 }
 
 var RoomShiftCancellationModel = model.Definition{
-	Name: "room_shift_cancellation",
+	Name:  "room_shift_cancellation",
+	Allow: model.Create | model.Read,
+	Rules: model.Rules{
+		Create: model.AddMyBusinessRule,
+		Read:   model.HaveNoBusinessRule,
+	},
 	Fields: model.Fields{
-		{Name: "tenant_id", Type: model.Text(), NotNull: true},
+		{Name: "tenant_id", Type: model.Text(), NotNull: true, ServerOnly: true},
 		{Name: "shift_id", Type: model.Text(), Ref: &RoomShiftModel, DB: &model.FieldDB{PK: true, RefColumn: "id"}, NotNull: true},
 		{Name: "specific_date", Type: model.UnixTime(), DB: &model.FieldDB{PK: true}, NotNull: true},
+		{Name: "moved_to_room_id", Type: model.Text(), Label: "Target room", OmitEmpty: true, Ref: &RoomModel, DB: &model.FieldDB{RefColumn: "id"}}, // si la ocurrencia se movió: la sala destino
 	},
 }
 
@@ -202,207 +253,100 @@ var RoomShiftFormModel = model.Definition{
 	},
 }
 
-var IdRefModel = model.Definition{
-	Name: "id_ref",
+// CategoryOptionModel es una opción de categoría de atención (lo que el lector de categorías de la app responde).
+var CategoryOptionModel = model.Definition{
+	Name: "category_option", Wire: true, Allow: model.Read, Rules: model.Rules{Read: model.AddMyBusinessRule},
 	Fields: model.Fields{
-		{Name: "id", Type: model.Text(), NotNull: true},
+		{Name: "id", Type: model.Text(), OmitEmpty: true},
+		{Name: "label", Type: model.Text(), OmitEmpty: true},
 	},
 }
 
-// Definiciones de argumentos.
-var ListFloorsArgsModel = model.Definition{
-	Name:   "list_floors_args",
-	Fields: model.Fields{},
-}
-
-var ListRoomsArgsModel = model.Definition{
-	Name: "list_rooms_args",
+// OccupantOptionModel es una opción de ocupante (profesional o persona) que puede tener un turno.
+var OccupantOptionModel = model.Definition{
+	Name: "occupant_option", Wire: true, Allow: model.Read, Rules: model.Rules{Read: model.AddMyBusinessRule},
 	Fields: model.Fields{
-		{Name: "active_only", Type: model.Bool()},
+		{Name: "id", Type: model.Text(), OmitEmpty: true},
+		{Name: "label", Type: model.Text(), OmitEmpty: true},
 	},
 }
 
-var GetRoomArgsModel = model.Definition{
-	Name: "get_room_args",
-	Fields: model.Fields{
-		{Name: "id", Type: model.Text(), NotNull: true},
-	},
-}
-
-var DeactivateRoomArgsModel = model.Definition{
-	Name: "deactivate_room_args",
-	Fields: model.Fields{
-		{Name: "id", Type: model.Text(), NotNull: true},
-	},
-}
-
-var ListEquipmentArgsModel = model.Definition{
-	Name:   "list_equipment_args",
-	Fields: model.Fields{},
-}
-
-var ListRoomEquipmentArgsModel = model.Definition{
-	Name: "list_room_equipment_args",
-	Fields: model.Fields{
-		{Name: "room_id", Type: model.Text(), NotNull: true},
-	},
-}
-
-var SetRoomEquipmentArgsModel = model.Definition{
-	Name: "set_room_equipment_args",
-	Fields: model.Fields{
-		{Name: "room_id", Type: model.Text(), NotNull: true},
-		{Name: "equipment_ids", Type: model.StructSlice(&IdRefModel)},
-	},
-}
-
-var ListRoomCategoriesArgsModel = model.Definition{
-	Name: "list_room_categories_args",
-	Fields: model.Fields{
-		{Name: "room_id", Type: model.Text(), NotNull: true},
-	},
-}
-
-var SetRoomCategoriesArgsModel = model.Definition{
-	Name: "set_room_categories_args",
-	Fields: model.Fields{
-		{Name: "room_id", Type: model.Text(), NotNull: true},
-		{Name: "category_ids", Type: model.StructSlice(&IdRefModel)},
-	},
-}
-
-var ListOptionsArgsModel = model.Definition{
-	Name:   "list_options_args",
-	Fields: model.Fields{},
-}
-
-var ListRoomShiftsArgsModel = model.Definition{
-	Name: "list_room_shifts_args",
-	Fields: model.Fields{
-		{Name: "room_id", Type: model.Text(), NotNull: true},
-	},
-}
-
-var DeleteRoomShiftArgsModel = model.Definition{
-	Name: "delete_room_shift_args",
-	Fields: model.Fields{
-		{Name: "id", Type: model.Text(), NotNull: true},
-	},
-}
-
-var CancelShiftOccurrenceArgsModel = model.Definition{
-	Name: "cancel_shift_occurrence_args",
-	Fields: model.Fields{
-		{Name: "shift_id", Type: model.Text(), NotNull: true},
-		{Name: "date", Type: model.Text(), NotNull: true},
-	},
-}
-
-var MoveShiftOccurrenceArgsModel = model.Definition{
-	Name: "move_shift_occurrence_args",
-	Fields: model.Fields{
-		{Name: "shift_id", Type: model.Text(), NotNull: true},
-		{Name: "date", Type: model.Text(), NotNull: true},
-		{Name: "target_room_id", Type: model.Text(), Label: "Target room", NotNull: true},
-	},
-}
-
-var ListRoomDayArgsModel = model.Definition{
-	Name: "list_room_day_args",
-	Fields: model.Fields{
-		{Name: "room_id", Type: model.Text()},
-		{Name: "date", Type: model.Text()},
-	},
-}
-
-var ListBoardArgsModel = model.Definition{
-	Name: "list_board_args",
-	Fields: model.Fields{
-		{Name: "category_id", Type: model.Text()},
-		{Name: "equipment_id", Type: model.Text()},
-	},
-}
-
-var FindFreeRoomsArgsModel = model.Definition{
-	Name: "find_free_rooms_args",
-	Fields: model.Fields{
-		{Name: "date", Type: model.Text(), NotNull: true},
-		{Name: "start", Type: model.Text(), NotNull: true},
-		{Name: "end", Type: model.Text(), NotNull: true},
-		{Name: "category_id", Type: model.Text()},
-	},
-}
-
-var ListPublicAvailabilityArgsModel = model.Definition{
-	Name: "list_public_availability_args",
-	Fields: model.Fields{
-		{Name: "date", Type: model.Text(), NotNull: true},
-		{Name: "category_id", Type: model.Text()},
-	},
-}
-
-// Definiciones de resultados / salidas.
-var OptionModel = model.Definition{
-	Name: "option",
-	Fields: model.Fields{
-		{Name: "id", Type: model.Text(), NotNull: true},
-		{Name: "label", Type: model.Text(), NotNull: true},
-	},
-}
-
+// DayShiftModel es un turno de un día. Filtro: room_id (opcional) y date ("AAAA-MM-DD", opcional: hoy).
 var DayShiftModel = model.Definition{
-	Name: "day_shift",
+	Name: "day_shift", Wire: true, Allow: model.Read, Rules: model.Rules{Read: model.AddMyBusinessRule},
 	Fields: model.Fields{
-		{Name: "shift_id", Type: model.Text(), NotNull: true},
-		{Name: "room_id", Type: model.Text(), NotNull: true},
-		{Name: "room_code", Type: model.Text(), NotNull: true},
-		{Name: "category_id", Type: model.Text(), NotNull: true},
-		{Name: "category_label", Type: model.Text(), NotNull: true},
-		{Name: "occupant_id", Type: model.Text()},
-		{Name: "occupant_label", Type: model.Text(), NotNull: true},
-		{Name: "start", Type: model.Text(), NotNull: true},
-		{Name: "end", Type: model.Text(), NotNull: true},
-		{Name: "is_weekly", Type: model.Bool(), NotNull: true},
+		{Name: "date", Type: model.Text(), OmitEmpty: true}, // filtro
+		{Name: "shift_id", Type: model.Text(), OmitEmpty: true},
+		{Name: "room_id", Type: model.Text(), OmitEmpty: true}, // filtro y dato
+		{Name: "room_code", Type: model.Text(), OmitEmpty: true},
+		{Name: "category_id", Type: model.Text(), OmitEmpty: true},
+		{Name: "category_label", Type: model.Text(), OmitEmpty: true},
+		{Name: "occupant_id", Type: model.Text(), OmitEmpty: true},
+		{Name: "occupant_label", Type: model.Text(), OmitEmpty: true},
+		{Name: "start", Type: model.Text(), OmitEmpty: true},
+		{Name: "end", Type: model.Text(), OmitEmpty: true},
+		{Name: "is_weekly", Type: model.Bool(), OmitEmpty: true},
 	},
 }
 
+// BoardRoomModel es una fila del tablero de salas. Filtro: category_id y equipment_id (opcionales).
 var BoardRoomModel = model.Definition{
-	Name: "board_room",
+	Name: "board_room", Wire: true, Allow: model.Read, Rules: model.Rules{Read: model.AddMyBusinessRule},
 	Fields: model.Fields{
-		{Name: "room_id", Type: model.Text(), NotNull: true},
-		{Name: "code", Type: model.Text(), NotNull: true},
-		{Name: "name", Type: model.Text(), NotNull: true},
-		{Name: "floor_name", Type: model.Text(), NotNull: true},
-		{Name: "floor_position", Type: model.Int(), NotNull: true},
-		{Name: "category_labels", Type: model.Text(), NotNull: true},
-		{Name: "equipment_labels", Type: model.Text(), NotNull: true},
-		{Name: "status", Type: model.Text(), NotNull: true},
-		{Name: "current_occupant_label", Type: model.Text(), Label: "Current occupant"},
-		{Name: "current_until", Type: model.Text()},
-		{Name: "next_start", Type: model.Text()},
-		{Name: "next_occupant_label", Type: model.Text(), Label: "Next occupant"},
-		{Name: "today", Type: model.Text(), NotNull: true},
+		{Name: "category_id", Type: model.Text(), OmitEmpty: true},  // filtro
+		{Name: "equipment_id", Type: model.Text(), OmitEmpty: true}, // filtro
+		{Name: "room_id", Type: model.Text(), OmitEmpty: true},
+		{Name: "code", Type: model.Text(), OmitEmpty: true},
+		{Name: "name", Type: model.Text(), OmitEmpty: true},
+		{Name: "floor_name", Type: model.Text(), OmitEmpty: true},
+		{Name: "floor_position", Type: model.Int(), OmitEmpty: true},
+		{Name: "category_labels", Type: model.Text(), OmitEmpty: true},
+		{Name: "equipment_labels", Type: model.Text(), OmitEmpty: true},
+		{Name: "status", Type: model.Text(), OmitEmpty: true},
+		{Name: "current_occupant_label", Type: model.Text(), Label: "Current occupant", OmitEmpty: true},
+		{Name: "current_until", Type: model.Text(), OmitEmpty: true},
+		{Name: "next_start", Type: model.Text(), OmitEmpty: true},
+		{Name: "next_occupant_label", Type: model.Text(), Label: "Next occupant", OmitEmpty: true},
+		{Name: "today", Type: model.Text(), OmitEmpty: true},
 	},
 }
 
+// FreeRoomModel es una sala libre. Filtro: date, start y end ("AAAA-MM-DD", "HH:MM", "HH:MM": los tres requeridos por la regla) y category_id (opcional).
 var FreeRoomModel = model.Definition{
-	Name: "free_room",
+	Name: "free_room", Wire: true, Allow: model.Read, Rules: model.Rules{Read: model.AddMyBusinessRule},
 	Fields: model.Fields{
-		{Name: "room_id", Type: model.Text(), NotNull: true},
-		{Name: "code", Type: model.Text(), NotNull: true},
-		{Name: "name", Type: model.Text(), NotNull: true},
-		{Name: "floor_name", Type: model.Text(), NotNull: true},
-		{Name: "equipment_labels", Type: model.Text(), NotNull: true},
+		{Name: "date", Type: model.Text(), OmitEmpty: true},        // filtro
+		{Name: "start", Type: model.Text(), OmitEmpty: true},       // filtro
+		{Name: "end", Type: model.Text(), OmitEmpty: true},         // filtro
+		{Name: "category_id", Type: model.Text(), OmitEmpty: true}, // filtro
+		{Name: "room_id", Type: model.Text(), OmitEmpty: true},
+		{Name: "code", Type: model.Text(), OmitEmpty: true},
+		{Name: "name", Type: model.Text(), OmitEmpty: true},
+		{Name: "floor_name", Type: model.Text(), OmitEmpty: true},
+		{Name: "equipment_labels", Type: model.Text(), OmitEmpty: true},
 	},
 }
 
+// PublicSlotModel es un hueco libre que el público puede ver (la app lo declara público). Filtro: date (requerida por la regla) y category_id (opcional).
 var PublicSlotModel = model.Definition{
-	Name: "public_slot",
+	Name: "public_slot", Wire: true, Allow: model.Read, Rules: model.Rules{Read: model.AddMyBusinessRule},
 	Fields: model.Fields{
-		{Name: "room_code", Type: model.Text(), NotNull: true},
-		{Name: "room_name", Type: model.Text(), NotNull: true},
-		{Name: "floor_name", Type: model.Text(), NotNull: true},
-		{Name: "start", Type: model.Text(), NotNull: true},
-		{Name: "end", Type: model.Text(), NotNull: true},
+		{Name: "date", Type: model.Text(), OmitEmpty: true},        // filtro
+		{Name: "category_id", Type: model.Text(), OmitEmpty: true}, // filtro
+		{Name: "room_code", Type: model.Text(), OmitEmpty: true},
+		{Name: "room_name", Type: model.Text(), OmitEmpty: true},
+		{Name: "floor_name", Type: model.Text(), OmitEmpty: true},
+		{Name: "start", Type: model.Text(), OmitEmpty: true},
+		{Name: "end", Type: model.Text(), OmitEmpty: true},
+	},
+}
+
+// Definition declara el módulo room_layout en el marco crud-by-declaration.
+var Definition = model.ModuleDefinition{
+	Name: "room_layout",
+	Entities: []model.Definition{
+		FloorModel, RoomModel, RoomArtifactModel, EquipmentModel, RoomEquipmentModel, RoomCategoryModel,
+		RoomShiftModel, RoomShiftCancellationModel,
+		CategoryOptionModel, OccupantOptionModel, DayShiftModel, BoardRoomModel, FreeRoomModel, PublicSlotModel,
 	},
 }

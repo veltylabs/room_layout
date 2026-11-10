@@ -5,6 +5,7 @@ package module
 import (
 	"webtyp.com/appkit"
 	"webtyp.com/model"
+	"webtyp.com/view"
 
 	roomlayout "github.com/veltylabs/room_layout"
 )
@@ -13,7 +14,7 @@ import (
 var server = appkit.ModuleServer{Build: build}
 
 // En el servidor el módulo no aporta pantallas.
-var browser appkit.ModuleBrowser
+var browser view.ModuleBrowser
 
 func build(d appkit.Deps) (model.ModuleNaming, error) {
 	cats, err := appkit.Find[roomlayout.CategoryReader](d)

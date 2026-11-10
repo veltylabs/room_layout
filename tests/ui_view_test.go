@@ -13,13 +13,13 @@ import (
 
 type mockCaller struct{}
 
-func (c *mockCaller) Call(route string, args model.Encodable, res model.Decodable, cb func(error)) {
+func (c *mockCaller) Call(op router.Operation, args model.Encodable, res model.Decodable, cb func(error)) {
 	if cb != nil {
 		cb(nil)
 	}
 }
 
-func (c *mockCaller) Dispatch(route string, args model.Encodable) {}
+func (c *mockCaller) Dispatch(op router.Operation, args model.Encodable) {}
 
 var _ router.Caller = (*mockCaller)(nil)
 

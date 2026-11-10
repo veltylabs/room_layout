@@ -3,6 +3,7 @@ package roomlayout
 import (
 	"webtyp.com/fmt"
 	"webtyp.com/model"
+	"webtyp.com/storage"
 	"webtyp.com/time"
 )
 
@@ -99,17 +100,17 @@ func (m *Module) shiftsOn(tenantID string, date time.Unix) ([]RoomShift, error) 
 
 	dow := time.WeekdayUTC(date)
 
-	var activeShifts []RoomShift
-	err := m.db.Query(&RoomShift{}).
-		Where("tenant_id").Eq(tenantID).
-		Where("is_active").Eq(true).
-		ReadAll(func() model.Model { return &RoomShift{} }, func(row model.Model) {
-			if item, ok := row.(*RoomShift); ok {
-				activeShifts = append(activeShifts, *item)
-			}
-		})
+	store, err := m.storeFor(tenantID)
 	if err != nil {
 		return nil, err
+	}
+	rows, err := allRows(store, func() model.Model { return &RoomShift{} }, storage.Eq(RoomShift_.IsActive, true))
+	if err != nil {
+		return nil, err
+	}
+	var activeShifts []RoomShift
+	for _, r := range rows {
+		activeShifts = append(activeShifts, *r.(*RoomShift))
 	}
 
 	// Filter by active room
@@ -125,7 +126,7 @@ func (m *Module) shiftsOn(tenantID string, date time.Unix) ([]RoomShift, error) 
 		}
 		if s.SpecificDate == 0 { // Weekly
 			if s.DayOfWeek == int64(dow) {
-				cancelled, err := m.isShiftCancelled(tenantID, s.Id, date)
+				cancelled, err := isShiftCancelled(store, s.Id, date)
 				if err != nil {
 					return nil, err
 				}

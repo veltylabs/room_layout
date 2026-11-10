@@ -5,9 +5,9 @@ import (
 
 	roomlayout "github.com/veltylabs/room_layout"
 	"github.com/veltylabs/room_layout/ui"
+	"webtyp.com/crud"
 	"webtyp.com/layout"
 	"webtyp.com/msgtype"
-	"webtyp.com/router/loopback"
 	"webtyp.com/view"
 )
 
@@ -26,7 +26,7 @@ func TestMap_LoadsServerData(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	m := ui.NewMap(view.NewRecords().Caller(loopback.WithTenant("tenantA", env.mod)))
+	m := ui.NewMap(view.NewRecords().Caller(crud.LoopbackActingAs(nil, "u1", env.mod)))
 	m.Init(nil)
 
 	if len(m.Floors) != 1 || len(m.Floors[0].HabitableCells) != 2 || m.Floors[0].HabitableCells[1] != "2,1" {
@@ -46,7 +46,7 @@ func TestMap_LoadsServerData(t *testing.T) {
 // Un piso nuevo queda guardado en el servidor al crearlo, con el id que pone el servidor.
 func TestMap_AddFloorIsSaved(t *testing.T) {
 	env := newTestEnv("tenantA")
-	m := ui.NewMap(view.NewRecords().Caller(loopback.WithTenant("tenantA", env.mod)))
+	m := ui.NewMap(view.NewRecords().Caller(crud.LoopbackActingAs(nil, "u1", env.mod)))
 	notices := &notices{}
 	m.UseNotifier(notices)
 	m.Init(nil)
@@ -76,7 +76,7 @@ func TestMap_BadCellsAreAnError(t *testing.T) {
 	if _, err := env.mod.SaveFloor(roomlayout.Floor{TenantId: "tenantA", Name: "Piso 1", HabitableCells: "A1,B1"}); err != nil {
 		t.Fatal(err)
 	}
-	m := ui.NewMap(view.NewRecords().Caller(loopback.WithTenant("tenantA", env.mod)))
+	m := ui.NewMap(view.NewRecords().Caller(crud.LoopbackActingAs(nil, "u1", env.mod)))
 	notices := &notices{}
 	m.UseNotifier(notices)
 	m.Init(nil)
@@ -92,7 +92,7 @@ func TestMap_GridNeverHidesWhatIsDrawn(t *testing.T) {
 	if _, err := env.mod.SaveFloor(roomlayout.Floor{TenantId: "tenantA", Name: "Piso 1", Cols: 22, Rows: 38, HabitableCells: "1,1,22,38"}); err != nil {
 		t.Fatal(err)
 	}
-	m := ui.NewMap(view.NewRecords().Caller(loopback.WithTenant("tenantA", env.mod)))
+	m := ui.NewMap(view.NewRecords().Caller(crud.LoopbackActingAs(nil, "u1", env.mod)))
 	notices := &notices{}
 	m.UseNotifier(notices)
 	m.Init(nil)

@@ -1,35 +1,31 @@
 package roomlayout
 
 import (
+	"webtyp.com/crud"
 	"webtyp.com/fmt"
 	"webtyp.com/model"
-	"webtyp.com/orm"
+	"webtyp.com/storage"
 )
 
+// ListRoomCategories responde las categorías asignadas a una sala.
+//
+// Ejemplo: list, err := m.ListRoomCategories(tenantID, roomID)
 func (m *Module) ListRoomCategories(tenantID, roomID string) ([]fmt.KeyValue, error) {
-	if tenantID == "" {
-		return nil, ErrTenantRequired
-	}
-	var catIDs []string
-	err := m.db.Query(&RoomCategory{}).
-		Where("tenant_id").Eq(tenantID).
-		Where("room_id").Eq(roomID).
-		ReadAll(func() model.Model { return &RoomCategory{} }, func(row model.Model) {
-			if item, ok := row.(*RoomCategory); ok {
-				catIDs = append(catIDs, item.CategoryId)
-			}
-		})
+	store, err := m.storeFor(tenantID)
 	if err != nil {
 		return nil, err
 	}
-
+	links, err := allRows(store, func() model.Model { return &RoomCategory{} }, storage.Eq(RoomCategory_.RoomId, roomID))
+	if err != nil {
+		return nil, err
+	}
 	allOptions, err := m.deps.Categories.CategoryOptions(tenantID)
 	if err != nil {
 		return nil, err
 	}
-
 	var res []fmt.KeyValue
-	for _, id := range catIDs {
+	for _, l := range links {
+		id := l.(*RoomCategory).CategoryId
 		label := id
 		for _, opt := range allOptions {
 			if opt.Key == id {
@@ -42,72 +38,49 @@ func (m *Module) ListRoomCategories(tenantID, roomID string) ([]fmt.KeyValue, er
 	return res, nil
 }
 
+// SetRoomCategories actualiza la lista de categorías asignadas a una sala.
+//
+// Ejemplo: err := m.SetRoomCategories(tenantID, roomID, categoryIDs)
 func (m *Module) SetRoomCategories(tenantID, roomID string, categoryIDs []string) error {
-	if tenantID == "" {
-		return ErrTenantRequired
+	store, err := m.storeFor(tenantID)
+	if err != nil {
+		return err
 	}
 	if _, err := m.GetRoom(tenantID, roomID); err != nil {
 		return err
 	}
-
 	allOptions, err := m.deps.Categories.CategoryOptions(tenantID)
 	if err != nil {
 		return err
 	}
-
 	for _, catID := range categoryIDs {
-		var found bool
-		for _, opt := range allOptions {
-			if opt.Key == catID {
-				found = true
-				break
-			}
-		}
-		if !found {
+		if !categoryIn(allOptions, catID) {
 			return ErrUnknownCategory
 		}
 	}
-
-	// Check if any active shift uses a category being removed.
-	var activeShifts []RoomShift
-	err = m.db.Query(&RoomShift{}).
-		Where("tenant_id").Eq(tenantID).
-		Where("room_id").Eq(roomID).
-		Where("is_active").Eq(true).
-		ReadAll(func() model.Model { return &RoomShift{} }, func(row model.Model) {
-			if item, ok := row.(*RoomShift); ok {
-				activeShifts = append(activeShifts, *item)
-			}
-		})
-	if err != nil {
-		return err
-	}
-
-	for _, s := range activeShifts {
-		var kept bool
-		for _, catID := range categoryIDs {
-			if s.CategoryId == catID {
-				kept = true
-				break
-			}
-		}
-		if !kept {
-			return ErrCategoryInUse
-		}
-	}
-
-	return m.db.Tx(func(tx *orm.DB) error {
-		dummy := RoomCategory{TenantId: tenantID, RoomId: roomID}
-		if err := tx.Delete(&dummy, orm.Eq("tenant_id", tenantID), orm.Eq("room_id", roomID)); err != nil {
+	return store.Atomic(func(tx crud.Tx) error {
+		// an active shift of the room cannot lose the category it uses
+		shifts, err := allRows(tx, func() model.Model { return &RoomShift{} },
+			storage.Eq(RoomShift_.RoomId, roomID), storage.Eq(RoomShift_.IsActive, true))
+		if err != nil {
 			return err
 		}
-		for _, catID := range categoryIDs {
-			rc := RoomCategory{
-				TenantId:   tenantID,
-				RoomId:     roomID,
-				CategoryId: catID,
+		for _, r := range shifts {
+			if !containsString(categoryIDs, r.(*RoomShift).CategoryId) {
+				return ErrCategoryInUse
 			}
-			if err := tx.Create(&rc); err != nil {
+		}
+		old, err := allRows(tx, func() model.Model { return &RoomCategory{} }, storage.Eq(RoomCategory_.RoomId, roomID))
+		if err != nil {
+			return err
+		}
+		for _, r := range old {
+			if err := tx.Delete(&RoomCategory{}, model.JoinKey(roomID, r.(*RoomCategory).CategoryId)); err != nil {
+				return err
+			}
+		}
+		for _, catID := range categoryIDs {
+			if err := tx.Create(&RoomCategory{RoomId: roomID, CategoryId: catID}); err != nil {
 				return err
 			}
 		}

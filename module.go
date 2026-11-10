@@ -21,6 +21,7 @@ type Deps struct {
 
 type Module struct {
 	db       *orm.DB
+	store    *orm.Store
 	deps     Deps
 	tenantID string
 }
@@ -56,6 +57,7 @@ func New(db *orm.DB, deps Deps) (*Module, error) {
 	}
 	return &Module{
 		db:       db,
+		store:    orm.TenantStore(db, deps.TenantID, deps.IDs),
 		deps:     deps,
 		tenantID: deps.TenantID,
 	}, nil

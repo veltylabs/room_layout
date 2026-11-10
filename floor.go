@@ -1,108 +1,84 @@
 package roomlayout
 
 import (
+	"webtyp.com/crud"
 	"webtyp.com/fmt"
 	"webtyp.com/model"
-	"webtyp.com/orm"
 )
 
+// floorColumns son las columnas que cambia SaveFloor al actualizar (todas menos id y tenant_id).
+var floorColumns = []string{Floor_.Cols, Floor_.Rows, Floor_.GridLocked, Floor_.HabitableCells, Floor_.Name, Floor_.Position, Floor_.UpdatedAt}
+
+// SaveFloor guarda o actualiza un piso en la base de datos.
+//
+// Ejemplo: floor, err := m.SaveFloor(floor)
 func (m *Module) SaveFloor(f Floor) (Floor, error) {
-	if f.TenantId == "" {
-		return Floor{}, ErrTenantRequired
+	store, err := m.storeFor(f.TenantId)
+	if err != nil {
+		return Floor{}, err
 	}
 	f.Name = fmt.TrimSpace(f.Name)
 	isNew := f.Id == ""
 	if isNew {
 		f.Id = m.deps.IDs.NewID()
 	}
-
 	if err := model.ValidateFields(byte(model.Create), &f); err != nil {
 		return Floor{}, err
 	}
-	f.UpdatedAt = m.now().Unix()
-
-	if isNew {
-		if err := m.db.Create(&f); err != nil {
-			return Floor{}, err
+	f.UpdatedAt = m.now()
+	err = store.Atomic(func(tx crud.Tx) error {
+		if isNew {
+			return tx.Create(&f)
 		}
-	} else {
-		if err := m.db.Update(&f, orm.Eq("id", f.Id), orm.Eq("tenant_id", f.TenantId)); err != nil {
-			return Floor{}, err
-		}
+		return tx.UpdateFields(&f, f.Id, floorColumns)
+	})
+	if err != nil {
+		return Floor{}, err
 	}
-
 	m.publish(TopicFloorSaved, &f)
 	return f, nil
 }
 
+// ListFloors responde la lista de pisos de un tenant ordenados por posición y nombre.
+//
+// Ejemplo: floors, err := m.ListFloors(tenantID)
 func (m *Module) ListFloors(tenantID string) ([]Floor, error) {
-	if tenantID == "" {
-		return nil, ErrTenantRequired
+	store, err := m.storeFor(tenantID)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := allRows(store, func() model.Model { return &Floor{} })
+	if err != nil {
+		return nil, err
 	}
 	var res []Floor
-	err := m.db.Query(&Floor{}).
-		Where("tenant_id").Eq(tenantID).
-		OrderBy("position").Asc().
-		OrderBy("name").Asc().
-		ReadAll(func() model.Model { return &Floor{} }, func(row model.Model) {
-			if item, ok := row.(*Floor); ok {
-				res = append(res, *item)
-			}
-		})
-	if err != nil {
-		return nil, err
+	for _, r := range rows {
+		res = append(res, *r.(*Floor))
 	}
+	sortFloors(res)
 	return res, nil
 }
 
-func (m *Module) listFloors(search, after string, limit int64) ([]Floor, error) {
-	var f Floor
-	qb := m.db.Query(&f).Where(Floor_.TenantId).Eq(m.tenantID)
-	if search != "" {
-		qb = qb.Where(Floor_.Name).Like("%" + search + "%")
-	}
-	if after != "" {
-		qb = qb.Where(Floor_.Id).Gt(after)
-	}
-	qb = qb.OrderBy(Floor_.Id).Asc().Limit(int(limit))
-	results, err := ReadAllFloor(qb)
-	if err != nil {
-		return nil, err
-	}
-	res := make([]Floor, len(results))
-	for i, item := range results {
-		res[i] = *item
-	}
-	return res, nil
-}
-
+// DeleteFloor elimina un piso si no contiene salas asociadas.
+//
+// Ejemplo: err := m.DeleteFloor(tenantID, id)
 func (m *Module) DeleteFloor(tenantID, id string) error {
-	if tenantID == "" {
-		return ErrTenantRequired
+	store, err := m.storeFor(tenantID)
+	if err != nil {
+		return err
 	}
 	if id == "" {
 		return ErrNotFound
 	}
-	var hasRoom bool
-	err := m.db.Query(&Room{}).
-		Where("tenant_id").Eq(tenantID).
-		Where("floor_id").Eq(id).
-		Limit(1).
-		ReadAll(func() model.Model { return &Room{} }, func(row model.Model) {
-			hasRoom = true
-		})
+	err = store.Atomic(func(tx crud.Tx) error {
+		if err := checkFloorFree(tx, id); err != nil {
+			return err
+		}
+		return tx.Delete(&Floor{}, id)
+	})
 	if err != nil {
 		return err
 	}
-	if hasRoom {
-		return ErrFloorInUse
-	}
-
-	f := Floor{Id: id, TenantId: tenantID}
-	if err := m.db.Delete(&f, orm.Eq("id", id), orm.Eq("tenant_id", tenantID)); err != nil {
-		return err
-	}
-
-	m.publish(TopicFloorDeleted, &f)
+	m.publish(TopicFloorDeleted, &Floor{Id: id, TenantId: tenantID})
 	return nil
 }

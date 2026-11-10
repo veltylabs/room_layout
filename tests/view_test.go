@@ -4,34 +4,33 @@ import (
 	"testing"
 
 	roomlayout "github.com/veltylabs/room_layout"
-	"webtyp.com/router/loopback"
+	"webtyp.com/crud"
 	"webtyp.com/view"
 )
 
 func TestPresenterViewsCoverage(t *testing.T) {
 	env := newTestEnv("tenantA")
-	caller := loopback.WithTenant("tenantA", env.mod)
+	caller := view.NewRecords().Caller(crud.LoopbackActingAs(nil, "u1", env.mod))
 
 	noopDone := func(err error) {}
 
-	vFloor := roomlayout.NewFloorView(view.NewRecords().Caller(caller))
+	vFloor := roomlayout.NewFloorView(caller)
 	if vFloor == nil {
 		t.Fatalf("NewFloorView returned nil")
 	}
 	vFloor.Reload(noopDone)
 
-	vRoom := roomlayout.NewRoomView(view.NewRecords().Caller(caller))
+	vRoom := roomlayout.NewRoomView(caller)
 	if vRoom == nil {
 		t.Fatalf("NewRoomView returned nil")
 	}
 	vRoom.Reload(noopDone)
 
-	vEq := roomlayout.NewEquipmentView(view.NewRecords().Caller(caller))
+	vEq := roomlayout.NewEquipmentView(caller)
 	if vEq == nil {
 		t.Fatalf("NewEquipmentView returned nil")
 	}
 	vEq.Reload(noopDone)
-
 }
 
 func TestItemsDeclaredOnFields(t *testing.T) {

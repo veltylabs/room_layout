@@ -1,98 +1,117 @@
 # room_layout
 <img src="docs/img/badges.svg">
 
-Módulo genérico para la distribución y ocupación de espacios de atención por niveles, equipamiento, turnos y disponibilidad para el ecosistema Velty.
+Módulo de distribución arquitectónica y ocupación de espacios de atención (pisos, salas, equipamiento, turnos y disponibilidad) construido sobre [`crud`](https://github.com/webtyp/crud). Más detalles en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-## Inicio Rápido
+## ¿Por qué existe?
 
+Un centro clínico u operativo necesita saber qué espacios tiene, cómo están equipados y qué profesional ocupa cada box en cada momento.
+
+- **Sin esto**: Cada aplicación implementa a mano la persistencia, validaciones de solapamiento horario y cálculo de disponibilidad, duplicando reglas y arriesgando dobles reservas.
+- **Con esto**: La distribución física, el equipamiento, los turnos semanales y fechados, y la disponibilidad pública y privada se gestionan mediante contratos declarativos con verificación estricta de solapes y aislamiento multi-inquilino.
+
+## Antes de comenzar
+
+- Go 1.26+ y `GOPRIVATE=webtyp.com/*,github.com/veltylabs/*`.
+- Un `*orm.DB` con las tablas de [migrate/migrate.go](migrate/migrate.go).
+- `roomlayout.Deps`: `IDs` (generador de IDs), `TenantID` (identificador del inquilino), `Zone` (zona horaria del módulo, ej. `"America/Santiago"`), `Categories` (`CategoryReader`), `Occupants` (`OccupantReader`), y opcionalmente `Hours` (`HoursReader`), `Publisher` (`events.Publisher`) y `Clock` (`func() time.Time`).
+
+## Guía paso a paso
+
+### Paso 1: Inicialización y métodos de dominio
 ```go
+package main
+
 import (
 	roomlayout "github.com/veltylabs/room_layout"
+	"webtyp.com/fmt"
 	"webtyp.com/orm"
 	"webtyp.com/storage/mem"
 	"webtyp.com/unixid"
 )
 
-// Instanciación de la base de datos y módulo
-db := orm.New(mem.New())
-ids, _ := unixid.NewUnixID()
+type mockCategories struct{}
+func (mockCategories) CategoryOptions(_ string) ([]roomlayout.CategoryOption, error) {
+	return []roomlayout.CategoryOption{{Id: "cat1", Label: "Medicina General"}}, nil
+}
+type mockOccupants struct{}
+func (mockOccupants) OccupantOptions(_ string) ([]roomlayout.OccupantOption, error) {
+	return []roomlayout.OccupantOption{{Id: "doc1", Label: "Dr. Soto"}}, nil
+}
 
-mod, err := roomlayout.New(db, roomlayout.Deps{
-	IDs:        ids,
-	Categories: categoryReader,
-	Occupants:  occupantReader,
-	Hours:      hoursReader,
-	TenantID:   "tenant-1",
-	Timezone:   "America/Santiago",
-})
+func main() {
+	db := orm.New(mem.New())
+	ids, _ := unixid.NewUnixID()
+	mod, err := roomlayout.New(db, roomlayout.Deps{
+		IDs: ids, TenantID: "tenant-1", Zone: "America/Santiago",
+		Categories: mockCategories{}, Occupants: mockOccupants{},
+	})
+	if err != nil {
+		fmt.Println("error:", err)
+		return
+	}
+	f, _ := mod.SaveFloor(roomlayout.Floor{TenantId: "tenant-1", Name: "Piso 1", Cols: 10, Rows: 10})
+	r, _ := mod.SaveRoom(roomlayout.Room{TenantId: "tenant-1", FloorId: f.Id, Code: "B1", Name: "Box 1", IsActive: true})
+	rooms, _ := mod.ListRooms("tenant-1", false)
+	fmt.Println("Salas creadas:", len(rooms), r.Code)
+}
 ```
 
-## Demo
+### Paso 2: Mutaciones vía crud
+Las peticiones desde el cliente ejecutan operaciones declarativas sobre el cable. Ver ejemplos en [tests/rules_test.go](tests/rules_test.go).
 
-Para ejecutar la demo web interactiva:
-
+### Paso 3: Exploración interactiva
+Ejecuta la demo con interfaz gráfica desde la raíz del módulo usando el cargador en [seed/demo.go](seed/demo.go):
 ```bash
 webtyp
 ```
 
-ejecutado desde la raíz del repositorio.
+## Mapa de documentación
 
-## Operaciones Registradas (`MountOperations`)
-El módulo expone operaciones estándar usando `view.MountSave`/`view.MountDelete`. Las listas cargan según declara su `view.Page{First: view.All}` y buscan en el servidor aceptando `view.ListArgs{Search, After, Limit}`. Los errores de decodificación y de negocio son propagados mediante `rpc.WriteError`. Los permisos utilizan asignación por tabla con `model.ResourceOf`. El tenant lo pone siempre el servidor (`Deps.TenantID`): ninguna operación lee `tenant_id` de la petición, y un registro que llega con otro tenant se guarda en el de esta instalación.
-
-| Operación | Recurso | Acción |
+| Orden | Documento | Qué pregunta responde y cuándo leerlo |
 |---|---|---|
-| `list_floors` | `floor` | `Read` |
-| `save_floor` | `floor` | `Create\|Update` |
-| `delete_floor` | `floor` | `Delete` |
-| `list_rooms` | `room` | `Read` |
-| `get_room` | `room` | `Read` |
-| `save_room` | `room` | `Create\|Update` |
-| `deactivate_room` | `room` | `Update` |
-| `list_equipment` | `equipment` | `Read` |
-| `save_equipment` | `equipment` | `Create\|Update` |
-| `delete_equipment` | `equipment` | `Delete` |
-| `list_room_artifacts` | `room_artifact` | `Read` |
-| `save_room_artifact` | `room_artifact` | `Create\|Update` |
-| `delete_room_artifact` | `room_artifact` | `Delete` |
-| `list_room_equipment` | `room` | `Read` |
-| `set_room_equipment` | `room` | `Update` |
-| `list_categories` | `room` | `Read` |
-| `list_room_categories` | `room` | `Read` |
-| `set_room_categories` | `room` | `Update` |
-| `list_occupants` | `room_shift` | `Read` |
-| `list_room_shifts` | `room_shift` | `Read` |
-| `save_room_shift` | `room_shift` | `Create\|Update` |
-| `delete_room_shift` | `room_shift` | `Delete` |
-| `cancel_shift_occurrence` | `room_shift` | `Update` |
-| `move_shift_occurrence` | `room_shift` | `Create\|Update` |
-| `list_room_day` | `room_shift` | `Read` |
-| `list_board` | `room` | `Read` |
-| `find_free_rooms` | `room` | `Read` |
-| `list_public_availability` | — | `Public` |
+| 1 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | ¿Cómo interactúan las piezas, almacenes y flujos del sistema? |
+| 2 | [docs/TESTS.md](docs/TESTS.md) | ¿Qué regla de negocio protege cada prueba del repositorio? |
+| 3 | [docs/diagrams/ROOM_CATEGORY.md](docs/diagrams/ROOM_CATEGORY.md) | ¿Cómo valida y previene errores el vínculo entre sala y categoría? |
+| 4 | [docs/diagrams/SHIFT_RULES.md](docs/diagrams/SHIFT_RULES.md) | ¿Cómo se validan los horarios, límites de apertura y solapamientos de turnos? |
+| 5 | [docs/diagrams/DATABASE.md](docs/diagrams/DATABASE.md) | ¿Cuál es la estructura física de tablas e índices del módulo? |
 
-## Lector para otros módulos
+### Mapeo de operaciones («Antes» vs. «Después»)
 
-`RoomOfOccupant(tenantID, occupantID, at)`: el box donde un profesional tiene turno en ese instante (segundos Unix). Detalle en
-`docs/ARCHITECTURE.md` §5b.
+| Operación anterior | Operación `crud` equivalente |
+|---|---|
+| `list_floors`, `save_floor`, `delete_floor` | `room_floor` (`Create`, `Read`, `Update`, `Delete`) |
+| `list_rooms`, `get_room`, `save_room`, `deactivate_room` | `room_space` (`Create`, `Read`, `Update`, `Delete`) |
+| `list_equipment`, `save_equipment`, `delete_equipment` | `room_equipment` (`Create`, `Read`, `Update`, `Delete`) |
+| `list_room_artifacts`, `save_room_artifact`, `delete_room_artifact` | `room_artifact` (`Create`, `Read`, `Update`, `Delete`) |
+| `list_room_equipment`, `set_room_equipment` | `room_space_equipment` (`Create`, `Read`, `Delete`) |
+| `list_room_categories`, `set_room_categories` | `room_category` (`Create`, `Read`, `Delete`) |
+| `list_room_shifts`, `save_room_shift`, `delete_room_shift` | `room_shift` (`Create`, `Read`, `Update`, `Delete`) |
+| `cancel_shift_occurrence`, `move_shift_occurrence` | `room_shift_cancellation` (`Create`, `Read`) |
+| `list_categories` | `category_option` (`Read`) |
+| `list_occupants` | `occupant_option` (`Read`) |
+| `list_room_day` | `day_shift` (`Read`) |
+| `list_board` | `board_room` (`Read`) |
+| `find_free_rooms` | `free_room` (`Read`) |
+| `list_public_availability` | `public_slot` (`Read`, público) |
 
-Un equipamiento puede llevar el id de un equipo de red (`device_id`, opcional): un aparato se
-registra una vez. El que no tiene red deja el campo vacío. Este módulo no importa ningún otro
-módulo: lo que necesita de otro lo pide por una interfaz que él mismo declara (`interfaces.go`: `CategoryReader`,
-`OccupantReader`, `HoursReader`) y la app la conecta.
+### Permisos por entidad y modelos de lectura
 
-El mapa del recinto (`ui.NewMap(caller)`) lee los pisos, boxes y equipos del servidor y guarda cada
-cambio en el momento por las mismas operaciones (`save_floor`, `save_room`, `save_room_artifact`, …);
-después de cada cambio vuelve a leer, así que muestra siempre lo guardado. Las celdas se guardan como
-un texto separado por comas (`"A1,B1"`). Los turnos de la etapa de operación todavía no se guardan.
+| Entidad / Proyección | Acciones | Tipo |
+|---|---|---|
+| `room_floor` | `Create`, `Read`, `Update`, `Delete` | Tabla persistida |
+| `room_space` | `Create`, `Read`, `Update`, `Delete` | Tabla persistida |
+| `room_equipment` | `Create`, `Read`, `Update`, `Delete` | Tabla persistida |
+| `room_artifact` | `Create`, `Read`, `Update`, `Delete` | Tabla persistida |
+| `room_space_equipment` | `Create`, `Read`, `Delete` | Tabla persistida (clave compuesta) |
+| `room_category` | `Create`, `Read`, `Delete` | Tabla persistida (clave compuesta) |
+| `room_shift` | `Create`, `Read`, `Update`, `Delete` | Tabla persistida |
+| `room_shift_cancellation` | `Create`, `Read` | Tabla persistida |
+| `category_option` | `Read` | Proyección (lectura) |
+| `occupant_option` | `Read` | Proyección (lectura) |
+| `day_shift` | `Read` | Proyección (lectura) |
+| `board_room` | `Read` | Proyección (lectura) |
+| `free_room` | `Read` | Proyección (lectura) |
+| `public_slot` | `Read` (público) | Proyección (lectura) |
 
-## Archivos Clave
-
-- `model.go`: Definición de modelos, parámetros y respuestas.
-- `module.go`: Constructor `New` e interfaces de dependencias.
-- `floor.go`, `room.go`, `equipment.go`, `category.go`, `shift.go`, `day.go`: Lógica de dominio.
-- `ops.go`: Registro de operaciones `router.OperationModule`.
-- `view.go`: Vistas y presentadores.
-- `ui/`: Pantalla del módulo en el navegador.
-- `seed/`: Cargador de datos iniciales.
-- `migrate/`: Migración de esquema.
+*Nota*: `public_slot` está declarado como recurso público (`model.Read`), permitiendo consultas de disponibilidad sin sesión autenticada.

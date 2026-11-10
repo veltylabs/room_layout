@@ -7,7 +7,7 @@ import (
 	"webtyp.com/model"
 )
 
-// Each error of the module carries its kind, so rpc.WriteError answers 404/409/400
+// Each error of the module carries its kind, so crud answers 404/409/400
 // with its text instead of a 500 that hides it.
 func TestErrorKinds(t *testing.T) {
 	cases := []struct {
@@ -30,7 +30,8 @@ func TestErrorKinds(t *testing.T) {
 		{roomlayout.ErrCategoryNotAllowed, model.ErrorInvalid},
 		{roomlayout.ErrOutsideBounds, model.ErrorInvalid},
 		{roomlayout.ErrNotWeekly, model.ErrorInvalid},
-		{roomlayout.ErrCannotRead, model.ErrorInvalid},
+		{roomlayout.ErrBlankName, model.ErrorInvalid},
+		{roomlayout.ErrFieldNotEditable, model.ErrorInvalid},
 	}
 	for _, c := range cases {
 		if got := model.KindOf(c.err); got != c.kind {

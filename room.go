@@ -1,14 +1,22 @@
 package roomlayout
 
 import (
+	"webtyp.com/crud"
 	"webtyp.com/fmt"
 	"webtyp.com/model"
-	"webtyp.com/orm"
+	"webtyp.com/storage"
 )
 
+// roomColumns son las columnas que cambia SaveRoom al actualizar (todas menos id y tenant_id).
+var roomColumns = []string{Room_.RoomType, Room_.Cells, Room_.FloorId, Room_.Code, Room_.Name, Room_.Notes, Room_.IsActive, Room_.UpdatedAt}
+
+// SaveRoom guarda o actualiza una sala.
+//
+// Ejemplo: room, err := m.SaveRoom(room)
 func (m *Module) SaveRoom(r Room) (Room, error) {
-	if r.TenantId == "" {
-		return Room{}, ErrTenantRequired
+	store, err := m.storeFor(r.TenantId)
+	if err != nil {
+		return Room{}, err
 	}
 	r.Code = fmt.TrimSpace(r.Code)
 	r.Name = fmt.TrimSpace(r.Name)
@@ -16,124 +24,83 @@ func (m *Module) SaveRoom(r Room) (Room, error) {
 	if isNew {
 		r.Id = m.deps.IDs.NewID()
 	}
-
 	if err := model.ValidateFields(byte(model.Create), &r); err != nil {
 		return Room{}, err
 	}
-
-	var codeExists bool
-	err := m.db.Query(&Room{}).
-		Where("tenant_id").Eq(r.TenantId).
-		Where("code").Eq(r.Code).
-		ReadAll(func() model.Model { return &Room{} }, func(row model.Model) {
-			if existing, ok := row.(*Room); ok {
-				if existing.Id != r.Id {
-					codeExists = true
-				}
-			}
-		})
+	r.UpdatedAt = m.now()
+	err = store.Atomic(func(tx crud.Tx) error {
+		if err := checkCodeFree(tx, r.Code, r.Id); err != nil {
+			return err
+		}
+		if isNew {
+			return tx.Create(&r)
+		}
+		return tx.UpdateFields(&r, r.Id, roomColumns)
+	})
 	if err != nil {
 		return Room{}, err
 	}
-	if codeExists {
-		return Room{}, ErrCodeAlreadyExists
-	}
-
-	r.UpdatedAt = m.now().Unix()
-	if isNew {
-		if err := m.db.Create(&r); err != nil {
-			return Room{}, err
-		}
-	} else {
-		if err := m.db.Update(&r, orm.Eq("id", r.Id), orm.Eq("tenant_id", r.TenantId)); err != nil {
-			return Room{}, err
-		}
-	}
-
 	m.publish(TopicRoomSaved, &r)
 	return r, nil
 }
 
+// GetRoom responde una sala por su id.
+//
+// Ejemplo: room, err := m.GetRoom(tenantID, id)
 func (m *Module) GetRoom(tenantID, id string) (Room, error) {
-	if tenantID == "" {
-		return Room{}, ErrTenantRequired
+	store, err := m.storeFor(tenantID)
+	if err != nil {
+		return Room{}, err
 	}
 	if id == "" {
 		return Room{}, ErrNotFound
 	}
-	var res Room
-	var found bool
-	err := m.db.Query(&Room{}).
-		Where("tenant_id").Eq(tenantID).
-		Where("id").Eq(id).
-		Limit(1).
-		ReadAll(func() model.Model { return &Room{} }, func(row model.Model) {
-			if item, ok := row.(*Room); ok {
-				res = *item
-				found = true
-			}
-		})
-	if err != nil {
-		return Room{}, err
-	}
-	if !found {
-		return Room{}, ErrNotFound
-	}
-	return res, nil
-}
-
-func (m *Module) ListRooms(tenantID string, activeOnly bool) ([]Room, error) {
-	if tenantID == "" {
-		return nil, ErrTenantRequired
-	}
-	qb := m.db.Query(&Room{}).
-		Where("tenant_id").Eq(tenantID)
-	if activeOnly {
-		qb = qb.Where("is_active").Eq(true)
-	}
-	qb = qb.OrderBy("code").Asc()
-
-	var res []Room
-	err := qb.ReadAll(func() model.Model { return &Room{} }, func(row model.Model) {
-		if item, ok := row.(*Room); ok {
-			res = append(res, *item)
-		}
-	})
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
-}
-
-func (m *Module) listRooms(search, after string, limit int64) ([]Room, error) {
 	var r Room
-	qb := m.db.Query(&r).Where(Room_.TenantId).Eq(m.tenantID)
-	if search != "" {
-		qb = qb.Where(Room_.Code).Like("%" + search + "%")
+	if err := store.ReadOne(&r, id); err != nil {
+		return Room{}, notFound(err, ErrNotFound)
 	}
-	if after != "" {
-		qb = qb.Where(Room_.Id).Gt(after)
-	}
-	qb = qb.OrderBy(Room_.Id).Asc().Limit(int(limit))
-	results, err := ReadAllRoom(qb)
+	return r, nil
+}
+
+// ListRooms responde todas las salas de un tenant (opcionalmente solo las activas), ordenadas por código.
+//
+// Ejemplo: rooms, err := m.ListRooms(tenantID, true)
+func (m *Module) ListRooms(tenantID string, activeOnly bool) ([]Room, error) {
+	store, err := m.storeFor(tenantID)
 	if err != nil {
 		return nil, err
 	}
-	res := make([]Room, len(results))
-	for i, item := range results {
-		res[i] = *item
+	var conds []storage.Condition
+	if activeOnly {
+		conds = append(conds, storage.Eq(Room_.IsActive, true))
 	}
+	rows, err := allRows(store, func() model.Model { return &Room{} }, conds...)
+	if err != nil {
+		return nil, err
+	}
+	var res []Room
+	for _, r := range rows {
+		res = append(res, *r.(*Room))
+	}
+	sortRoomsByCode(res)
 	return res, nil
 }
 
+// DeactivateRoom desactiva una sala (is_active = false).
+//
+// Ejemplo: err := m.DeactivateRoom(tenantID, id)
 func (m *Module) DeactivateRoom(tenantID, id string) error {
 	r, err := m.GetRoom(tenantID, id)
 	if err != nil {
 		return err
 	}
+	store, err := m.storeFor(tenantID)
+	if err != nil {
+		return err
+	}
 	r.IsActive = false
-	r.UpdatedAt = m.now().Unix()
-	if err := m.db.Update(&r, orm.Eq("id", id), orm.Eq("tenant_id", tenantID)); err != nil {
+	r.UpdatedAt = m.now()
+	if err := store.UpdateFields(&r, id, []string{Room_.IsActive, Room_.UpdatedAt}); err != nil {
 		return err
 	}
 	m.publish(TopicRoomDeactivated, &r)

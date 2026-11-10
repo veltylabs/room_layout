@@ -278,9 +278,10 @@ func (s *Stage4Operacion) renderRoomOverlay(room *RoomData, floorID string) *dom
 			if art.RoomID == room.ID {
 				tok := html.Span().Class("tok-mini").
 					Text(artifactKindCode(art.Kind))
-				if art.Status == StatusWarn {
+				switch art.Status {
+				case StatusWarn:
 					tok.Class("tok-mini", "warn")
-				} else if art.Status == StatusCrit {
+				case StatusCrit:
 					tok.Class("tok-mini", "crit")
 				}
 				toks.Child(tok)

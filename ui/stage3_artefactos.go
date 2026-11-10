@@ -269,10 +269,11 @@ func (s *Stage3Artefactos) buildFloorCards() []*dom.Element {
 						Child(html.Span().Class("tok-code").Text(artifactKindCode(artifact.Kind)))
 
 					tokStyle := "width: 24px; height: 24px; border-radius: 50%; font-weight: 800; font-size: 10px; display: inline-flex; align-items: center; justify-content: center; background: var(--color-background); border: 2px solid var(--color-primary); color: var(--color-primary); box-shadow: 0 1px 4px rgba(0,0,0,0.3); cursor: pointer;"
-					if artifact.Status == StatusWarn {
+					switch artifact.Status {
+					case StatusWarn:
 						tokStyle = "width: 24px; height: 24px; border-radius: 50%; font-weight: 800; font-size: 10px; display: inline-flex; align-items: center; justify-content: center; background: var(--color-background); border: 2px solid var(--color-accent, #e8a33d); color: var(--color-accent, #e8a33d); box-shadow: 0 1px 4px rgba(0,0,0,0.3); cursor: pointer;"
 						tokEl.Child(html.Span().Class("bang").Attr("style", "position:absolute;top:-4px;right:-4px;width:12px;height:12px;border-radius:50%;background:var(--color-accent, #e8a33d);color:#fff;font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;").Text("!"))
-					} else if artifact.Status == StatusCrit {
+					case StatusCrit:
 						tokStyle = "width: 24px; height: 24px; border-radius: 50%; font-weight: 800; font-size: 10px; display: inline-flex; align-items: center; justify-content: center; background: rgba(186, 44, 13, 0.2); border: 2px solid var(--color-danger, #ba2c0d); color: var(--color-danger, #ba2c0d); box-shadow: 0 1px 4px rgba(0,0,0,0.3); cursor: pointer;"
 						tokEl.Child(html.Span().Class("bang").Attr("style", "position:absolute;top:-4px;right:-4px;width:12px;height:12px;border-radius:50%;background:var(--color-danger, #ba2c0d);color:#fff;font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;").Text("!"))
 					}

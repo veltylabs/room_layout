@@ -1,155 +1,78 @@
 # Arquitectura del módulo `room_layout`
 
-Módulo genérico para la distribución y ocupación de espacios de atención por niveles, equipamiento, turnos y disponibilidad.
+Módulo genérico para la distribución arquitectónica y ocupación de espacios de atención (pisos, salas, equipamiento, turnos y disponibilidad) construido sobre el framework declarativo `crud`.
 
 ---
 
-## 1. Alcance y Vocabulario del Dominio
+## 1. Visión general en un minuto
 
-El módulo gestiona espacios físicos en establecimientos (p. ej. consultorios, spas, hoteles) organizados en niveles/pisos. Cada espacio puede ser habilitado para ciertas categorías de atención y equipado con infraestructura. La ocupación de los espacios se asigna a ocupantes mediante turnos (semanales o fechados).
+`room_layout` administra la infraestructura física de un establecimiento (clínica, centro médico, hotel, espacio compartido) y cómo se ocupa en el tiempo. Organiza el edificio en niveles o pisos (`room_floor`), ubica en ellos salas de atención (`room_space`) y artefactos en el plano (`room_artifact`), y gestiona el catálogo de equipamiento (`room_equipment`) y su asignación a salas (`room_space_equipment`).
 
-**Vocabulario del dominio:**
-
-| Concepto del negocio (consultorio) | Nombre en el dominio | Tabla |
-|---|---|---|
-| Piso | `floor` | `floor` |
-| Box / Sala | `room` | `room` |
-| Infraestructura / Equipamiento | `equipment` | `equipment`, `room_equipment` |
-| Área / Especialidad | `category` (id blando) | `room_category` |
-| Profesional / Doctor | `occupant` (id blando) | — |
-| Turno de box | `room_shift` | `room_shift` |
-| Cancelación de ocurrencia | `room_shift_cancellation` | `room_shift_cancellation` |
+La ocupación se modela mediante turnos (`room_shift`), ya sean semanales recurrentes o de fecha específica, vinculados a categorías de atención provistas por la aplicación (`room_category`) y ocupantes profesionales. Las excepciones puntuales (feriados, reasignaciones) se registran como cancelaciones de ocurrencia (`room_shift_cancellation`). Sobre este núcleo se construyen proyecciones de disponibilidad inmediata (`board_room`), búsqueda de salas libres (`free_room`), agenda diaria (`day_shift`) y disponibilidad pública (`public_slot`).
 
 ---
 
-## 2. Entidades Principales
+## 2. Piezas y estructura
 
-1. **`Floor` (`floor`)**: Representa un piso o nivel físico (`id`, `tenant_id`, `name`, `position`, `updated_at`).
-2. **`Room` (`room`)**: Espacio de atención dentro de un nivel (`id`, `tenant_id`, `floor_id`, `code`, `name`, `notes`, `is_active`, `updated_at`).
-3. **`Equipment` (`equipment`)**: Equipamiento o infraestructura disponible (`id`, `tenant_id`, `name`, `updated_at`).
-4. **`RoomEquipment` (`room_equipment`)**: Relación N:M entre un espacio y su equipamiento (`tenant_id`, `room_id`, `equipment_id`).
-5. **`RoomCategory` (`room_category`)**: Relación N:M entre un espacio y las categorías para las que está habilitado (`tenant_id`, `room_id`, `category_id`).
-6. **`RoomShift` (`room_shift`)**: Turno de ocupación recurrente (semanal por `day_of_week`) o fechado (`specific_date`).
-7. **`RoomShiftCancellation` (`room_shift_cancellation`)**: Excepción que invalida la ocurrencia de un turno semanal en una fecha específica.
-
----
-
-## 3. Reglas de Negocio
-
-- **Validación de solapamiento**: Dos turnos en el mismo espacio (o para el mismo ocupante) no pueden solaparse en sus franjas horarias `[start_min, end_min)`.
-- **Límites de establecimiento (`DayLimits`)**: Los turnos fechados deben encontrarse dentro del horario de apertura del día.
-- **Transacciones e Integridad**: Los cambios en categorías y equipamiento de un espacio se realizan de forma atómica en transacciones. No se puede deshabilitar una categoría si el espacio tiene turnos activos vinculados a ella.
-- **Aislamiento Multi-Tenant**: Toda consulta y mutación filtra strictly por `tenant_id`.
-
----
-
-## 4. Pantalla (`ui/`)
-
-La pantalla del módulo en el navegador (`ui.Browser`) expone 6 pestañas organizadas en un mazo de solapas (`decktabs`):
-
-1. **Tablero (`boardTab`)**: Muestra la ocupación de los espacios agrupados por piso para la fecha de hoy, con filtros dinámicos por área/categoría y equipamiento (`OpListBoard`).
-2. **Buscar libre (`freeSearchTab`)**: Permite buscar espacios disponibles en un rango horario y fecha. Permite seleccionar un turno existente para reubicarlo manualmente (`OpMoveShiftOccurrence`, RL-4).
-3. **Turnos (`shiftsTab`)**: Administra los turnos de un espacio seleccionado mediante un selector de espacios reutilizable (`roomPicker`). Las opciones de los selectores del formulario (`room_id`, `category_id`, `occupant_id`, `day_of_week`) se alimentan mediante `CrudView.SetOptions`.
-4. **Espacios (`roomsTab`)**: Formularios y listado CRUD de espacios de atención (`RoomView`), alimentando el selector de piso (`floor_id`) dinámicamente desde `OpListFloors`.
-5. **Áreas y equipos (`assignTab`)**: Permite habilitar o deshabilitar áreas/categorías (`OpSetRoomCategories`) y equipamiento (`OpSetRoomEquipment`) para el espacio seleccionado.
-6. **Niveles y equipamiento (`catalogsPanel`)**: Paneles CRUD para la gestión de pisos (`FloorView`) y equipamiento global (`EquipmentView`).
+| Archivo / Carpeta | Rol en el módulo |
+|---|---|
+| `definition.go` | Declaración central de entidades, modelos de lectura, permisos (`Allow`), reglas (`Rules`) y constantes de error. |
+| `definition_gen.go` | Código generado por `definitionc` (estructuras, códecs, helpers de consulta y enrutador `crud`). |
+| `checks.go` | Funciones de validación compartidas entre reglas `crud` y métodos de dominio (existencia de sala, unicidad de código, categorías válidas). |
+| `shift_tx.go` | Lógica transaccional de turnos: verificación de franjas horarias, apertura del recinto, solapamientos y traslados. |
+| `store.go` | Métodos `Store*()` para exponer repositorios al framework y constructor multi-inquilino `storeFor`. |
+| `rows.go` | Ayudantes tipados de lectura de una o múltiples filas (`firstRow`, `allRows`, `keyOf`, `notFound`). |
+| `order.go` | Ordenamiento determinista en memoria para pisos, salas y equipamiento sin dependencias de stdlib `sort`. |
+| `floor.go` | Métodos de Go para administración de pisos (`SaveFloor`, `ListFloors`, `DeleteFloor`). |
+| `room.go` | Métodos de Go para administración de salas (`SaveRoom`, `GetRoom`, `ListRooms`, `DeactivateRoom`). |
+| `equipment.go` | Métodos de Go para equipamiento y artefactos (`SaveEquipment`, `SetRoomEquipment`, `SaveRoomArtifact`, etc.). |
+| `category.go` | Métodos de Go para vinculación sala-categoría (`ListRoomCategories`, `SetRoomCategories`). |
+| `shift.go` | Métodos de Go para turnos y traslados (`SaveShift`, `ListRoomShifts`, `DeleteShift`, `CancelShiftOccurrence`, `MoveShiftOccurrence`). |
+| `day.go` | Lógica de consulta de ocupación diaria, tablero de estado y salas libres (`shiftsOn`, `FindFreeRooms`, etc.). |
+| `view.go` | Presentadores de lista para la interfaz (`NewFloorView`, `NewRoomView`, `NewEquipmentView`, `NewShiftView`) y adaptador `roomShiftLister`. |
+| `ui/` | Componentes visuales en el navegador: plano interactivo del recinto, mazo de pestañas y formularios. |
+| `seed/` | Cargador de datos iniciales y punto de entrada para desarrollo interactivo (`seed/demo.go`). |
+| `migrate/` | DDL y creación de tablas en la base de datos relacional. |
 
 ---
 
-## 5. Tabla de Operaciones (Ops)
+## 3. Flujos paso a paso
 
-Las operaciones de listado (`list_floors`, `list_rooms`, `list_equipment`, `list_room_artifacts`) cargan según su `view.Page{First: view.All}`, aceptan `view.ListArgs{Search, After, Limit}` y realizan la búsqueda y paginación en el servidor.
+### 3.1 Crear una sala (`room_space.create`)
+1. El cliente envía `&crud.CreateArgs{Records: []model.Model{&Room{FloorId, Code, Name}}}`.
+2. La regla `Room.Create` verifica mediante `checkFloorFree` que el piso exista en el tenant.
+3. Se verifica con `checkCodeFree` que el código de sala no esté repetido en el tenant.
+4. Si las validaciones pasan, `crud` persiste la fila generando el identificador y estampa `updated_at`.
+5. Se publica el evento de cambio correspondiente.
 
-| Op | Recurso | Acción | Descripción |
-|---|---|---|---|
-| `list_floors` | `floor` | `model.Read` | Lista los niveles del tenant (acepta `view.ListArgs`, búsqueda por nombre) |
-| `save_floor` | `floor` | `model.Create\|model.Update` | Crea o actualiza un nivel |
-| `delete_floor` | `floor` | `model.Delete` | Borra un nivel (si no tiene espacios) |
-| `list_rooms` | `room` | `model.Read` | Lista espacios del tenant (acepta `view.ListArgs`, búsqueda por código) |
-| `get_room` | `room` | `model.Read` | Obtiene un espacio por ID |
-| `save_room` | `room` | `model.Create\|model.Update` | Crea o actualiza un espacio |
-| `deactivate_room` | `room` | `model.Update` | Desactiva un espacio |
-| `list_equipment` | `equipment` | `model.Read` | Lista equipamiento disponible (acepta `view.ListArgs`, búsqueda por nombre) |
-| `save_equipment` | `equipment` | `model.Create\|model.Update` | Crea o actualiza equipamiento |
-| `delete_equipment` | `equipment` | `model.Delete` | Borra equipamiento |
-| `list_room_artifacts` | `room_artifact` | `model.Read` | Lista artefactos del mapa (acepta `view.ListArgs`, búsqueda por código) |
-| `save_room_artifact` | `room_artifact` | `model.Create\|model.Update` | Crea o actualiza un artefacto |
-| `delete_room_artifact` | `room_artifact` | `model.Delete` | Borra un artefacto |
-| `list_room_equipment` | `room` | `model.Read` | Lista equipamiento asignado a un espacio |
-| `set_room_equipment` | `room` | `model.Update` | Reemplaza el equipamiento de un espacio |
-| `list_categories` | `room` | `model.Read` | Lista categorías globales desde `CategoryReader` |
-| `list_room_categories` | `room` | `model.Read` | Lista categorías asignadas a un espacio |
-| `set_room_categories` | `room` | `model.Update` | Reemplaza categorías asociadas a un espacio |
-| `list_occupants` | `room_shift` | `model.Read` | Lista ocupantes desde `OccupantReader` |
-| `list_room_shifts` | `room_shift` | `model.Read` | Lista turnos activos de un espacio |
-| `save_room_shift` | `room_shift` | `model.Create\|model.Update` | Crea o actualiza un turno |
-| `delete_room_shift` | `room_shift` | `model.Delete` | Borra un turno |
-| `cancel_shift_occurrence` | `room_shift` | `model.Update` | Cancela una ocurrencia de turno semanal |
-| `move_shift_occurrence` | `room_shift` | `model.Create\|model.Update` | Mueve una ocurrencia a otro espacio |
-| `list_room_day` | `room_shift` | `model.Read` | Ocupación resuelta de un día |
-| `list_board` | `room` | `model.Read` | Estado actual/siguiente del tablero de espacios |
-| `find_free_rooms` | `room` | `model.Read` | Busca espacios libres en un rango horario |
-| `list_public_availability` | — | `.Public()` | Consulta pública de slots disponibles |
+### 3.2 Vincular una categoría a una sala (`room_category.create`)
+1. El cliente solicita asociar una sala con una categoría mediante clave compuesta `(RoomId, CategoryId)`.
+2. La regla `RoomCategory.Create` valida que la sala exista y que `CategoryId` sea una de las entregadas por `Deps.Categories`.
+3. Ver detalles de ramificaciones y rechazos en [docs/diagrams/ROOM_CATEGORY.md](diagrams/ROOM_CATEGORY.md).
+4. La eliminación (`room_category.delete`) comprueba previamente que la sala no tenga turnos activos que dependan de esa categoría.
+
+### 3.3 Leer el tablero de salas (`board_room.read`)
+1. La consulta solicita la proyección `board_room` para la fecha actual.
+2. El lector recopila las salas activas, sus pisos y categorías habilitadas.
+3. Para cada sala, evalúa los turnos del día calculando si la sala se encuentra libre, ocupada y quién es el siguiente profesional programado.
+
+### 3.4 Guardar un turno (`room_shift.create` / `room_shift.update`)
+1. La regla `RoomShift.Create` o `Update` valida la franja `[StartMin, EndMin)` dentro de 00:00 y 24:00.
+2. Si el turno es fechado (`SpecificDate`), comprueba con `Deps.Hours` que se ajuste al horario de apertura.
+3. Comprueba que la sala tenga asignada la categoría del turno.
+4. Valida ausencia de solapamiento horario en la sala y para el profesional ocupante.
+5. Ver flujo completo en [docs/diagrams/SHIFT_RULES.md](diagrams/SHIFT_RULES.md).
+
+### 3.5 Mover una ocurrencia de turno
+1. Si el turno es semanal: se registra una cancelación (`RoomShiftCancellation`) con el campo `moved_to_room_id`.
+2. En la misma transacción atómica, se crea un turno fechado (`SpecificDate`) en la sala de destino.
+3. Si el turno ya era fechado: se actualiza directamente su `RoomId` tras revalidar categoría y solapamiento en el destino.
 
 ---
 
-## 5b. Lectores para otros módulos
+## 4. Contratos y límites de seguridad
 
-`RoomOfOccupant(tenantID, occupantID string, at time.Unix) (roomID string, found bool, err error)`: el box donde un ocupante
-(profesional) tiene un turno que cubre el instante `at` (segundos Unix UTC, leído en la zona horaria del módulo). Cuentan los
-turnos semanales y los de fecha; no cuentan una ocurrencia cancelada ni un box inactivo; un turno cubre `[inicio, fin)`. Sin
-turno, `found` es falso. Otro módulo lo declara en una interfaz estrecha propia y la aplicación le pasa este módulo: así
-`clinical_encounter` sabe en qué box ocurrió una atención sin importar `room_layout`.
-
-Las fechas que ve una persona salen de la zona de la instalación (`Deps.Zone` / `BrowserDeps.Zone`); un día guardado como clave usa las funciones UTC.
-
-## 6. Ejemplo de Raíz de Composición
-
-```go
-package main
-
-import (
-	roomlayout "github.com/veltylabs/room_layout"
-	"webtyp.com/fmt"
-	"webtyp.com/orm"
-	"webtyp.com/router/loopback"
-	"webtyp.com/storage/mem"
-	"webtyp.com/unixid"
-)
-
-type categoryAdapter struct{}
-
-func (c *categoryAdapter) CategoryOptions(tenantID string) ([]fmt.KeyValue, error) {
-	return []fmt.KeyValue{
-		{Key: "general", Value: "Medicina General"},
-		{Key: "cardio", Value: "Cardiología"},
-	}, nil
-}
-
-type occupantAdapter struct{}
-
-func (o *occupantAdapter) OccupantOptions(tenantID string) ([]fmt.KeyValue, error) {
-	return []fmt.KeyValue{
-		{Key: "perez", Value: "Dr. Juan Pérez"},
-	}, nil
-}
-
-func main() {
-	db := orm.New(mem.New())
-	ids, _ := unixid.NewUnixID()
-
-	mod, err := roomlayout.New(db, roomlayout.Deps{
-		IDs:        ids,
-		Categories: &categoryAdapter{},
-		Occupants:  &occupantAdapter{},
-		TenantID:   "tenant-1",
-		Zone:       zone, // asumiendo zone fue cargado con time.LoadZone
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	router := loopback.WithTenant("tenant-1", mod)
-	_ = router
-}
-```
+1. **Aislamiento multi-inquilino estricto**: Cada mutación o lectura opera a través de `storeFor(tenantID)`. Un tenant vacío es rechazado (`ErrTenantRequired`), impidiendo lecturas globales o filtraciones entre organizaciones.
+2. **Claves compuestas nativas**: Tablas de asociación como `room_space_equipment` y `room_category` emplean clave primaria compuesta `(room_id, equipment_id)` o `(room_id, category_id)`. Las peticiones de creación con clave existente son tratadas de forma idempotente por `crud`.
+3. **Paridad de validaciones (`checks.go`)**: Los métodos directos de Go y las operaciones sobre el cable invocan las mismas funciones puras de verificación, evitando discrepancias entre la API interna y la externa.
+4. **Atomicidad en reubicaciones**: El traslado de ocurrencias combina la cancelación y la inserción del nuevo turno en una sola transacción (`tx.Atomic`). Si la sala de destino no soporta la categoría o presenta solapamiento, la operación se cancela en su totalidad sin efectos secundarios.
