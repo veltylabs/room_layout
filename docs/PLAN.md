@@ -1,147 +1,182 @@
 ---
-PLAN: "refactor!: room_layout on the closed crud contract — server tenant, transactional batch, single declarative validation, public read via registry, seed.Demo"
+PLAN: "refactor!: room_layout on the crud-by-declaration framework — Allow and Rules in definition.go, persistence by crud, only domain rules in rule files"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
-SESSION: 15931334370260317991
 ---
 
 > Read AGENTS.md at the repo root before any change.
 > **Finish by yourself:** when the delivery check passes, commit, push and open the pull request. Never ask whether to
 > proceed or finalize — nobody answers, and a session that waits ends without your work. Commit after every stage.
 > Never run `git reset`, `git restore`, `git checkout -- <file>` or `git stash` on your own work.
-> Never edit `model_orm.go` or `model_crud.go`: a build error there means the hand-written code is wrong.
+> Never edit `definition_gen.go`: a build error there means `definition.go` or a rule file is wrong; fix that and run `definitionc` again.
+> This plan is dispatched in one wave with the other 11 modules without external calls (D53), after `patient_directory` (the reference) was executed and approved by the owner.
 
-# Plan: `room_layout` on `crud.Registry`
 
-Context: master `webtyp/docs/ARCHITECTURE_MASTER_PLAN.md` D2–D18 (phases A4.2 + L5). Follows the template in `patient_directory`.
-After this plan the module mounts operations through generated helpers on `crud.Registry`,
-tenant comes from `Deps`, validation of the schema lives in one place (`crud`), `PublicSlot` does not call `.Public()` (D10: public reads are configured by the app), and `seed.Demo` provides the demo without `webtyp.com/layout`.
+# Plan: `room_layout` on the crud-by-declaration framework
 
-## Tools and local dependencies
+Today `ops.go` mounts 21 operations. Three tables have composite primary keys (`RoomEquipment`, `RoomCategory`, `RoomShiftCancellation`): their wire id is the key values joined by `/` (D22, `model.JoinKey`). `RoomShiftForm` is a screen model (hours as `HH:MM` text); `RoomShift` is the entity (minutes): the screen converts, the rules of `SaveShift` move to the `RoomShift` rules.
+
+Reference implementation of the same migration (read it first, copy its shape): `patient_directory` — `definition.go` (`Definition`, `Allow`, `Rules`), `rule_patient_create.go`/`rule_patient_update.go`/`rule_patient_search.go` (the rules), `store.go`, `readers.go` (signatures kept, bodies on `m.store`).
+
+## Tools
 
 ```bash
 go install webtyp.com/devflow/cmd/gotest@latest
 go install webtyp.com/lang/cmd/langc@latest
-go install webtyp.com/ormc/cmd/ormc@v0.1.37
+go install webtyp.com/definitionc/cmd/definitionc@v0.1.41
+go get webtyp.com/model@v0.2.18 webtyp.com/crud@v0.0.11 webtyp.com/orm@v0.12.30 webtyp.com/storage@v0.2.1 webtyp.com/ddl@v0.0.49 webtyp.com/router@v0.4.21 webtyp.com/definitionc@v0.1.41 webtyp.com/view@v0.6.72 webtyp.com/appkit@v0.2.33 webtyp.com/rpc@v0.2.21
 ```
-```bash
-go get webtyp.com/model@v0.2.14 webtyp.com/router@v0.4.19 webtyp.com/crud@v0.0.3 webtyp.com/rpc@v0.2.17 webtyp.com/mcp@v0.3.23 \
-  webtyp.com/dbsync@v0.3.47 webtyp.com/view@v0.6.67 webtyp.com/appkit@v0.2.28
-```
-`view@v0.6.67` and `appkit@v0.2.28` contain `view.Demo` and `appkit` without `layout` (plans L1, L2).
-Remove every `replace` from `go.mod`; `go mod tidy`; run `ormc` (generates `model_crud.go`).
-After the delivery check, `go.mod` does not list `webtyp.com/layout`.
+Remove every `replace` from `go.mod`; `go mod tidy`. Before any change check, with `go doc`, that these exist: `model.ModuleDefinition`, `model.Rules` (`model.AddMyBusinessRule`, `model.HaveNoBusinessRule`), `crud.CurrentUser`, `crud.RuleAnswer`, `crud.Topic`, `crud.Loopback`, and that `definitionc` writes a `definition_gen.go` containing `func (m *Module) MountOperations(`. If one is missing, stop and say so in the PR.
+Prerequisite of the whole wave: `patient_directory` was executed, reviewed and approved by the owner; it is the reference and the 17 other modules are dispatched together after it.
 
-## APIs used
+## Lessons of the reference module (`patient_directory`, executed locally)
 
-| Symbol | Signature |
+- Needs `crud` ≥ v0.0.11 (a filter has no required field; v0.0.10 rejected every read of a table with a rule). `definitionc` ≥ v0.1.41 generates `Search(a, filter *X, text, m)`; a text of `""` is normal (the rule runs on every read).
+- Running `definitionc` rewrites `go.mod` to older versions: run the `go get` list of «Tools» again after it, then `go mod tidy`; raise stale indirect dependencies (`rbac`, `mcp`, `appkit`) to the published ones.
+- In tests, events reach the publisher given to `crud.LoopbackActingAs(pub, "u1", mod)`, not `Deps.Publisher`; a caller double takes `router.Operation`; a `ddl.Execer` double returns `(storage.Result, error)`; a rule that answers `0` fails with an internal error (assert the refusal and that nothing was stored).
+- `langc sync .` can warn that other languages are untranslated: that is the repo's `lang.json`, not this plan.
+
+## The rule of this plan (decisions D28–D50 of the architecture master)
+
+The framework persists; the module declares and writes only domain rules.
+
+| The module no longer writes | Who does it now |
 |---|---|
-| generated `Mount<Entity>Read/Create/Update/Delete` | typed signatures on `crud.Registry` |
-| `crud.ReadArgs` | `struct{ ID, Search, After string; Limit int64; Filter model.Model }` |
-| `crud.Loopback` / `crud.LoopbackActingAs` | `func Loopback(mods ...crud.Module) router.Caller` / `func LoopbackActingAs(userID string, mods ...crud.Module) router.Caller` |
-| `crud.Op` | `func Op(m model.ModuleNaming, action model.Action) string` |
-| `model.ValidateFields` | `func ValidateFields(action byte, f Fielder) error` |
-| `orm.DB.Tx` | `func (d *DB) Tx(fn func(tx *DB) error) error` |
-| `view.Notifier` | notification contract (D16) |
+| id, `tenant_id`, `created_at`/`updated_at`, the transaction loop, create/update/delete bodies, «not found», batch atomicity, idempotent retry by id, paging by `After`, `tenant_id` in every query, schema checks repeated from the model | `crud` + `orm.TenantStore` / `orm.GlobalStore` |
+| an operation per verb (`list_*`, `save_*`, `upsert_*`, `delete_*`), its handler, `ops.go`, the permission resources and the event topics | `Allow` + `Rules` in `definition.go`; `definitionc` writes `MountOperations`; `crud` names the operation (`router.Operation{Module, Entity, Action}`; on the wire `GET\|POST\|PATCH\|DELETE /api/<module>/<entity>`, in MCP `<module>.<entity>.read\|create\|update\|delete`) and publishes `<module>.<entity>.created\|updated\|deleted` with a `*crud.Change` after the commit |
+| an action with its own permission (approve, settle, receive stock…) | a **record created** in its own table, or a **read model** with its own name (D18) |
 
-## Explicit deletions (grep must be empty)
+A module writes: `definition.go` (`var Definition = model.ModuleDefinition{…}` and, per table, `Allow` and `Rules`), one `rule_<entity>_<verb>.go` for every action declared `model.AddMyBusinessRule` (created once by `definitionc`; the skeleton does not compile until completed) and `store.go` (`func (m *Module) Store<Entity>() crud.Store`, one line per table). Every allowed action that has no rule below is declared `model.HaveNoBusinessRule`: `crud` alone checks it. Read the reference first: `patient_directory` (`definition.go`, `rule_patient_*.go`, `store.go`).
 
-- `ops.go`: raw `reg.Operation` calls, `var _ router.OperationModule`, `.Public()` calls (D10: room_layout drops `.Public()`, ops.go:529), imports `webtyp.com/router`, `webtyp.com/rpc`.
-  `grep -rn "reg.Operation\|router.Context\|rpc\.\|\.Public(" --include=*.go . | grep -v _test` → empty.
-- `model.go`: manual argument models for ops if any; errors covered by schema/crud.
-- `module.go`: operations logic moved to `crud.go` and `queries.go`.
-- `web/`: directory deleted (`test ! -d web`).
+| Rule | Form (the receiver is the entity) |
+|---|---|
+| Create | `func (p *X) Create(a crud.CurrentUser, tx crud.Tx, m *Module) (crud.RuleAnswer, error)` |
+| Update | `func (next *X) Update(a crud.CurrentUser, tx crud.Tx, old *X, fields []string, m *Module) (crud.RuleAnswer, error)` (`next` carries only the sent `fields`) |
+| Delete | `func (p *X) Delete(a crud.CurrentUser, tx crud.Tx, m *Module) (crud.RuleAnswer, error)` (`p` is the stored row) |
+| Search (Read of a table) | `func (p *X) Search(a crud.CurrentUser, filter *X, text string, m *Module) ([]storage.Condition, error)` — AND conditions only; it runs on every read, `text` may be `""`, and `filter` is a record of the entity with only the fields the caller sent (D52: the entity is its own filter) |
+| Read (model without a table) | `func (p *X) Read(a crud.CurrentUser, filter *X, args crud.ReadArgs, m *Module) (model.ModelSlice, error)` (`filter` carries the fields the caller sent, D52) |
 
-## Stage 1 — `model.go` and `errors.go`
+A rule ends with `return crud.ApplyAndPublish, nil` (saves and announces) or `crud.ApplyWithoutPublishing` (saves without announcing); a rejection is `return 0, err`. It queries with `tx`, never with `m.db`. To write another row it calls `tx.Create`/`tx.UpdateFields`. The old `Committed` hook does not exist: `crud` publishes.
 
-- `tenant_id` and `updated_at` get `ServerOnly: true` on models.
-- Remove manual argument models (`ListFloorsArgsModel`, `ListRoomsArgsModel`, `GetRoomArgsModel`, etc.) that are superseded by `crud.ReadArgs`.
-- Verify `errors.go` has doc comments in Spanish with usage examples (`// Ejemplo:`).
-- Install `ormc@v0.1.37` and run `ormc generate .`.
+## Tables, stores and rules
 
-## Stage 2 — `crud.go` (writes) and `queries.go` (reads)
+An action with a rule below is declared `model.AddMyBusinessRule` in the table's `Rules`; every other allowed action is `model.HaveNoBusinessRule`. A `Search` below is the rule of `Read`.
 
-- `crud.go`: Create, Update, Delete methods for Floor, Room, Equipment, Category, Shift, etc. wrapped in `m.db.Tx`.
-  Signatures accept `(c crud.Caller, list <Entity>List) error`.
-- `queries.go`: Read methods for entities accepting `(c crud.Caller, args crud.ReadArgs, filter model.Fielder) (model.ModelSlice, error)`.
-  Filter always scopes by `tenant_id` from `m.tenantID`.
-  `PublicSlot` read method implements availability read without calling `.Public()` (public exposure is configured at app level).
+| Table (`<X>Model`) | Store | `Allow` | Rules (`rule_<entity>_<verb>.go`) — where their rules come from today |
+|---|---|---|---|
+| `Floor` | `orm.TenantStore` | `model.Create \| model.Read \| model.Update \| model.Delete` | `Create`/`Update`: checks of `SaveFloor`; `Delete`: checks of `DeleteFloor` |
+| `Room` | `orm.TenantStore` | `model.Create \| model.Read \| model.Update \| model.Delete` | `Create`/`Update`: checks of `SaveRoom` (area cells via `EncodeArea`/`DecodeArea`); deactivate = Update `["is_active"]` with the checks of `DeactivateRoom` |
+| `RoomArtifact` | `orm.TenantStore` | `model.Create \| model.Read \| model.Update \| model.Delete` | checks of `SaveRoomArtifact` / `DeleteRoomArtifact` |
+| `Equipment` | `orm.TenantStore` | `model.Create \| model.Read \| model.Update \| model.Delete` | checks of `SaveEquipment` / `DeleteEquipment` |
+| `RoomEquipment (key `room_id/equipment_id`)` | `orm.TenantStore` | `model.Create \| model.Read \| model.Delete` | `Create`: room and equipment exist (checks of `SetRoomEquipment`) |
+| `RoomCategory (key `room_id/category_id`)` | `orm.TenantStore` | `model.Create \| model.Read \| model.Delete` | `Create`: room exists (checks of `SetRoomCategories`) |
+| `RoomShift` | `orm.TenantStore` | `model.Create \| model.Read \| model.Update \| model.Delete` | `Create`/`Update`: the checks of `SaveShift` from step 2 on (active room, `start_min < end_min ≤ 1440`, weekly xor dated, no overlap); `Delete`: checks of `DeleteShift` |
+| `RoomShiftCancellation (key `shift_id/specific_date`)` | `orm.TenantStore` | `model.Create \| model.Read \| model.Delete` | `Create`: checks of `CancelShiftOccurrence`; with `moved_to_room_id` set, also the logic of `MoveShiftOccurrence`: creates the dated `RoomShift` in the target room with `tx.Create` (same transaction) |
 
-## Stage 3 — `ops.go` and `module.go`
+## Read models (D18 — no table, `Allow: model.Read` only, `Rules.Read: model.AddMyBusinessRule`)
 
-- `ops.go`:
-```go
-const ModelName = "room_layout"
+| Model | Filter | Answered by |
+|---|---|---|
+| `DayShift` (existing; `Allow: model.Read`, no `DB:` marks) | `RoomDayFilter{room_id string; date int64}` | `ListRoomDay` |
+| `BoardRoom` (existing) | `BoardFilter{category_id, equipment_id string}` | `ListBoard` |
+| `FreeRoom` (existing) | `FreeRoomFilter{date int64; start_min, end_min int64; category_id string}` | `FindFreeRooms` |
+| `PublicSlot` (existing) — the app lists it in `AppServer.Public` with `model.Read` (D23) | `PublicSlotFilter{date int64; category_id string}` | `ListPublicAvailability` |
+| `OccupantOption` (the rows `opListOccupants` returns today) | none | body of `opListOccupants` |
+| `CategoryOption` (the rows `list_categories` returns today) | none | body of its handler |
 
-func (m *Module) ModelName() string { return ModelName }
+A read model is a `model.Definition` **without** `DB:` marks, with `Allow: model.Read` and `Rules: model.Rules{Read: model.AddMyBusinessRule}`, listed in `Definition.Entities`; `definitionc` mounts it and creates its `rule_<model name>_read.go`. Its permission resource is its own `ModelName`: list it in the README permissions table (roles must be granted it).
 
-var _ crud.Module = (*Module)(nil)
+## Operation mapping (every operation of today has exactly one row)
 
-func (m *Module) MountOperations(reg crud.Registry) {
-    MountFloorRead(reg, nil, m.ReadFloors)
-    MountFloorCreate(reg, m.CreateFloors)
-    MountFloorUpdate(reg, m.UpdateFloors)
-    MountFloorDelete(reg, m.DeleteFloors)
+«After» is `router.Operation{Module, Entity, Action}` written `<entity>.<verb>`; the wire form is `crud`'s (REST `/api/<module>/<entity>` by method, MCP `<module>.<entity>.<verb>`).
 
-    MountRoomRead(reg, nil, m.ReadRooms)
-    MountRoomCreate(reg, m.CreateRooms)
-    MountRoomUpdate(reg, m.UpdateRooms)
-    MountRoomDelete(reg, m.DeleteRooms)
+| Today | After |
+|---|---|
+| `list_floors (+save/delete)` | `room_floor.read`, `room_floor.create`, `room_floor.update`, `room_floor.delete` |
+| `list_rooms / get_room (+save)` | `room_space.read`, `room_space.create`, `room_space.update` |
+| `deactivate_room` | `room_space.update` with `["is_active"]` |
+| `list_room_artifacts (+save/delete)` | `room_artifact.read`, `room_artifact.create`, `room_artifact.update`, `room_artifact.delete` |
+| `list_equipment (+save/delete)` | `room_equipment.read`, `room_equipment.create`, `room_equipment.update`, `room_equipment.delete` |
+| `list_room_equipment` | `room_space_equipment.read` with filter `{room_id}` |
+| `set_room_equipment` | the screen sends `room_space_equipment.create` for added and `_d` (ids `room/equipment`) for removed |
+| `list_categories` | read model `CategoryOption` |
+| `list_room_categories` | `room_category.read` with filter `{room_id}` |
+| `set_room_categories` | `room_category.create` / `_d` (same as equipment) |
+| `list_occupants` | read model `OccupantOption` |
+| `list_room_shifts` | `room_shift.read` with filter `{room_id}` |
+| `save_room_shift` | `room_shift.create` / `_u` (the screen converts `RoomShiftForm` → `RoomShift`) |
+| `delete_room_shift` | `room_shift.delete` |
+| `cancel_shift_occurrence` | `room_shift_cancellation.create` |
+| `move_shift_occurrence` | `room_shift_cancellation.create` with `moved_to_room_id` |
+| `list_room_day` | read model `DayShift` |
+| `list_board` | read model `BoardRoom` |
+| `find_free_rooms` | read model `FreeRoom` |
+| `list_public_availability` | read model `PublicSlot` (public by the app) |
 
-    MountEquipmentRead(reg, nil, m.ReadEquipment)
-    MountEquipmentCreate(reg, m.CreateEquipment)
-    MountEquipmentUpdate(reg, m.UpdateEquipment)
-    MountEquipmentDelete(reg, m.DeleteEquipment)
+## Stage 1 — `definition.go`
 
-    MountRoomCategoryRead(reg, nil, m.ReadRoomCategories)
-    MountRoomCategoryCreate(reg, m.CreateRoomCategories)
-    MountRoomCategoryUpdate(reg, m.UpdateRoomCategories)
-    MountRoomCategoryDelete(reg, m.DeleteRoomCategories)
+- Set `Allow` on each table exactly as in «Tables, stores and rules»; a table not listed there gets no `Allow` (internal).
+- Mark `ServerOnly: true`: `tenant_id`, `created_at`, `updated_at`, and every field the server fills (actor/author fields).
+- Delete every `*Args` / `*Result` definition that only carried a removed operation
+  (`grep -n "ArgsModel\|ResultModel" model.go` → only the ones this plan keeps).
+- `RoomShiftCancellationModel` gains `{Name: "moved_to_room_id", Type: model.Text(), OmitEmpty: true, Ref: &RoomModel, DB: &model.FieldDB{RefColumn: "id"}}` (`ddl.Sync` adds the column).
+- `RoomShiftFormModel` stays as the screen's form only (no `Allow`); the screen (`ui/`) converts it to `RoomShift` (`parseHour` moves to `ui/`).
+- The screens of `RoomEquipment`, `RoomCategory` and `RoomShiftCancellation` list them whole: `view.Page{First: view.All}` (no `After` on composite keys).
+- **Keep every `*Args` model that an exported reader's signature still uses** (`grep -n "^func (m \*Module) [A-Z][A-Za-z]*([^)]*Args" *.go` lists them): mark each `Wire: true`; delete only the `*Args` no remaining signature uses.
+- D52 (the entity is its own filter): a filter model (`*Filter`, `*FilterModel`, an `*ArgsModel` that only carried filter values) is not kept: its fields become fields of the read model or table (`OmitEmpty`), and the rule reads them from its receiver; delete the filter type and its `Wire`/`NewFilter` plumbing.
+- Add `var Definition = model.ModuleDefinition{Name: "room_layout", Entities: []model.Definition{…every table and read model of this plan…}}` and, on every table and read model, `Rules` as «Tables, stores and rules» says (`AddMyBusinessRule` where a rule is named, `HaveNoBusinessRule` for the other allowed actions; a read model: `Read: model.AddMyBusinessRule`). Delete the hand topics (`Topic*`) and `Err*`/resources no code uses any more.
 
-    MountRoomShiftRead(reg, nil, m.ReadRoomShifts)
-    MountRoomShiftCreate(reg, m.CreateRoomShifts)
-    MountRoomShiftUpdate(reg, m.UpdateRoomShifts)
-    MountRoomShiftDelete(reg, m.DeleteRoomShifts)
+## Stage 2 — `module.go`
 
-    MountPublicSlotRead(reg, nil, m.ReadPublicSlots)
-}
-```
-- Adapt generated helpers according to `model_crud.go`.
+`Deps` keeps its fields; add `IDs model.IDGenerator` (required, `depErr("IDs")` when nil) if it is missing.
+`Module` gains `store *orm.Store`, built once in `New`: `m.store = orm.TenantStore(db, deps.TenantID, deps.IDs)`.
+Delete the hand-written persistence (create/update/upsert/patch/delete/list/get bodies that only move rows) once its rules moved to the rule files: the row-moving bodies of every `Save*`, `Delete*`, `DeactivateRoom`, `SetRoomEquipment`, `SetRoomCategories`, `SaveShift`, `DeleteShift`, `CancelShiftOccurrence`, `MoveShiftOccurrence` (their checks move to the rules).
 
-## Stage 4 — `view.go`, `seed/demo.go`, and remove `web/`
+## Stage 3 — generate, then write the rules
 
-- `view.go`: update `view.Ops` to closed contract: `Allow: model.Read | model.Create | model.Update` (no string op names). Do NOT add `//go:build browser` so tests compile cleanly.
-- `seed/demo.go`:
-```go
-//go:build wasm
+1. Delete `ops.go`, `crud.go`, `queries.go`, `model_crud.go`, `model_orm.go` and `definition_crud.go` (those that exist). Run `definitionc`: it writes one `definition_gen.go` (the types, the schemas and, on `Module`, `ModelName()`, `Definition()`, `MountOperations()`) and the skeleton `rule_<entity>_<verb>.go` of every action declared `AddMyBusinessRule`.
+2. Add `store.go`: for each table of «Tables, stores and rules» that has a Store, `// Store<Entity> is the store of <entity>.` `func (m *Module) Store<Entity>() crud.Store { return m.store }` (the module's global store for a table the plan lists with `orm.GlobalStore`).
+3. Fill each skeleton with the body of the rule named in «Tables, stores and rules» (and «Read models»), in the forms of «The rule of this plan». An old rule `func(c crud.Caller, tx, rec) error` becomes the rule method with the same body, `c.UserID` becomes `a.UserID`, a nil error becomes `return crud.ApplyAndPublish, nil`, an error `e` becomes `return 0, e`.
+4. Specific to this module: Every rule named above is a rule file. Hooks keep the error sentinels the functions use today (`ErrInvalidRange`, `ErrInvalidWeekday`, `ErrNotFound`…). `ui/` keeps notifying through `view.Notifier` (L1).
+Delete every `Op*` constant, `res*`/`Resource*` variable, every `op*` handler, every `view.MountSave`/`view.MountDelete`/`reg.Operation` call and the `webtyp.com/router`, `webtyp.com/rpc` imports that only they used (`grep -rn "reg.Operation\|view.MountSave\|view.MountDelete\|router.Context\|rpc.WriteError" --include=*.go . | grep -v _test` → empty).
 
-package seed
+## Stage 4 — readers used by other modules
 
-import (
-    "github.com/veltylabs/room_layout/ui"
-    "webtyp.com/crud"
-    "webtyp.com/ddl"
-    "webtyp.com/view"
-)
+Signatures of every exported reader stay (other modules and apps call them). Bodies read through `m.store` (`ReadOne`, `ReadAll` with `crud.Query`), never `m.db` directly; a `tenantID` parameter different from the module's tenant answers «not found» (`found=false` / empty, `err=nil`). Keep `RoomOfOccupant`, `ListRoomDay`, `ListBoard`, `FindFreeRooms`, `ListPublicAvailability`, `GetRoom`, `ListRooms`, `ListEquipment`, `ListRoomEquipment`, `ListRoomCategories`, `ListRoomShifts`, `ListFloors`, `ListRoomArtifacts`; `SaveShift`, `SetRoomEquipment`, `SetRoomCategories`, `CancelShiftOccurrence`, `MoveShiftOccurrence` stay as callers that run the same rules inside `m.store.Atomic`.
 
-func Demo() (view.Demo, error) {
-    // create mem DB and seed module
-    ...
-    return view.Demo{
-        Label:    "Room Layout",
-        Timezone: "America/Santiago",
-        ActingAs: "u1",
-        Modules:  []crud.Module{mod},
-        Screens:  func(d view.BrowserDeps) []view.Screen { return ui.Screens(...) },
-    }, nil
-}
-```
-- Delete `web/` directory (`rm -rf web`).
+## Stage 5 — browser side (D15, D16)
 
-## Stage 5 — tests and delivery check
+- `view.go` (`//go:build browser`): every `view.NewCallerLister(caller, view.Ops{…}, newList)` takes
+  `func() model.TableSlice { return &<Entity>List{} }` and `view.Ops` has no `Allow` (the screen reads `<Entity>List.Allow()`).
+- `module/browser.go`, `module/server.go` (if present): `appkit.ModuleBrowser`/`appkit.BrowserDeps` → `view.ModuleBrowser`/`view.BrowserDeps`.
+- Demo: `seed/demo.go` (`//go:build wasm`) returning `view.Demo{Label, Timezone: "America/Santiago", ActingAs: "u1",
+  Modules: []crud.Module{mod}, Migrations: <the module's ddl.Step list, or nil if it has no migrations>,
+  Screens: func(d view.BrowserDeps) []view.Screen { return ui.Screens(<what today's demo main passes>) }}`, built with
+  `orm.New(mem.New())`, `New(db, Deps{…})` with the same fakes today's demo uses, and `seed.Load` (when the module has one).
+  Delete the old demo: `web/browser/main.go` (`test ! -e web`).
+- `grep -rn "webtyp.com/layout\|appkit.BrowserDeps\|appkit.ModuleBrowser\|router/loopback" .` → empty, `go.mod` included.
 
-- Update tests to use `crud.Loopback(m)` or `crud.LoopbackActingAs(userID, m)` or test direct methods.
-- Run `gotest`.
-- Run `langc sync .`.
-- Verify explicit deletions grep is empty.
+## Stage 6 — tests (`tests/`, through `crud.LoopbackActingAs(nil, "u1", mod)`; rows in `docs/TESTS.md`)
+
+Delete tests of removed code. Operations are `router.Operation{Module: ModelName, Entity: "<entity>", Action: model.<Action>}`, never a string; fixtures follow `crud` v0.0.10 (`reg.AddStoredEntity`, `crud.CurrentUser`). Add `TestMount_MatchesDefinition` (`crud.Mount(reg, nil, nil, mod)` returns nil) and one test that an allowed write publishes a `*crud.Change` on `crud.Topic(ModelName, "<entity>", model.<Action>)`. Required:
+
+| Test | Setup → call → expected |
+|---|---|
+| `TestTenant_ReadOtherTenantIsNotFound` | room of tenant a read by tenant b → `model.ErrorNotFound` |
+| `TestRoomEquipment_CompositeKey` | create `{room_id:"r1", equipment_id:"e7"}`; delete ids `["r1/e7"]` → gone |
+| `TestShift_InvalidRangeRejected` | start_min ≥ end_min → `ErrInvalidRange` |
+| `TestShift_OverlapRejected` | two shifts overlapping in a room → second rejected |
+| `TestCancellation_MoveCreatesDatedShift` | cancel with `moved_to_room_id: "r2"` → cancellation stored and a dated shift in r2, atomically |
+| `TestPublicSlot_Readable` | read model `PublicSlot` returns the free slots of a date |
+| `TestDemo_Valid` (`//go:build wasm`) | `seed.Demo()` → no error, `Validate()` nil, at least one screen |
+
+## Stage 7 — translations and documentation (Spanish, veltylabs)
+
+`langc sync .` (zero pending, zero reuse warnings). `README.md` (≤150 lines, 4 mandatory sections; «Sin/Con»: hand-written
+operations vs `Allow` + rules) with the operations table of the mapping above. `docs/ARCHITECTURE.md`: rules vs persistence.
+Translate to Spanish every README, `docs/*`, diagram and code comment still in English; exported symbols without a usage example get one.
+
+## Delivery check
+
+`gotest` passes; `langc sync .` clean; every grep of this plan empty. A tree that does not compile or whose tests did not run is a
+failed delivery.
