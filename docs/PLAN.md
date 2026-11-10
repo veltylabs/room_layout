@@ -2,8 +2,6 @@
 PLAN: "refactor!: room_layout on the crud-by-declaration framework — Allow and Rules in definition.go, persistence by crud, only domain rules in rule files"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
-SESSION: 10083970285225739348
 ---
 
 > Read AGENTS.md at the repo root before any change.
@@ -30,6 +28,18 @@ go get webtyp.com/model@v0.2.18 webtyp.com/crud@v0.0.11 webtyp.com/orm@v0.12.30 
 ```
 Remove every `replace` from `go.mod`; `go mod tidy`. Before any change check, with `go doc`, that these exist: `model.ModuleDefinition`, `model.Rules` (`model.AddMyBusinessRule`, `model.HaveNoBusinessRule`), `crud.CurrentUser`, `crud.RuleAnswer`, `crud.Topic`, `crud.Loopback`, and that `definitionc` writes a `definition_gen.go` containing `func (m *Module) MountOperations(`. If one is missing, stop and say so in the PR.
 Prerequisite of the whole wave: `patient_directory` was executed, reviewed and approved by the owner; it is the reference and the 17 other modules are dispatched together after it.
+
+## Facts you need (every one was a question that stalled a session; do not ask them again)
+
+- **Publishing:** you publish only by OPENING THE PULL REQUEST (a `git push` from your sandbox does not reach GitHub, and work not submitted is lost when the session ends). Open the PR after Stage 3 with whatever compiles and keep committing to it. Never ask a yes/no question about progress; the answer is always yes.
+- **Tools:** `go install webtyp.com/definitionc/cmd/definitionc@v0.1.42`, `export PATH="$PATH:$(go env GOPATH)/bin"`; use `crud@v0.0.12`, `model@v0.2.19`, `orm@v0.12.33`, `router@v0.4.22`, `view@v0.6.74`, `appkit@v0.2.35` or newer. `definitionc` rewrites `go.mod` to older versions: after EVERY run repeat the `go get` line and `go mod tidy`. Never edit `definition_gen.go`; never write `go.sum` lines; no sed/regex/python scripts over the source: edit by hand, file by file, `gotest` after each.
+- **Arguments of an operation (tests and callers):** `crud.CreateArgs{Records []model.Model}`, `crud.UpdateArgs{IDs []string, Fields []string, Record model.Model}`, `crud.DeleteArgs{IDs []string}`, `crud.ReadArgs{ID, Search, After string, Limit int64, Filter model.Model}`. Never a bare entity pointer, a generated `*List` or a map. A call is `crud.LoopbackActingAs(pub, "u1", mod).Call(router.Operation{Module: <pkg>.ModelName, Entity: "<entity>", Action: model.Create}, args, &into, func(err error){…})`; the module name is the constant, never a literal; assert the callback error BEFORE reading the result; events reach `pub`, never `Deps.Publisher`.
+- **The `id` of a table:** `ValidateInput` always requires a Text primary key unless the field is `ServerOnly`. A table whose rows are created by a form: `{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true, ServerOnly: true}` and the Create records OMIT the id; otherwise every Create record carries its `Id`. Composite keys are client-sent; their wire id is `model.JoinKey(a, b)`. Never send a `ServerOnly` field.
+- **Inside a rule:** `tx` is `crud.Tx`: `ReadOne(&rec, id)`, `ReadAll(newRow, crud.Query{Conditions, Order, After, Limit}, onRow)` (field `Conditions`; `storage.Eq/Neq/Gt/Gte/Lt/Lte/In/Like`, AND only; never a `tenant_id` condition; at most `crud.MaxPage` rows per read), `Create`, `UpdateFields(&rec, id, cols)`, `Delete`. In an `Update` rule `crud` writes `next` after the rule with exactly the columns in `Fields`: a column the rule derives and the caller did not send must be written by the rule with `tx.UpdateFields`. Keep the signatures `definitionc` writes.
+- **Read models:** `Allow: model.Read`, `Rules{Read: AddMyBusinessRule}`, `Wire: true`, flat kinds only (`model.Pointer`/`List`/`Map` do not exist: one row per result; the rule returns `&<Entity>List{…}` typed as `model.ModelSlice`), the filter values are fields of the read model (`OmitEmpty`) and arrive in `filter`; list every table and read model in `Definition.Entities`. A caller passes `&crud.ReadArgs{Filter: &X{…}}`. `model.Slice` does not exist: the type is `model.ModelSlice`. «cannot read the request» means the filter fails its `Permitted` rules or the generated code is stale: encode and decode the args with `webtyp.com/json` to read the failing field.
+- **Errors in tests:** an action outside `Allow` answers an error containing `unknown operation`; `model.KindOf(err)` gives `ErrorNotFound`/`ErrorInvalid`/`ErrorConflict`; the failed field is `err.(interface{ FailedField() string }).FailedField()`; a duplicate key is a conflict answered by `crud`.
+- **Browser and demo:** keep `module/` (an app imports it): only `appkit.ModuleBrowser` → `view.ModuleBrowser` and `appkit.BrowserDeps` → `view.BrowserDeps`. `view.Ops` has no `List`, `Save`, `Delete` or `Allow`; `view.NewCallerLister` takes `func() model.TableSlice`. `seed/demo.go` (`//go:build wasm`) copies https://github.com/veltylabs/patient_directory/blob/main/seed/demo.go. `view.ListArgs` does not exist any more.
+- **Tests:** `gotest` must end green on EVERY destination (`wasm`, `browser`); each test has a row in `docs/TESTS.md` as `| [TestName](../tests/file_test.go) | rule |` under `| Test | Rule |` (no File column); a `ddl.Execer` double returns `(storage.Result, error)` (`storage.Affected(0), nil`); delete only tests of removed code, port the others.
 
 ## Lessons of the reference module (`patient_directory`, executed locally)
 
