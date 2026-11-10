@@ -2,8 +2,10 @@
 PLAN: "refactor!: room_layout on the crud-by-declaration framework — Allow and Rules in definition.go, persistence by crud, only domain rules in rule files"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 12919903460028227102
+PR: https://github.com/veltylabs/room_layout/pull/13
+REVIEWED_COMMIT: 708fdbb3485cc00277a0187e8be203433d250a64
 ---
 
 > Read AGENTS.md at the repo root before any change.
