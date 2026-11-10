@@ -2,6 +2,8 @@
 PLAN: "refactor!: room_layout on the crud-by-declaration framework — Allow and Rules in definition.go, persistence by crud, only domain rules in rule files"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 10083970285225739348
 ---
 
 > Read AGENTS.md at the repo root before any change.
