@@ -4,7 +4,7 @@ go 1.26.8
 
 require (
 	webtyp.com/appkit v0.2.35
-	webtyp.com/components v0.8.63
+	webtyp.com/components v0.8.72
 	webtyp.com/crud v0.0.12
 	webtyp.com/ddl v0.0.49
 	webtyp.com/dom v0.13.29
