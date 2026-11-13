@@ -62,7 +62,7 @@ require (
 require (
 	webtyp.com/color v0.1.2 // indirect
 	webtyp.com/css v0.4.31
-	webtyp.com/fmt v1.0.0
+	webtyp.com/fmt v1.0.1
 	webtyp.com/font v0.0.5 // indirect
 	webtyp.com/html v0.0.30
 	webtyp.com/json v0.5.40 // indirect
