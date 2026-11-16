@@ -10,7 +10,7 @@ require (
 	webtyp.com/dom v0.13.29
 	webtyp.com/events v0.1.8
 	webtyp.com/form v0.4.61
-	webtyp.com/input v0.2.0
+	webtyp.com/input v0.2.4
 	webtyp.com/lang v0.1.16
 	webtyp.com/layout v0.3.108
 	webtyp.com/model v0.2.23
@@ -42,6 +42,7 @@ require (
 	webtyp.com/base64 v0.0.6 // indirect
 	webtyp.com/calendar v0.1.0 // indirect
 	webtyp.com/context v0.0.23 // indirect
+	webtyp.com/country v0.0.2 // indirect
 	webtyp.com/dbus v0.1.1 // indirect
 	webtyp.com/definitioncheck v0.0.3 // indirect
 	webtyp.com/env v0.1.3 // indirect
