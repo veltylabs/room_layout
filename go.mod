@@ -4,12 +4,12 @@ go 1.26.8
 
 require (
 	webtyp.com/appkit v0.2.35
-	webtyp.com/components v0.8.73
+	webtyp.com/components v0.8.75
 	webtyp.com/crud v0.0.12
 	webtyp.com/ddl v0.0.49
 	webtyp.com/dom v0.13.29
 	webtyp.com/events v0.1.8
-	webtyp.com/form v0.4.61
+	webtyp.com/form v0.4.68
 	webtyp.com/input v0.2.4
 	webtyp.com/lang v0.1.16
 	webtyp.com/layout v0.3.108
@@ -21,7 +21,7 @@ require (
 	webtyp.com/svg v0.3.33
 	webtyp.com/time v0.6.4
 	webtyp.com/unixid v0.3.1
-	webtyp.com/widget v0.6.46
+	webtyp.com/widget v0.6.49
 )
 
 require (
@@ -50,6 +50,7 @@ require (
 	webtyp.com/fetch v0.1.30 // indirect
 	webtyp.com/filepath v0.1.0 // indirect
 	webtyp.com/filetype v0.1.1 // indirect
+	webtyp.com/icons v0.0.42 // indirect
 	webtyp.com/keyring v0.2.9 // indirect
 	webtyp.com/mcp v0.3.24 // indirect
 	webtyp.com/pwa v0.2.13 // indirect
