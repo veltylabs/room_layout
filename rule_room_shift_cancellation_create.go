@@ -11,12 +11,12 @@ import (
 func (p *RoomShiftCancellation) Create(a crud.CurrentUser, tx crud.Tx, m *Module) (crud.RuleAnswer, error) {
 	s, err := checkOccurrence(tx, p.ShiftId, p.SpecificDate)
 	if err != nil {
-		return 0, err
+		return crud.RuleAnswer{}, err
 	}
 	if p.MovedToRoomId != "" {
 		if _, err := m.createMovedShift(tx, s, p.SpecificDate, p.MovedToRoomId); err != nil {
-			return 0, &model.FieldError{Field: RoomShiftCancellation_.MovedToRoomId, Err: err}
+			return crud.RuleAnswer{}, &model.FieldError{Field: RoomShiftCancellation_.MovedToRoomId, Err: err}
 		}
 	}
-	return crud.ApplyAndPublish, nil
+	return crud.ApplyAndPublish(), nil
 }

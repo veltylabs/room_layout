@@ -7,12 +7,12 @@ func (next *Equipment) Update(a crud.CurrentUser, tx crud.Tx, old *Equipment, fi
 	if containsString(fields, Equipment_.Name) {
 		name, err := trimmed(Equipment_.Name, next.Name)
 		if err != nil {
-			return 0, err
+			return crud.RuleAnswer{}, err
 		}
 		next.Name = name
 	}
 	if err := tx.UpdateFields(&Equipment{UpdatedAt: m.now()}, old.Id, []string{Equipment_.UpdatedAt}); err != nil {
-		return 0, err
+		return crud.RuleAnswer{}, err
 	}
-	return crud.ApplyAndPublish, nil
+	return crud.ApplyAndPublish(), nil
 }

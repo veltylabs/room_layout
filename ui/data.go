@@ -6,7 +6,6 @@ import (
 	"webtyp.com/dom"
 	"webtyp.com/fmt"
 	"webtyp.com/lang"
-	"webtyp.com/layout"
 	"webtyp.com/model"
 	"webtyp.com/msgtype"
 	"webtyp.com/router"
@@ -30,7 +29,7 @@ func operation(entity model.Model, action model.Action) router.Operation {
 var readAll = &crud.ReadArgs{Limit: crud.MaxPage}
 
 // UseNotifier recibe los avisos de la plataforma: la app la llama al montar la pantalla.
-func (r *RootView) UseNotifier(n layout.Notifier) { r.notifier = n }
+func (r *RootView) UseNotifier(n view.Notifier) { r.notifier = n }
 
 // savedAndReload confirma un guardado: avisa «Guardado» y relee.
 func (r *RootView) savedAndReload(err error) {
@@ -44,7 +43,7 @@ func (r *RootView) savedAndReload(err error) {
 // notify muestra un aviso de la plataforma; sin plataforma (pruebas) no hay dónde mostrarlo.
 func (r *RootView) notify(t msgtype.Type, msg string) {
 	if r.notifier != nil {
-		r.notifier.Notify(t, msg, layout.Auto())
+		r.notifier.Notify(t, msg, view.Auto())
 	}
 }
 
@@ -267,6 +266,6 @@ func initials(name string) string {
 }
 
 var (
-	_ dom.Component       = (*RootView)(nil)
-	_ layout.UsesNotifier = (*RootView)(nil)
+	_ dom.Component     = (*RootView)(nil)
+	_ view.UsesNotifier = (*RootView)(nil)
 )

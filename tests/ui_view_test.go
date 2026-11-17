@@ -25,7 +25,7 @@ var _ router.Caller = (*mockCaller)(nil)
 
 func TestUI_Screens(t *testing.T) {
 	fake := view.NewRecords().Caller(&mockCaller{})
-	screens := ui.Screens(fake)
+	screens := ui.Screens(view.BrowserDeps{Caller: fake})
 	if len(screens) != 1 {
 		t.Fatalf("len(screens) = %d, want 1", len(screens))
 	}

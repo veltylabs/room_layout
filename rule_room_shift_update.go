@@ -8,18 +8,18 @@ import "webtyp.com/crud"
 func (next *RoomShift) Update(a crud.CurrentUser, tx crud.Tx, old *RoomShift, fields []string, m *Module) (crud.RuleAnswer, error) {
 	merged := *old
 	if err := copyShiftFields(&merged, next, fields); err != nil {
-		return 0, err
+		return crud.RuleAnswer{}, err
 	}
 	if err := m.checkShift(tx, m.tenantID, &merged); err != nil {
-		return 0, err
+		return crud.RuleAnswer{}, err
 	}
 	merged.UpdatedAt = m.now()
 	if err := tx.UpdateFields(&merged, old.Id, shiftColumns); err != nil {
-		return 0, err
+		return crud.RuleAnswer{}, err
 	}
 	// crud escribe next con las columnas de fields después de la regla: debe quedar igual a lo ya guardado
 	if err := copyShiftFields(next, &merged, fields); err != nil {
-		return 0, err
+		return crud.RuleAnswer{}, err
 	}
-	return crud.ApplyAndPublish, nil
+	return crud.ApplyAndPublish(), nil
 }

@@ -4,7 +4,6 @@ import (
 	roomlayout "github.com/veltylabs/room_layout"
 	"webtyp.com/lang"
 	"webtyp.com/model"
-	"webtyp.com/router"
 	"webtyp.com/view"
 )
 
@@ -30,7 +29,8 @@ const (
 )
 
 // Screens declara las pantallas que este módulo ofrece al menú de la app.
-func Screens(caller router.Caller) []view.Screen {
+func Screens(d view.BrowserDeps) []view.Screen {
+	caller := d.Caller
 	return []view.Screen{
 		{
 			ID:    ID,

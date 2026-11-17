@@ -6,7 +6,6 @@ import (
 	roomlayout "github.com/veltylabs/room_layout"
 	"github.com/veltylabs/room_layout/ui"
 	"webtyp.com/crud"
-	"webtyp.com/layout"
 	"webtyp.com/msgtype"
 	"webtyp.com/view"
 )
@@ -68,7 +67,7 @@ func TestMap_AddFloorIsSaved(t *testing.T) {
 // notices hace de plataforma: guarda el tipo de cada aviso.
 type notices struct{ types []msgtype.Type }
 
-func (n *notices) Notify(t msgtype.Type, _ string, _ layout.Duration) { n.types = append(n.types, t) }
+func (n *notices) Notify(t msgtype.Type, _ string, _ view.Duration) { n.types = append(n.types, t) }
 
 // Celdas guardadas en un formato que no es el de roomlayout.EncodeArea se avisan como error.
 func TestMap_BadCellsAreAnError(t *testing.T) {

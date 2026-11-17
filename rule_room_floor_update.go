@@ -7,12 +7,12 @@ func (next *Floor) Update(a crud.CurrentUser, tx crud.Tx, old *Floor, fields []s
 	if containsString(fields, Floor_.Name) {
 		name, err := trimmed(Floor_.Name, next.Name)
 		if err != nil {
-			return 0, err
+			return crud.RuleAnswer{}, err
 		}
 		next.Name = name
 	}
 	if err := tx.UpdateFields(&Floor{UpdatedAt: m.now()}, old.Id, []string{Floor_.UpdatedAt}); err != nil {
-		return 0, err
+		return crud.RuleAnswer{}, err
 	}
-	return crud.ApplyAndPublish, nil
+	return crud.ApplyAndPublish(), nil
 }

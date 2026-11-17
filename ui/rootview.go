@@ -6,9 +6,9 @@ import (
 	"webtyp.com/fmt"
 	"webtyp.com/html"
 	"webtyp.com/lang"
-	"webtyp.com/layout"
 	"webtyp.com/model"
 	"webtyp.com/router"
+	"webtyp.com/view"
 	"webtyp.com/widget"
 )
 
@@ -41,7 +41,7 @@ type RootView struct {
 
 	verCount int
 	VerSig   *dom.SignalString
-	notifier layout.Notifier // los avisos de la plataforma: «Guardado» o el error al leer o guardar
+	notifier view.Notifier // los avisos de la plataforma: «Guardado» o el error al leer o guardar
 
 	Cols int
 	Rows int

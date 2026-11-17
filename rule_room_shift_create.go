@@ -6,8 +6,8 @@ import "webtyp.com/crud"
 // con fecha, categoría, ocupante, horario de la clínica, solapes) y lo completa con lo que decide el servidor.
 func (p *RoomShift) Create(a crud.CurrentUser, tx crud.Tx, m *Module) (crud.RuleAnswer, error) {
 	if err := m.checkShift(tx, m.tenantID, p); err != nil {
-		return 0, err
+		return crud.RuleAnswer{}, err
 	}
 	p.UpdatedAt = m.now()
-	return crud.ApplyAndPublish, nil
+	return crud.ApplyAndPublish(), nil
 }

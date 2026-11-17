@@ -6,9 +6,9 @@ import "webtyp.com/crud"
 func (p *Equipment) Create(a crud.CurrentUser, tx crud.Tx, m *Module) (crud.RuleAnswer, error) {
 	name, err := trimmed(Equipment_.Name, p.Name)
 	if err != nil {
-		return 0, err
+		return crud.RuleAnswer{}, err
 	}
 	p.Name = name
 	p.UpdatedAt = m.now()
-	return crud.ApplyAndPublish, nil
+	return crud.ApplyAndPublish(), nil
 }

@@ -1202,8 +1202,8 @@ func (m *Module) MountOperations(reg crud.Registry) {
 		Store: m.StoreRoomArtifact(),
 		Rules: RoomArtifactModel.Rules,
 		MFA: RoomArtifactModel.MFA,
-		Search: func(a crud.CurrentUser, filter model.Model, text string) ([]storage.Condition, error) {
-			return (&RoomArtifact{}).Search(a, filter.(*RoomArtifact), text, m)
+		Search: func(a crud.CurrentUser, filter model.Model) ([]storage.Condition, error) {
+			return (&RoomArtifact{}).Search(a, filter.(*RoomArtifact), m)
 		},
 	})
 	reg.AddStoredEntity(crud.StoredEntity{
@@ -1231,8 +1231,8 @@ func (m *Module) MountOperations(reg crud.Registry) {
 		Create: func(a crud.CurrentUser, tx crud.Tx, rec model.Model) (crud.RuleAnswer, error) {
 			return rec.(*RoomEquipment).Create(a, tx, m)
 		},
-		Search: func(a crud.CurrentUser, filter model.Model, text string) ([]storage.Condition, error) {
-			return (&RoomEquipment{}).Search(a, filter.(*RoomEquipment), text, m)
+		Search: func(a crud.CurrentUser, filter model.Model) ([]storage.Condition, error) {
+			return (&RoomEquipment{}).Search(a, filter.(*RoomEquipment), m)
 		},
 	})
 	reg.AddStoredEntity(crud.StoredEntity{
@@ -1247,8 +1247,8 @@ func (m *Module) MountOperations(reg crud.Registry) {
 		Delete: func(a crud.CurrentUser, tx crud.Tx, rec model.Model) (crud.RuleAnswer, error) {
 			return rec.(*RoomCategory).Delete(a, tx, m)
 		},
-		Search: func(a crud.CurrentUser, filter model.Model, text string) ([]storage.Condition, error) {
-			return (&RoomCategory{}).Search(a, filter.(*RoomCategory), text, m)
+		Search: func(a crud.CurrentUser, filter model.Model) ([]storage.Condition, error) {
+			return (&RoomCategory{}).Search(a, filter.(*RoomCategory), m)
 		},
 	})
 	reg.AddStoredEntity(crud.StoredEntity{
@@ -1266,8 +1266,8 @@ func (m *Module) MountOperations(reg crud.Registry) {
 		Delete: func(a crud.CurrentUser, tx crud.Tx, rec model.Model) (crud.RuleAnswer, error) {
 			return rec.(*RoomShift).Delete(a, tx, m)
 		},
-		Search: func(a crud.CurrentUser, filter model.Model, text string) ([]storage.Condition, error) {
-			return (&RoomShift{}).Search(a, filter.(*RoomShift), text, m)
+		Search: func(a crud.CurrentUser, filter model.Model) ([]storage.Condition, error) {
+			return (&RoomShift{}).Search(a, filter.(*RoomShift), m)
 		},
 	})
 	reg.AddStoredEntity(crud.StoredEntity{

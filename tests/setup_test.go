@@ -67,7 +67,7 @@ func (f *fakeOccupants) OccupantOptions(tenantID string) ([]fmt.KeyValue, error)
 }
 
 type boundEntry struct {
-	date   time.Unix
+	date  time.Unix
 	hours time.DayLimits
 }
 
@@ -103,7 +103,7 @@ type testEnv struct {
 	ids       *simpleIDs
 	cats      *fakeCategories
 	occs      *fakeOccupants
-	hours    *fakeHours
+	hours     *fakeHours
 	publisher *mockPublisher
 	clockSec  time.Unix
 	mod       *roomlayout.Module
@@ -130,7 +130,7 @@ func newTestEnv(tenantID string) *testEnv {
 		ids:       ids,
 		cats:      cats,
 		occs:      occs,
-		hours:    hours,
+		hours:     hours,
 		publisher: pub,
 		clockSec:  1700000000,
 	}

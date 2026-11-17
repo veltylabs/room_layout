@@ -7,22 +7,22 @@ func (next *Room) Update(a crud.CurrentUser, tx crud.Tx, old *Room, fields []str
 	if containsString(fields, Room_.Code) {
 		code, err := trimmed(Room_.Code, next.Code)
 		if err != nil {
-			return 0, err
+			return crud.RuleAnswer{}, err
 		}
 		if err := checkCodeFree(tx, code, old.Id); err != nil {
-			return 0, err
+			return crud.RuleAnswer{}, err
 		}
 		next.Code = code
 	}
 	if containsString(fields, Room_.Name) {
 		name, err := trimmed(Room_.Name, next.Name)
 		if err != nil {
-			return 0, err
+			return crud.RuleAnswer{}, err
 		}
 		next.Name = name
 	}
 	if err := tx.UpdateFields(&Room{UpdatedAt: m.now()}, old.Id, []string{Room_.UpdatedAt}); err != nil {
-		return 0, err
+		return crud.RuleAnswer{}, err
 	}
-	return crud.ApplyAndPublish, nil
+	return crud.ApplyAndPublish(), nil
 }

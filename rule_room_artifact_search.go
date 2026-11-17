@@ -6,7 +6,7 @@ import (
 )
 
 // Search es la regla de negocio de leer room_artifact: con room_id en el filtro, solo los artefactos de esa sala.
-func (p *RoomArtifact) Search(a crud.CurrentUser, filter *RoomArtifact, text string, m *Module) ([]storage.Condition, error) {
+func (p *RoomArtifact) Search(a crud.CurrentUser, filter *RoomArtifact, m *Module) ([]storage.Condition, error) {
 	if filter.RoomId == "" {
 		return nil, nil
 	}

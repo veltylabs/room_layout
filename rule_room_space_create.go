@@ -6,16 +6,16 @@ import "webtyp.com/crud"
 func (p *Room) Create(a crud.CurrentUser, tx crud.Tx, m *Module) (crud.RuleAnswer, error) {
 	code, err := trimmed(Room_.Code, p.Code)
 	if err != nil {
-		return 0, err
+		return crud.RuleAnswer{}, err
 	}
 	name, err := trimmed(Room_.Name, p.Name)
 	if err != nil {
-		return 0, err
+		return crud.RuleAnswer{}, err
 	}
 	if err := checkCodeFree(tx, code, ""); err != nil {
-		return 0, err
+		return crud.RuleAnswer{}, err
 	}
 	p.Code, p.Name = code, name
 	p.UpdatedAt = m.now()
-	return crud.ApplyAndPublish, nil
+	return crud.ApplyAndPublish(), nil
 }
