@@ -7,11 +7,10 @@ require (
 	webtyp.com/crud v0.0.17
 	webtyp.com/ddl v0.0.57
 	webtyp.com/dom v0.13.29
-	webtyp.com/events v0.1.8
+	webtyp.com/events v0.1.15
 	webtyp.com/form v0.4.68
 	webtyp.com/input v0.2.5
 	webtyp.com/lang v0.1.16
-	webtyp.com/layout v0.3.108
 	webtyp.com/model v0.2.24
 	webtyp.com/msgtype v0.1.0
 	webtyp.com/orm v0.12.42
@@ -39,9 +38,5 @@ require (
 	webtyp.com/font v0.0.5 // indirect
 	webtyp.com/html v0.0.30
 	webtyp.com/json v0.5.40 // indirect
-	webtyp.com/view v0.6.74
+	webtyp.com/view v0.6.87
 )
-
-replace webtyp.com/view => ../../../webtyp/view
-
-replace webtyp.com/events => ../../../webtyp/events
