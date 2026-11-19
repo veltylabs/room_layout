@@ -11,13 +11,13 @@ require (
 	webtyp.com/form v0.4.68
 	webtyp.com/input v0.2.5
 	webtyp.com/lang v0.1.22
-	webtyp.com/model v0.2.24
-	webtyp.com/msgtype v0.1.0
+	webtyp.com/model v0.2.26
+	webtyp.com/msgtype v0.1.2
 	webtyp.com/orm v0.12.42
-	webtyp.com/router v0.5.0
+	webtyp.com/router v0.5.9
 	webtyp.com/storage v0.2.8
 	webtyp.com/svg v0.3.43
-	webtyp.com/time v0.6.4
+	webtyp.com/time v0.6.7
 	webtyp.com/unixid v0.3.1
 	webtyp.com/widget v0.6.50
 )
