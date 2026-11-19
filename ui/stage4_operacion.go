@@ -221,8 +221,7 @@ func (s *Stage4Operacion) buildFloorCards() []*dom.Element {
 				root.floorNav(),
 			)
 
-		gridEl := html.Div().Class("grid").
-			Attr("style", fmt.Sprintf(planGrid, root.Cols))
+		gridEl := applyStyle(html.Div().Class("grid"), fmt.Sprintf(planGrid, root.Cols))
 
 		for r := 0; r < root.Rows; r++ {
 			rowIdx := r
@@ -232,7 +231,7 @@ func (s *Stage4Operacion) buildFloorCards() []*dom.Element {
 				cellEl := html.Div().Class("cell")
 
 				room := FindRoomByCell(root.Rooms, fl.ID, coord)
-				cellEl.Attr("style", gridPos(rowIdx, colIdx)+planCell(fl, room, coord)+planContent+" position: relative;")
+				applyStyle(cellEl, gridPos(rowIdx, colIdx)+planCell(fl, room, coord)+planContent+" position: relative;")
 				if room == nil {
 					gridEl.Child(cellEl)
 					continue
@@ -252,7 +251,7 @@ func (s *Stage4Operacion) buildFloorCards() []*dom.Element {
 				continue
 			}
 			if place, ok := roomPlace(room.Cells); ok {
-				gridEl.Child(s.renderRoomOverlay(room, fl.ID).Attr("style", place+roomButton))
+				gridEl.Child(applyStyle(s.renderRoomOverlay(room, fl.ID), place+roomButton))
 			}
 		}
 		floorCard.Child(fHeader, gridEl)
@@ -455,7 +454,7 @@ func (s *Stage4Operacion) renderProfessionalsPanel() *dom.Element {
 						html.Strong().Text(doctor.Name),
 						html.Span().Class(clsField).Text(doctor.Specialty),
 						html.Div().Class("meter").
-							Child(html.Span().Attr("style", fmt.Sprintf("width: %d%%;", doctor.WeeklyOccupancy))),
+							Child(html.Span().StyleProp("width", fmt.Sprintf("%d%%", doctor.WeeklyOccupancy))),
 					),
 			).
 			OnClick(func(dom.Event) {

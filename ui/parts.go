@@ -68,7 +68,6 @@ var (
 	clsFloorHeader  = NameRoomMap.Class(PartFloorHeader).String()
 	clsFloorBadge   = NameRoomMap.Class(PartFloorBadge).String()
 	clsFloorName    = NameRoomMap.Class(PartFloorName).String()
-	clsFloorCount   = NameRoomMap.Class(PartFloorCount).String()
 	clsFloorAdd     = NameRoomMap.Class(PartFloorAdd).String()
 	clsPanel        = NameRoomMap.Class(PartPanel).String()
 	clsPanelTitle   = NameRoomMap.Class(PartPanelTitle).String()

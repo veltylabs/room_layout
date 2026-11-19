@@ -13,6 +13,82 @@ func gridPos(row, col int) string {
 	return "grid-row: " + fmt.Sprint(row+1) + "; grid-column: " + fmt.Sprint(col+1) + "; "
 }
 
+func trimASCII(s string) string {
+	start, end := 0, len(s)
+	for start < end && (s[start] == ' ' || s[start] == '\t' || s[start] == '\n' || s[start] == '\r') {
+		start++
+	}
+	for end > start && (s[end-1] == ' ' || s[end-1] == '\t' || s[end-1] == '\n' || s[end-1] == '\r') {
+		end--
+	}
+	return s[start:end]
+}
+
+// applyStyle aplica declaraciones CSS ("prop: val; ...") vía CSSOM (StyleProp) en lugar del
+// atributo HTML style=, bloqueado bajo CSP style-src 'self'.
+func applyStyle(el *dom.Element, decls string) *dom.Element {
+	for i := 0; i < len(decls); {
+		j := i
+		for j < len(decls) && decls[j] != ';' {
+			j++
+		}
+		part := trimASCII(decls[i:j])
+		if part != "" {
+			colon := -1
+			for k := 0; k < len(part); k++ {
+				if part[k] == ':' {
+					colon = k
+					break
+				}
+			}
+			if colon > 0 {
+				prop := trimASCII(part[:colon])
+				val := trimASCII(part[colon+1:])
+				if prop != "" {
+					el.StyleProp(prop, val)
+				}
+			}
+		}
+		i = j + 1
+	}
+	return el
+}
+
+func stylePropValue(decls, target string) string {
+	val := ""
+	for i := 0; i < len(decls); {
+		j := i
+		for j < len(decls) && decls[j] != ';' {
+			j++
+		}
+		part := trimASCII(decls[i:j])
+		if part != "" {
+			colon := -1
+			for k := 0; k < len(part); k++ {
+				if part[k] == ':' {
+					colon = k
+					break
+				}
+			}
+			if colon > 0 && trimASCII(part[:colon]) == target {
+				val = trimASCII(part[colon+1:])
+			}
+		}
+		i = j + 1
+	}
+	return val
+}
+
+func bindStyleProps(el *dom.Element, props []string, fn func() string) *dom.Element {
+	for _, prop := range props {
+		p := prop
+		el.BindStylePropFunc(p, func() string {
+			return stylePropValue(fn(), p)
+		})
+	}
+	return el
+}
+
 // roomOutline es el contorno de un espacio, con un borde de outlineWidth px.
 const roomOutline = "z-index: 1; pointer-events: none; display: flex; align-items: center; justify-content: center; text-align: center; padding: 2px; overflow: hidden; border: 2px solid var(--color-primary); font-size: 11px; font-weight: 700; line-height: 1.1; color: var(--color-on-surface);"
 
@@ -70,7 +146,7 @@ func (r *RootView) roomOutlines(floorID, except string, g gridLayout, name strin
 				el.Text(rm.Name)
 			}
 			place := fmt.Sprintf("grid-row: %d / span %d; grid-column: %d / span %d; ", rc.Row+g.offset, rc.H, rc.Col+g.offset, rc.W)
-			el.Attr("style", place+roomOutline+g.wall()+name)
+			applyStyle(el, place+roomOutline+g.wall()+name)
 			out = append(out, el)
 		}
 	}

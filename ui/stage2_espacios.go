@@ -238,36 +238,37 @@ func (s *Stage2Espacios) buildFloorCards() []*dom.Element {
 			)
 
 		// Grid: renders only habitable cells with room colors
-		gridEl := html.Div().Class("grid").
-			Attr("style", fmt.Sprintf("display: grid; grid-template-columns: 24px repeat(%d, 28px); gap: 2px; padding: 10px; background: var(--color-background); border: 1px solid var(--color-outline); border-radius: 12px; overflow-x: auto; touch-action: none; user-select: none; -webkit-user-select: none;", root.Cols)).
+		gridEl := applyStyle(html.Div().Class("grid"),
+			fmt.Sprintf("display: grid; grid-template-columns: 24px repeat(%d, 28px); gap: 2px; padding: 10px; background: var(--color-background); border: 1px solid var(--color-outline); border-radius: 12px; overflow-x: auto; touch-action: none; user-select: none; -webkit-user-select: none;", root.Cols)).
 			OnPointerUp(func(dom.Event) { s.endStroke() }).
 			OnPointerLeave(func(dom.Event) { s.endStroke() })
 
 		// Column headers
 		gridEl.Child(html.Span())
 		for c := 0; c < root.Cols; c++ {
-			gridEl.Child(html.Span().Class("lbl-col").
-				Attr("style", gridPos(0, c+1)+"font-size: 11px; font-weight: 700; color: var(--color-muted); text-align: center; height: 20px; display: flex; align-items: center; justify-content: center;").
+			gridEl.Child(applyStyle(html.Span().Class("lbl-col"),
+				gridPos(0, c+1)+"font-size: 11px; font-weight: 700; color: var(--color-muted); text-align: center; height: 20px; display: flex; align-items: center; justify-content: center;").
 				Text(fmt.Sprint(c + 1)))
 		}
 
 		for r := 0; r < root.Rows; r++ {
 			rowIdx := r
-			gridEl.Child(html.Span().Class("lbl-row").
-				Attr("style", gridPos(rowIdx+1, 0)+"font-size: 11px; font-weight: 700; color: var(--color-muted); display: flex; align-items: center; justify-content: center;").
+			gridEl.Child(applyStyle(html.Span().Class("lbl-row"),
+				gridPos(rowIdx+1, 0)+"font-size: 11px; font-weight: 700; color: var(--color-muted); display: flex; align-items: center; justify-content: center;").
 				Text(fmt.Sprint(rowIdx + 1)))
 
 			for c := 0; c < root.Cols; c++ {
 				colIdx := c
 				coord := FormatCell(rowIdx, colIdx)
 
-				cellBtn := html.Button().Class("cell").
+				cellBtn := applyStyle(html.Button().Class("cell").
 					Attr("type", "button").
-					Attr("title", coord)
+					Attr("title", coord),
+					gridPos(rowIdx+1, colIdx+1)+cellBase)
 
-				cellBtn.BindAttrFunc("style", func() string {
+				bindStyleProps(cellBtn, []string{"border", "background", "opacity", "pointer-events", "cursor"}, func() string {
 					_ = root.VerSig.Get()
-					return gridPos(rowIdx+1, colIdx+1) + s.cellStyle(fl, coord)
+					return s.cellStyle(fl, coord)
 				})
 
 				cellBtn.OnPointerDown(func(e dom.Event) {
@@ -317,19 +318,16 @@ func (s *Stage2Espacios) buildFloorCards() []*dom.Element {
 		}
 		s.outlineFloor = fl.ID
 		s.outlineNodes.Set(s.roomOutlines(fl.ID))
-		gridEl.Child(html.Div().Attr("style", "display: contents;").BindChildren(s.outlineNodes))
+		gridEl.Child(html.Div().StyleProp("display", "contents").BindChildren(s.outlineNodes))
 
 		floorCard.Key(fmt.Sprintf("floor-s2-%s-%dx%d", fl.ID, root.Cols, root.Rows)).
 			BindClassFunc("active", func() bool {
 				_ = root.VerSig.Get()
 				return root.ActiveFloor == fIdx
 			}).
-			BindAttrFunc("style", func() string {
+			BindAttrBoolFunc("hidden", func() bool {
 				_ = root.VerSig.Get()
-				if root.ActiveFloor == fIdx {
-					return "display: flex; flex-direction: column; gap: 8px;"
-				}
-				return "display: none;"
+				return root.ActiveFloor != fIdx
 			}).
 			Child(fHeader, gridEl)
 
@@ -467,9 +465,9 @@ func (s *Stage2Espacios) selectedOutline() []*dom.Element {
 	rects := roomlayout.Rects(cells)
 	var out []*dom.Element
 	for i, r := range rects {
-		el := html.Div().Attr("aria-hidden", "true").
-			Key(fmt.Sprintf("selected-%d-%s-%d,%d,%d,%d", i, s.DraftName, r.Col, r.Row, r.W, r.H)).
-			Attr("style", fmt.Sprintf("grid-row: %d / span %d; grid-column: %d / span %d; ", r.Row+1, r.H, r.Col+1, r.W)+roomOutline+numbered.wall()+selectedBorder)
+		el := applyStyle(html.Div().Attr("aria-hidden", "true").
+			Key(fmt.Sprintf("selected-%d-%s-%d,%d,%d,%d", i, s.DraftName, r.Col, r.Row, r.W, r.H)),
+			fmt.Sprintf("grid-row: %d / span %d; grid-column: %d / span %d; ", r.Row+1, r.H, r.Col+1, r.W)+roomOutline+numbered.wall()+selectedBorder)
 		if i == 0 {
 			el.Text(s.DraftName)
 		}

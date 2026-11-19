@@ -25,10 +25,12 @@ func (s *Stage1Planta) Render() *dom.Element {
 
 	header := root.header(0)
 
-	decColBtn := html.Button().Class(clsButton).
+	const stepBtnStyle = "padding: 2px 7px; font-weight: 700; cursor: pointer; border-radius: 4px; border: 1px solid var(--color-outline); background: var(--color-surface);"
+	const dimInputStyle = "width: 64px; text-align: center; border-radius: 4px; border: 1.5px solid var(--color-primary); background: var(--color-surface); font-weight: 700;"
+
+	decColBtn := applyStyle(html.Button().Class(clsButton).
 		Attr("type", "button").
-		Attr("title", lang.Translate("Remove column").String()).
-		Attr("style", "padding: 2px 7px; font-weight: 700; cursor: pointer; border-radius: 4px; border: 1px solid var(--color-outline); background: var(--color-surface);").
+		Attr("title", lang.Translate("Remove column").String()), stepBtnStyle).
 		Text("−").
 		OnClick(func(dom.Event) {
 			if root.Cols > 6 {
@@ -36,10 +38,9 @@ func (s *Stage1Planta) Render() *dom.Element {
 			}
 		})
 
-	incColBtn := html.Button().Class(clsButton).
+	incColBtn := applyStyle(html.Button().Class(clsButton).
 		Attr("type", "button").
-		Attr("title", lang.Translate("Add column").String()).
-		Attr("style", "padding: 2px 7px; font-weight: 700; cursor: pointer; border-radius: 4px; border: 1px solid var(--color-outline); background: var(--color-surface);").
+		Attr("title", lang.Translate("Add column").String()), stepBtnStyle).
 		Text("+").
 		OnClick(func(dom.Event) {
 			if root.Cols < 40 {
@@ -47,10 +48,9 @@ func (s *Stage1Planta) Render() *dom.Element {
 			}
 		})
 
-	decRowBtn := html.Button().Class(clsButton).
+	decRowBtn := applyStyle(html.Button().Class(clsButton).
 		Attr("type", "button").
-		Attr("title", lang.Translate("Remove row").String()).
-		Attr("style", "padding: 2px 7px; font-weight: 700; cursor: pointer; border-radius: 4px; border: 1px solid var(--color-outline); background: var(--color-surface);").
+		Attr("title", lang.Translate("Remove row").String()), stepBtnStyle).
 		Text("−").
 		OnClick(func(dom.Event) {
 			if root.Rows > 4 {
@@ -58,10 +58,9 @@ func (s *Stage1Planta) Render() *dom.Element {
 			}
 		})
 
-	incRowBtn := html.Button().Class(clsButton).
+	incRowBtn := applyStyle(html.Button().Class(clsButton).
 		Attr("type", "button").
-		Attr("title", lang.Translate("Add row").String()).
-		Attr("style", "padding: 2px 7px; font-weight: 700; cursor: pointer; border-radius: 4px; border: 1px solid var(--color-outline); background: var(--color-surface);").
+		Attr("title", lang.Translate("Add row").String()), stepBtnStyle).
 		Text("+").
 		OnClick(func(dom.Event) {
 			if root.Rows < 40 {
@@ -69,9 +68,8 @@ func (s *Stage1Planta) Render() *dom.Element {
 			}
 		})
 
-	colInput := html.Input("number").Class(clsInput).
-		Attr("min", "6").Attr("max", "40").
-		Attr("style", "width: 64px; text-align: center; border-radius: 4px; border: 1.5px solid var(--color-primary); background: var(--color-surface); font-weight: 700;").
+	colInput := applyStyle(html.Input("number").Class(clsInput).
+		Attr("min", "6").Attr("max", "40"), dimInputStyle).
 		BindAttrFunc("value", func() string {
 			_ = root.VerSig.Get()
 			return fmt.Sprint(root.Cols)
@@ -83,9 +81,8 @@ func (s *Stage1Planta) Render() *dom.Element {
 			}
 		})
 
-	rowInput := html.Input("number").Class(clsInput).
-		Attr("min", "4").Attr("max", "40").
-		Attr("style", "width: 64px; text-align: center; border-radius: 4px; border: 1.5px solid var(--color-primary); background: var(--color-surface); font-weight: 700;").
+	rowInput := applyStyle(html.Input("number").Class(clsInput).
+		Attr("min", "4").Attr("max", "40"), dimInputStyle).
 		BindAttrFunc("value", func() string {
 			_ = root.VerSig.Get()
 			return fmt.Sprint(root.Rows)
@@ -167,8 +164,8 @@ func (s *Stage1Planta) buildFloorCards() []*dom.Element {
 			)
 
 		// Grid element with letter headers and row numbers
-		gridEl := html.Div().Class("grid").
-			Attr("style", fmt.Sprintf("display: grid; grid-template-columns: 24px repeat(%d, 28px); gap: 2px; padding: 10px; background: var(--color-background); border: 1px solid var(--color-outline); border-radius: 12px; overflow-x: auto; touch-action: none; user-select: none; -webkit-user-select: none;", root.Cols)).
+		gridEl := applyStyle(html.Div().Class("grid"),
+			fmt.Sprintf("display: grid; grid-template-columns: 24px repeat(%d, 28px); gap: 2px; padding: 10px; background: var(--color-background); border: 1px solid var(--color-outline); border-radius: 12px; overflow-x: auto; touch-action: none; user-select: none; -webkit-user-select: none;", root.Cols)).
 			OnPointerUp(func(dom.Event) {
 				s.isDragging = false
 			}).
@@ -179,15 +176,15 @@ func (s *Stage1Planta) buildFloorCards() []*dom.Element {
 		// Column headers
 		gridEl.Child(html.Span()) // Corner
 		for c := 0; c < root.Cols; c++ {
-			gridEl.Child(html.Span().Class("lbl-col").
-				Attr("style", "font-size: 11px; font-weight: 700; color: var(--color-muted); text-align: center; height: 20px; display: flex; align-items: center; justify-content: center;").
+			gridEl.Child(applyStyle(html.Span().Class("lbl-col"),
+				"font-size: 11px; font-weight: 700; color: var(--color-muted); text-align: center; height: 20px; display: flex; align-items: center; justify-content: center;").
 				Text(fmt.Sprint(c + 1)))
 		}
 
 		for r := 0; r < root.Rows; r++ {
 			rowIdx := r
-			gridEl.Child(html.Span().Class("lbl-row").
-				Attr("style", "font-size: 11px; font-weight: 700; color: var(--color-muted); display: flex; align-items: center; justify-content: center;").
+			gridEl.Child(applyStyle(html.Span().Class("lbl-row"),
+				"font-size: 11px; font-weight: 700; color: var(--color-muted); display: flex; align-items: center; justify-content: center;").
 				Text(fmt.Sprint(rowIdx + 1)))
 
 			for c := 0; c < root.Cols; c++ {
@@ -197,15 +194,16 @@ func (s *Stage1Planta) buildFloorCards() []*dom.Element {
 				isInitiallyHab := CellInList(f.HabitableCells, coord)
 				cellSig := dom.NewBool(isInitiallyHab)
 
-				cellBtn := html.Button().Class("cell").
+				cellBtn := applyStyle(html.Button().Class("cell").
 					Attr("type", "button").
-					Attr("title", coord)
+					Attr("title", coord),
+					"aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border-radius: 4px; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none;")
 
-				cellBtn.BindAttrFunc("style", func() string {
+				bindStyleProps(cellBtn, []string{"border", "background", "color", "box-shadow"}, func() string {
 					if cellSig.Get() {
-						return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1.5px solid var(--color-primary); background: var(--color-primary); color: #ffffff; border-radius: 4px; cursor: pointer; box-shadow: 0 0 3px var(--color-primary); touch-action: none; user-select: none; -webkit-user-select: none;"
+						return "border: 1.5px solid var(--color-primary); background: var(--color-primary); color: #ffffff; box-shadow: 0 0 3px var(--color-primary);"
 					}
-					return "aspect-ratio: 1/1; min-width: 22px; min-height: 22px; border: 1px solid var(--color-outline); background: var(--color-surface); cursor: pointer; border-radius: 4px; touch-action: none; user-select: none; -webkit-user-select: none;"
+					return "border: 1px solid var(--color-outline); background: var(--color-surface);"
 				})
 
 				cellBtn.OnPointerDown(func(e dom.Event) {
@@ -258,12 +256,9 @@ func (s *Stage1Planta) buildFloorCards() []*dom.Element {
 				_ = root.VerSig.Get()
 				return root.ActiveFloor == fIdx
 			}).
-			BindAttrFunc("style", func() string {
+			BindAttrBoolFunc("hidden", func() bool {
 				_ = root.VerSig.Get()
-				if root.ActiveFloor == fIdx {
-					return "display: flex; flex-direction: column; gap: 8px;"
-				}
-				return "display: none;"
+				return root.ActiveFloor != fIdx
 			}).
 			Child(cardHeader, gridEl, cardFooter)
 

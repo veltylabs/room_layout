@@ -1,7 +1,6 @@
 package roomlayout
 
 import (
-	"webtyp.com/fmt"
 	"webtyp.com/input"
 	"webtyp.com/model"
 )
@@ -66,18 +65,6 @@ const (
 	ErrBlankName          model.Invalid  = "the name cannot be blank"
 	ErrFieldNotEditable   model.Invalid  = "this field cannot be changed"
 )
-
-func weekdayInput() input.Input {
-	return input.Select(
-		fmt.KeyValue{Key: WeekdaySunday, Value: "Sunday"},
-		fmt.KeyValue{Key: WeekdayMonday, Value: "Monday"},
-		fmt.KeyValue{Key: WeekdayTuesday, Value: "Tuesday"},
-		fmt.KeyValue{Key: WeekdayWednesday, Value: "Wednesday"},
-		fmt.KeyValue{Key: WeekdayThursday, Value: "Thursday"},
-		fmt.KeyValue{Key: WeekdayFriday, Value: "Friday"},
-		fmt.KeyValue{Key: WeekdaySaturday, Value: "Saturday"},
-	)
-}
 
 var FloorModel = model.Definition{
 	Name:  "room_floor",

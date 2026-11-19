@@ -94,8 +94,8 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 					),
 				html.Div().Class("sel-card").
 					Child(
-						html.Div().Class("tok", "sel").
-							Attr("style", "width:28px;height:28px;border-radius:50%;background:var(--color-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;").
+						applyStyle(html.Div().Class("tok", "sel"),
+							"width:28px;height:28px;border-radius:50%;background:var(--color-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;").
 							Child(html.Span().Text(artifactKindCode(selectedArt.Kind))),
 						html.Div().Class("rm-sel-details").
 							Child(
@@ -237,8 +237,7 @@ func (s *Stage3Artefactos) buildFloorCards() []*dom.Element {
 				root.floorNav(),
 			)
 
-		gridEl := html.Div().Class("grid").
-			Attr("style", fmt.Sprintf(planGrid, root.Cols))
+		gridEl := applyStyle(html.Div().Class("grid"), fmt.Sprintf(planGrid, root.Cols))
 
 		for r := 0; r < root.Rows; r++ {
 			rowIdx := r
@@ -246,15 +245,15 @@ func (s *Stage3Artefactos) buildFloorCards() []*dom.Element {
 				colIdx := c
 				coord := FormatCell(rowIdx, colIdx)
 
-				cellBtn := html.Div().Class("cell")
+				cellBtn := applyStyle(html.Div().Class("cell"), gridPos(rowIdx, colIdx)+planContent)
 
-				cellBtn.BindAttrFunc("style", func() string {
+				bindStyleProps(cellBtn, []string{"border", "background", "cursor", "pointer-events"}, func() string {
 					_ = root.VerSig.Get()
 					room := FindRoomByCell(root.Rooms, fl.ID, coord)
 					if room != nil && s.IsPlacing && FindArtifactByCell(root.Artifacts, fl.ID, coord) == nil {
-						return gridPos(rowIdx, colIdx) + "border: 2px dashed var(--color-primary); background: var(--color-selection); cursor: copy;" + planContent
+						return "border: 2px dashed var(--color-primary); background: var(--color-selection); cursor: copy;"
 					}
-					return gridPos(rowIdx, colIdx) + planCell(fl, room, coord) + planContent
+					return planCell(fl, room, coord)
 				})
 
 				room := FindRoomByCell(root.Rooms, fl.ID, coord)
@@ -272,16 +271,16 @@ func (s *Stage3Artefactos) buildFloorCards() []*dom.Element {
 					switch artifact.Status {
 					case StatusWarn:
 						tokStyle = "width: 24px; height: 24px; border-radius: 50%; font-weight: 800; font-size: 10px; display: inline-flex; align-items: center; justify-content: center; background: var(--color-background); border: 2px solid var(--color-accent, #e8a33d); color: var(--color-accent, #e8a33d); box-shadow: 0 1px 4px rgba(0,0,0,0.3); cursor: pointer;"
-						tokEl.Child(html.Span().Class("bang").Attr("style", "position:absolute;top:-4px;right:-4px;width:12px;height:12px;border-radius:50%;background:var(--color-accent, #e8a33d);color:#fff;font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;").Text("!"))
+						tokEl.Child(applyStyle(html.Span().Class("bang"), "position:absolute;top:-4px;right:-4px;width:12px;height:12px;border-radius:50%;background:var(--color-accent, #e8a33d);color:#fff;font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;").Text("!"))
 					case StatusCrit:
 						tokStyle = "width: 24px; height: 24px; border-radius: 50%; font-weight: 800; font-size: 10px; display: inline-flex; align-items: center; justify-content: center; background: rgba(186, 44, 13, 0.2); border: 2px solid var(--color-danger, #ba2c0d); color: var(--color-danger, #ba2c0d); box-shadow: 0 1px 4px rgba(0,0,0,0.3); cursor: pointer;"
-						tokEl.Child(html.Span().Class("bang").Attr("style", "position:absolute;top:-4px;right:-4px;width:12px;height:12px;border-radius:50%;background:var(--color-danger, #ba2c0d);color:#fff;font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;").Text("!"))
+						tokEl.Child(applyStyle(html.Span().Class("bang"), "position:absolute;top:-4px;right:-4px;width:12px;height:12px;border-radius:50%;background:var(--color-danger, #ba2c0d);color:#fff;font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;").Text("!"))
 					}
 
 					if s.SelectedArtifactID == artifact.ID {
 						tokStyle += " box-shadow: 0 0 0 3px #ffffff, 0 0 6px var(--color-primary); background: var(--color-primary); color: #ffffff;"
 					}
-					tokEl.Attr("style", tokStyle)
+					applyStyle(tokEl, tokStyle)
 
 					tokEl.OnClick(func(dom.Event) {
 						s.SelectedArtifactID = artifact.ID
@@ -334,12 +333,9 @@ func (s *Stage3Artefactos) buildFloorCards() []*dom.Element {
 				_ = root.VerSig.Get()
 				return root.ActiveFloor == fIdx
 			}).
-			BindAttrFunc("style", func() string {
+			BindAttrBoolFunc("hidden", func() bool {
 				_ = root.VerSig.Get()
-				if root.ActiveFloor == fIdx {
-					return "display: flex; flex-direction: column; gap: 8px;"
-				}
-				return "display: none;"
+				return root.ActiveFloor != fIdx
 			}).
 			Child(fHeader, gridEl)
 

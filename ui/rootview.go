@@ -31,9 +31,8 @@ func WithLabel(label string) Option {
 type RootView struct {
 	dom.Element
 
-	caller   router.Caller
-	ids      model.IDGenerator
-	tenantID string
+	caller router.Caller
+	ids    model.IDGenerator
 
 	ActiveStage    int // 0=Planta, 1=Espacios, 2=Artefactos, 3=Operación
 	ActiveStageSig *dom.SignalString
