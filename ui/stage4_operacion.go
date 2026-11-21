@@ -100,6 +100,7 @@ func (s *Stage4Operacion) Render() *dom.Element {
 		stats := html.Div().Class("stats").
 			Child(
 				html.Span().Child(html.Span().Text(lang.Translate("Occupancy").String()+": "), html.Strong().Text(fmt.Sprint(occPct)+"%")),
+				html.Span().Text(" · "),
 				html.Span().Child(html.Strong().Text(fmt.Sprint(freeBlocks)), html.Span().Text(" "+lang.Translate("free blocks").String())),
 			)
 

@@ -1,0 +1,21 @@
+# Bugs de UI y mejoras — `room_layout`
+
+> Auditoría en vivo sobre `#room_layout.map` (pasos 1–4), `#room_layout.rooms`, `#room_layout.floors`, `#room_layout.equipment` (2026-11-19).
+
+## Bugs encontrados
+
+| # | Sev | Pantalla | Qué se ve en pantalla | Causa raíz verificada |
+|---|---|---|---|---|
+| RL-1 | 🔴 | `#room_layout.rooms`, `.floors`, `.equipment` | **Todas las etiquetas del formulario están en minúsculas y con jerga técnica** (`id de piso`, `código`, `nombre`, `notas`, `está activo`, `posición`). | `room_layout/definition.go:85-86,105-109,149` omite `Label` en todos los campos de `FloorModel`, `RoomModel` y `EquipmentModel`, por lo que `form.go:380` genera `humanize(field.Name)` en minúsculas (`"floor id"`, `"is active"`). |
+| RL-2 | 🟡 | `#room_layout.map` (Paso 4 `Operación`) | **Texto pegado `Ocupación: 0%216 bloques libres`** sin separador ni espacio entre `0%` y `216`. | `room_layout/ui/stage4_operacion.go:100-104` coloca dos `html.Span()` seguidos dentro de `html.Div().Class("stats")` sin espacio ni separador CSS/texto entre ambos hijos. |
+| RL-3 | 🟡 | `#room_layout.map` (Paso 3 `Equipamiento`) | **Badges pegados a los nombres en `Catálogo de equipos`**: `AGAgenda médica`, `PCComputador`, `IMPImpresora`, `GASGastroscopio`, `SDSillón dental`, `ECGElectrocardiógrafo`, `MONMonitor de signos vitales`, `INSInsumos clínicos`. | `room_layout/ui/stage3_artefactos.go:173-180` renderiza código + nombre en `catalogItem` sin estilo de pastilla ni separación (`gap`). |
+| RL-4 | 🟡 | `#room_layout.map` (Paso 4 `Operación`) | **Lista «Profesionales» muestra recepcionistas (`juenifer fuentes`, `yessenia sepulveda`) y las iniciales (`C`, `jf`, `ys`) flotan sin estilo de avatar encima del nombre.** | La fuente de ocupantes lista todo el personal sin filtrar por rol asistencial y las tarjetas de ocupante carecen de estilo de avatar circular/alineación horizontal. |
+| RL-5 | 🟡 | `#room_layout.map` (Móvil 390px y Paso 2) | **El stepper `1 Planta · 2 Espacios · 3 Equipami...` se corta por la derecha en móvil**, y en Paso 2 (1024px) las columnas 21–22 del mapa quedan cortadas sin indicación de scroll horizontal. | `stepindicator` no envuelve ni hace scroll horizontal limpio en 390px y la grilla del plano excede el contenedor en desktop medio. |
+| RL-6 | 🟡 | `#room_layout.map` (Pasos 2 y 3) | **Botones de «Tipo de espacio» (`Clínico`, `Compartido`, `Apoyo`) con hueco vacío inferior** y contraste bajo (texto blanco sobre ámbar en `Clínico`). Además el botón de Paso 3 dice **`Terminar →`** aunque aún sigue el Paso 4 `Operación`. | Chips sin centrado flex (`F1`), contraste ámbar/blanco, y `stage3_artefactos.go:206` usa `lang.Translate("Finish")` en vez de `"Operation"`. |
+| RL-7 | ⚪ | `#room_layout` | **Pantallas CRUD `Boxes`, `Pisos`, `Equipamiento` duplican lo que ya hace el asistente `Mapa`** y `Equipamiento` abre vacío `0 / 0` mientras el catálogo en el mapa ya tiene 8 tipos. | Coexisten 4 pantallas en el submenú `Espacios` sin unificar flujo (viola `ui-consistency`: «una pantalla por tarea»). Además en Paso 4 las barras `Semana | Mes` y `Ocupación | Operación` ocupan el 100% del ancho. |
+
+## Sugerencias de mejora justificadas
+
+1. **Agregar `Label` en inglés capitalizado y humano a `FloorModel`, `RoomModel` y `EquipmentModel` (`"Floor"`, `"Code"`, `"Name"`, `"Notes"`, `"Active"`, `"Order"`):** *Justificación:* elimina de inmediato toda la jerga `"id de piso"` y las minúsculas en formularios y `lang.json`.
+2. **Corregir formato en Paso 3 y Paso 4 de `Mapa`:** estilizar el código (`AG`, `PC`, ...) como badge separado del nombre en `stage3_artefactos.go`; agregar separador `" · "` en `Ocupación: 0% · 216 bloques libres`; cambiar `"Terminar →"` por `"Siguiente: Operación →"`; dar estilo de avatar en fila (`row`) a las iniciales de profesionales y compactar los `SegmentedControl` de Paso 4. *Justificación:* son defectos visuales directos que dañan la legibilidad diaria de la agenda espacial.
+3. **Evaluar ocultar o fusionar `Boxes`, `Pisos` y `Equipamiento` dentro de `Mapa` (o dejar solo `Mapa` + `Equipamiento` si es inventario por box):** *Justificación:* simplifica el submenú `Espacios` de 4 ítems a 1–2 y evita editar boxes sin contexto espacial.

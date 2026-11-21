@@ -203,7 +203,7 @@ func (s *Stage3Artefactos) Render() *dom.Element {
 					return lang.Translate(len(root.Artifacts), "equipment", "·", len(root.Rooms), "spaces", "·", alertCount, "alerts").String()
 				}),
 			html.Button().Class(clsPrimary).
-				Child(html.Span().Text(lang.Translate("Finish").String()+" →")).
+				Child(html.Span().Text(lang.Translate("Operation").String()+" →")).
 				OnClick(func(dom.Event) {
 					root.GoToStage(3)
 				}),
@@ -351,7 +351,7 @@ func catalogItem(kind, code string, s *Stage3Artefactos, root *RootView) *dom.El
 		btn.Class("btn-cat", "on")
 	}
 	btn.Child(
-		html.Span().Class("ic").Text(code),
+		html.Span().Class("ic").Text(code + " · "),
 		html.Span().Text(artifactKindLabel(kind)),
 	)
 	btn.OnClick(func(dom.Event) {

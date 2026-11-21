@@ -82,8 +82,8 @@ var FloorModel = model.Definition{
 		{Name: "habitable_cells", Type: model.Text()},
 		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true, ServerOnly: true},
 		{Name: "tenant_id", Type: model.Text(), NotNull: true, ServerOnly: true},
-		{Name: "name", Type: input.Text(), Item: model.ItemLabel, NotNull: true, Permitted: model.Permitted{Minimum: 1, Maximum: 60}},
-		{Name: "position", Type: input.Number(), OmitEmpty: true},
+		{Name: "name", Type: input.Text(), Label: "Name", Item: model.ItemLabel, NotNull: true, Permitted: model.Permitted{Minimum: 1, Maximum: 60}},
+		{Name: "position", Type: input.Number(), Label: "Position", OmitEmpty: true},
 		{Name: "updated_at", Type: model.NanoTime(), OmitEmpty: true, ServerOnly: true},
 	},
 }
@@ -102,11 +102,11 @@ var RoomModel = model.Definition{
 		{Name: "cells", Type: model.Text()},
 		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true, ServerOnly: true},
 		{Name: "tenant_id", Type: model.Text(), NotNull: true, ServerOnly: true},
-		{Name: "floor_id", Type: input.Select(), Ref: &FloorModel, DB: &model.FieldDB{RefColumn: "id"}, NotNull: true, Permitted: model.Permitted{Letters: true, Numbers: true, Extra: []rune{'-', '_'}}},
-		{Name: "code", Type: input.Text(), Item: model.ItemLabel, NotNull: true, Permitted: model.Permitted{Letters: true, Numbers: true, Extra: []rune{'-'}, Minimum: 1, Maximum: 20}},
-		{Name: "name", Type: input.Text(), Item: model.ItemDescription, NotNull: true, Permitted: model.Permitted{Minimum: 1, Maximum: 120}},
-		{Name: "notes", Type: input.Textarea(), OmitEmpty: true},
-		{Name: "is_active", Type: input.Checkbox()},
+		{Name: "floor_id", Type: input.Select(), Label: "Floor", Ref: &FloorModel, DB: &model.FieldDB{RefColumn: "id"}, NotNull: true, Permitted: model.Permitted{Letters: true, Numbers: true, Extra: []rune{'-', '_'}}},
+		{Name: "code", Type: input.Text(), Label: "Code", Item: model.ItemLabel, NotNull: true, Permitted: model.Permitted{Letters: true, Numbers: true, Extra: []rune{'-'}, Minimum: 1, Maximum: 20}},
+		{Name: "name", Type: input.Text(), Label: "Name", Item: model.ItemDescription, NotNull: true, Permitted: model.Permitted{Minimum: 1, Maximum: 120}},
+		{Name: "notes", Type: input.Textarea(), Label: "Notes", OmitEmpty: true},
+		{Name: "is_active", Type: input.Checkbox(), Label: "Active"},
 		{Name: "updated_at", Type: model.NanoTime(), OmitEmpty: true, ServerOnly: true},
 	},
 }
@@ -146,7 +146,7 @@ var EquipmentModel = model.Definition{
 	Fields: model.Fields{
 		{Name: "id", Type: model.Text(), DB: &model.FieldDB{PK: true}, OmitEmpty: true, ServerOnly: true},
 		{Name: "tenant_id", Type: model.Text(), NotNull: true, ServerOnly: true},
-		{Name: "name", Type: input.Text(), Item: model.ItemLabel, NotNull: true, Permitted: model.Permitted{Minimum: 1, Maximum: 80}},
+		{Name: "name", Type: input.Text(), Label: "Name", Item: model.ItemLabel, NotNull: true, Permitted: model.Permitted{Minimum: 1, Maximum: 80}},
 		// Id suelto del equipo de red (device_manager) al que corresponde este equipamiento; vacío si
 		// no tiene red (un gastroscopio). Este módulo no importa device_manager: la app le entrega los
 		// equipos por una interfaz, y el id se asigna en el mapa, no en el formulario de la lista.
